@@ -35,3 +35,14 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Secrets ###
+.env
+*.env
+application-local.properties
+application-secret.properties
+application-prod.properties
+
+### Local Dev ###
+CLAUDE.md
+task.md
