@@ -3,7 +3,7 @@ package com.yanus.attendance.team.application;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.infrastructure.TeamRepository;
+import com.yanus.attendance.team.domain.TeamRepository;
 import com.yanus.attendance.team.presentation.dto.TeamResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

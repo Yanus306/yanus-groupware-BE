@@ -1,7 +1,5 @@
-package com.yanus.attendance.team.infrastructure;
+package com.yanus.attendance.team.domain;
 
-import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import java.util.List;
 import java.util.Optional;
 
