@@ -85,4 +85,16 @@ public class JwtTokenProviderTest {
         assertThat(result).isFalse();
     }
 
+    @Test
+    @DisplayName("Refresh Token 생성")
+    void create_refresh_token() {
+        // given
+        Long memberId = 1L;
+
+        // when
+        String token = jwtTokenProvider.createRefreshToken(memberId);
+
+        // then
+        assertThat(token).isNotBlank();
+    }
 }
