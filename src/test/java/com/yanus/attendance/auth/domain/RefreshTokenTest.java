@@ -24,4 +24,34 @@ public class RefreshTokenTest {
         assertThat(refreshToken.getMemberId()).isEqualTo(memberId);
         assertThat(refreshToken.getExpiresAt()).isEqualTo(expiresAt);
     }
+
+    @Test
+    @DisplayName("만료되지 않은 토큰은 false를 반환")
+    void not_expired_token_return_false() {
+        // given
+        RefreshToken refreshToken = RefreshToken.create(
+                "token", 1L, LocalDateTime.now().plusDays(7)
+        );
+
+        //when
+        boolean result = refreshToken.isExpired();
+
+        //then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("만료된 토큰은 true를 반환")
+    void expired_token_return_true() {
+        // given
+        RefreshToken refreshToken = RefreshToken.create(
+                "token", 1L, LocalDateTime.now().minusSeconds(1)
+        );
+
+        //when
+        boolean result = refreshToken.isExpired();
+
+        //then
+        assertThat(result).isTrue();
+    }
 }
