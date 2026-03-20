@@ -11,7 +11,7 @@ public class MemberTest {
 
     private Member createMember() {
         Team team = Team.create(TeamName.BACKEND);
-        return Member.create("정용태", "jyt6640@gmail.com", "password", MemberRole.ADMIN, team);
+        return Member.create("정용태", "jyt6640@gmail.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
     }
 
     @Test
@@ -24,7 +24,7 @@ public class MemberTest {
         String encodedPassword = "encoded_password";
 
         // when
-        Member member = Member.create(name, email, encodedPassword, MemberRole.MEMBER, team);
+        Member member = Member.create(name, email, encodedPassword, MemberRole.MEMBER, MemberStatus.ACTIVE, team);
 
         // then
         assertThat(member.getName()).isEqualTo(name);
@@ -37,7 +37,7 @@ public class MemberTest {
 
     @Test
     @DisplayName("멤버 생성시 ACTIVE 상태")
-    void active_member() {
+    void when_create_active_member() {
         // given % when
         Member member = createMember();
 
@@ -55,6 +55,20 @@ public class MemberTest {
         member.deactivate();
 
         // then
-        assertThat(mebmer.getStatus()).isEqualTo(MemberStatus.INACTIVE);
+        assertThat(member.getStatus()).isEqualTo(MemberStatus.INACTIVE);
+    }
+
+    @Test
+    @DisplayName("멤버 활성화시 ACTIVE 상태")
+    void active_member() {
+        // given
+        Member member = createMember();
+
+        // when
+        member.deactivate();
+        member.activate();
+
+        // then
+        assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
     }
 }
