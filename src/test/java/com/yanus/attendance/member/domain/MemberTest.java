@@ -9,6 +9,11 @@ import org.junit.jupiter.api.Test;
 
 public class MemberTest {
 
+    private Member createMember() {
+        Team team = Team.create(TeamName.BACKEND);
+        return Member.create("정용태", "jyt6640@gmail.com", "password", MemberRole.ADMIN, team);
+    }
+
     @Test
     @DisplayName("멤버 생성")
     void create_member() {
@@ -28,5 +33,28 @@ public class MemberTest {
         assertThat(member.getRole()).isEqualTo(MemberRole.MEMBER);
         assertThat(member.getTeam()).isEqualTo(team);
         assertThat(member.getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("멤버 생성시 ACTIVE 상태")
+    void active_member() {
+        // given % when
+        Member member = createMember();
+
+        // then
+        assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("멤버 비활성화시 INACTIVE 상태")
+    void inactive_member() {
+        // given
+        Member member = createMember();
+
+        // when
+        member.deactivate();
+
+        // then
+        assertThat(mebmer.getStatus()).isEqualTo(MemberStatus.INACTIVE);
     }
 }
