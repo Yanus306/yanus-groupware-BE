@@ -34,4 +34,18 @@ public class JwtTokenProviderTest {
         assertThat(token).isNotBlank();
     }
 
+    @Test
+    @DisplayName("Access Token 멤버ID를 추출")
+    void getMemberId() {
+        // given
+        Long memberId = 1L;
+        String token = jwtTokenProvider.createAccessToken(memberId, MemberRole.MEMBER);
+
+        // when
+        Long result = jwtTokenProvider.getMemberId(token);
+
+        // then
+        assertThat(result).isEqualTo(memberId);
+    }
+
 }
