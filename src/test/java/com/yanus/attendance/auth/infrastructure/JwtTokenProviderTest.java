@@ -48,4 +48,17 @@ public class JwtTokenProviderTest {
         assertThat(result).isEqualTo(memberId);
     }
 
+    @Test
+    @DisplayName("Access Token 역할 추출")
+    void getRole() {
+        // given
+        String token = jwtTokenProvider.createAccessToken(1L, MemberRole.ADMIN);
+
+        // when
+        String role = jwtTokenProvider.getRole(token);
+
+        // then
+        assertThat(role).isEqualTo("ADMIN");
+    }
+
 }
