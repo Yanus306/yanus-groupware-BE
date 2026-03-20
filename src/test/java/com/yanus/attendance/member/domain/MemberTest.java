@@ -97,4 +97,17 @@ public class MemberTest {
         // then
         assertThat(member.getPassword()).isEqualTo("new_password");
     }
+
+    @Test
+    @DisplayName("역할 변경")
+    void change_role() {
+        // given
+        Member member = createMember();
+
+        // when
+        MemberRole result = member.changeRole(MemberRole.MEMBER);
+
+        // then
+        assertThat(result).isEqualTo(MemberRole.MEMBER);
+    }
 }
