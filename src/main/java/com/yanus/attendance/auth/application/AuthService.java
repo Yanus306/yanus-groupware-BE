@@ -5,6 +5,7 @@ import com.yanus.attendance.auth.domain.RefreshTokenRepository;
 import com.yanus.attendance.auth.infrastructure.JwtTokenProvider;
 import com.yanus.attendance.auth.presentation.dto.LoginRequest;
 import com.yanus.attendance.auth.presentation.dto.LoginResponse;
+import com.yanus.attendance.auth.presentation.dto.MeResponse;
 import com.yanus.attendance.auth.presentation.dto.RefreshRequest;
 import com.yanus.attendance.auth.presentation.dto.RegisterRequest;
 import com.yanus.attendance.global.exception.BusinessException;
@@ -86,5 +87,11 @@ public class AuthService {
     @Transactional
     public void logout(Long memberId) {
         refreshTokenRepository.deleteByMemberId(memberId);
+    }
+
+    public MeResponse me(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        return MeResponse.from(member);
     }
 }
