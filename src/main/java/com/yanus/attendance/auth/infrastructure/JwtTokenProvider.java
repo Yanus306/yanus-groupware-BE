@@ -24,7 +24,7 @@ public class JwtTokenProvider {
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessExpiration = accessExpiration;
-        this.refreshExpiration = refreshExpiration;`
+        this.refreshExpiration = refreshExpiration;
     }
 
     public String createAccessToken(Long memberId, MemberRole role) {
@@ -39,6 +39,10 @@ public class JwtTokenProvider {
 
     public Long getMemberId(String token) {
         return Long.parseLong(getClaims(token).getSubject());
+    }
+
+    public String getRole(String token) {
+        return getClaims(token).get("role", String.class);
     }
 
     private Claims getClaims(String token) {
