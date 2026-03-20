@@ -14,7 +14,7 @@ public class TeamTest {
         TeamName name = TeamName.BACKEND;
 
         // when
-        Team team = new Team.create(name);
+        Team team = Team.create(name);
 
         // then
         assertThat(team.getName()).isEqualTo(TeamName.BACKEND);
