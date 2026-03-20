@@ -61,4 +61,28 @@ public class JwtTokenProviderTest {
         assertThat(role).isEqualTo("ADMIN");
     }
 
+    @Test
+    void 유효한_토큰은_true를_반환한다() {
+        // given
+        String token = jwtTokenProvider.createAccessToken(1L, MemberRole.MEMBER);
+
+        // when
+        boolean result = jwtTokenProvider.validateToken(token);
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void 유효하지_않은_토큰은_false를_반환한다() {
+        // given
+        String invalidToken = "invalid.token.value";
+
+        // when
+        boolean result = jwtTokenProvider.validateToken(invalidToken);
+
+        // then
+        assertThat(result).isFalse();
+    }
+
 }
