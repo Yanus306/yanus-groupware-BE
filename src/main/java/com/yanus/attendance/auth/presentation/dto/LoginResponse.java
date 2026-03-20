@@ -1,7 +1,7 @@
 package com.yanus.attendance.auth.presentation.dto;
 
 public record LoginResponse(
-        String email,
-        String password
-) {
-}
+        String accessToken,
+        String refreshToken,
+        String tokenType
+) {}
