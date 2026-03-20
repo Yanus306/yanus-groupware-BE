@@ -72,6 +72,10 @@ public class Member {
         this.status = MemberStatus.ACTIVE;
     }
 
+    public void changeRole(MemberRole role) {
+        this.role = role;
+    }
+
     public void updateProfile(String name, String encodedPassword) {
         if (name != null) {
             this.name = name;
