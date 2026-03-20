@@ -1,4 +1,4 @@
-package com.yanus.attendance.team.application;
+package com.yanus.attendance.team.infrastructure;
 
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamName;
@@ -13,5 +13,5 @@ public interface TeamRepository {
 
     Optional<Team> findByName(TeamName name);
 
-    List<Team> findALl();
+    List<Team> findAll();
 }

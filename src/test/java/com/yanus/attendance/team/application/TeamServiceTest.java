@@ -4,8 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamName;
-import com.yanus.attendance.team.infrastructure.FakeTeamRepository;
-import com.yanus.attendance.team.infrastructure.TeamRepository;
+import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.presentation.dto.TeamResponse;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

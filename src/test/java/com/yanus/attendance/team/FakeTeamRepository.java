@@ -1,8 +1,8 @@
-package com.yanus.attendance.team.application;
+package com.yanus.attendance.team;
 
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamName;
-
+import com.yanus.attendance.team.infrastructure.TeamRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +35,7 @@ public class FakeTeamRepository implements TeamRepository {
     }
 
     @Override
-    public List<Team> findALl() {
+    public List<Team> findAll() {
         return new ArrayList<>(store.values());
     }
 }
