@@ -1,0 +1,37 @@
+package com.yanus.attendance.auth.infrastructure;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.yanus.attendance.member.domain.MemberRole;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+public class JwtTokenProviderTest {
+
+    private JwtTokenProvider jwtTokenProvider;
+
+    @BeforeEach
+    void setUp() {
+        jwtTokenProvider = new JwtTokenProvider(
+                "test-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm",
+                3600000L,
+                604800000L
+        );
+    }
+
+    @Test
+    @DisplayName("Access Token 생성")
+    void create_access_token() {
+        // given
+        Long memberId = 1L;
+        MemberRole role = MemberRole.MEMBER;
+
+        // when
+        String token = jwtTokenProvider.createAccessToken(memberId, role);
+
+        //then
+        assertThat(token).isNotBlank();
+    }
+
+}
