@@ -10,7 +10,8 @@ import org.junit.jupiter.api.Test;
 public class MemberTest {
 
     @Test
-    @DisplayName("멤버 생성") {
+    @DisplayName("멤버 생성")
+    void create_member() {
         // given
         Team team = Team.create(TeamName.BACKEND);
         String name = "정용태";
@@ -18,7 +19,7 @@ public class MemberTest {
         String encodedPassword = "encoded_password";
 
         // when
-        Member member = new Member.create(name, email, encodedPassword, MemberRole.MEMBER, team);
+        Member member = Member.create(name, email, encodedPassword, MemberRole.MEMBER, team);
 
         // then
         assertThat(member.getName()).isEqualTo(name);
