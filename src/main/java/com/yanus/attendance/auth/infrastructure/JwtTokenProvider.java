@@ -47,6 +47,15 @@ public class JwtTokenProvider {
         }
     }
 
+    public String createRefreshToken(Long memberId) {
+        return Jwts.builder()
+                .subject(String.valueOf(memberId))
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+                .signWith(secretKey)
+                .compact();
+    }
+
     public Long getMemberId(String token) {
         return Long.parseLong(getClaims(token).getSubject());
     }
