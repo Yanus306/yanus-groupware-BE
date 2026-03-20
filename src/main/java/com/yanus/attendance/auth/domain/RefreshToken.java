@@ -38,4 +38,8 @@ public class RefreshToken {
         refreshToken.expiresAt = expiresAt;
         return refreshToken;
     }
+
+    public boolean isExpired() {
+        return LocalDateTime.now().isAfter(expiresAt);
+    }
 }
