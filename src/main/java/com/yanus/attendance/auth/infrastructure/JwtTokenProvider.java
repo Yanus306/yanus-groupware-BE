@@ -1,6 +1,7 @@
 package com.yanus.attendance.auth.infrastructure;
 
 import com.yanus.attendance.member.domain.MemberRole;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +24,7 @@ public class JwtTokenProvider {
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessExpiration = accessExpiration;
-        this.refreshExpiration = refreshExpiration;
+        this.refreshExpiration = refreshExpiration;`
     }
 
     public String createAccessToken(Long memberId, MemberRole role) {
@@ -36,4 +37,15 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public Long getMemberId(String token) {
+        return Long.parseLong(getClaims(token).getSubject());
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
 }
