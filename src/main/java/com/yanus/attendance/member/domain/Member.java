@@ -41,6 +41,10 @@ public class Member {
     @Column(name = "role", nullable = false, length = 20)
     private MemberRole role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private MemberStatus status;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
@@ -48,14 +52,23 @@ public class Member {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public static Member create(String name, String email, String encodedPassword, MemberRole role, Team team) {
+    public static Member create(String name, String email, String encodedPassword, MemberRole role, MemberStatus status, Team team) {
         Member member = new Member();
         member.name = name;
         member.email = email;
         member.password = encodedPassword;
         member.role = role;
+        member.status = MemberStatus.ACTIVE;
         member.team = team;
         member.createdAt = LocalDateTime.now();
         return member;
+    }
+
+    public void deactivate() {
+        this.status = MemberStatus.INACTIVE;
+    }
+
+    public void activate() {
+        this.status = MemberStatus.ACTIVE;
     }
 }
