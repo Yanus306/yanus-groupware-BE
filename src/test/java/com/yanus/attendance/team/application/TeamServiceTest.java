@@ -6,6 +6,8 @@ import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamName;
 import com.yanus.attendance.team.infrastructure.FakeTeamRepository;
 import com.yanus.attendance.team.infrastructure.TeamRepository;
+import com.yanus.attendance.team.presentation.dto.TeamResponse;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,8 +19,8 @@ public class TeamServiceTest {
 
     @BeforeEach
     void setUp() {
-        teamService = new TeamService();
-        teamRepository = new TeamRepository();
+        teamRepository = new FakeTeamRepository();
+        teamService = new TeamService(teamRepository);
     }
 
     @Test
