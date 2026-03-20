@@ -71,4 +71,13 @@ public class Member {
     public void activate() {
         this.status = MemberStatus.ACTIVE;
     }
+
+    public void updateProfile(String name, String encodedPassword) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (encodedPassword != null) {
+            this.password = encodedPassword;
+        }
+    }
 }
