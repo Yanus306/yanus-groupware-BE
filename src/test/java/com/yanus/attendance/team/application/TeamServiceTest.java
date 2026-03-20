@@ -26,7 +26,7 @@ public class TeamServiceTest {
     }
 
     @Test
-    @DisplayName("팀 목록 조회")
+    @DisplayName("전체 팀 목록 조회")
     void find_all() {
         // given
         teamRepository.save(Team.create(TeamName.FRONTEND));
@@ -37,6 +37,19 @@ public class TeamServiceTest {
 
         // then
         assertThat(result).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("팀 조회")
+    void find_by_id() {
+        // given
+        teamRepository.save(Team.create(TeamName.BACKEND));
+
+        // when
+        TeamResponse result = teamService.findById(1L);
+
+        // then
+        assertThat(result.name()).isEqualTo("BACKEND");
     }
 
     @Test
