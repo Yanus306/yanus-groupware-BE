@@ -71,4 +71,30 @@ public class MemberTest {
         // then
         assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
     }
+
+    @Test
+    @DisplayName("멤버 이름 수정")
+    void change_name() {
+        // given
+        Member member = createMember();
+
+        // when
+        member.updateProfile("김민성", null);
+
+        // then
+        assertThat(member.getName()).isEqualTo("김민성");
+    }
+
+    @Test
+    @DisplayName("비밀번호 수정")
+    void change_password() {
+        // given
+        Member member = createMember();
+
+        // when
+        member.updateProfile(null, "new_password");
+
+        // then
+        assertThat(member.getPassword()).isEqualTo("new_password");
+    }
 }
