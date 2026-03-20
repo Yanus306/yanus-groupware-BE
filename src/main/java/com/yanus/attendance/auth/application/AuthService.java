@@ -13,6 +13,7 @@ import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
+import com.yanus.attendance.member.domain.MemberStatus;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,6 +41,7 @@ public class AuthService {
                 request.email(),
                 passwordEncoder.encode(request.password()),
                 MemberRole.MEMBER,
+                MemberStatus.ACTIVE,
                 request.team()
         );
         memberRepository.save(member);
