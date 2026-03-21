@@ -9,6 +9,9 @@ import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
+import com.yanus.attendance.member.presentation.dto.MemberResponse;
+import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
+import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamName;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,14 +64,14 @@ public class MemberServiceTest {
     @DisplayName("멤버 역할 변경")
     void change_role() {
         // given
-        Member saved = createMember("hong@yanus.com", MemberRole.MEMBER);
+        Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
         RoleChangeRequest request = new RoleChangeRequest(MemberRole.TEAM_LEAD);
 
         // when
-        memberService.changeRole(saved.getId(), request);
+        memberService.changeRole(member.getId(), request);
 
         // then
-        assertThat(memberRepository.findById(saved.getId()).get().getRole())
+        assertThat(memberRepository.findById(member.getId()).get().getRole())
                 .isEqualTo(MemberRole.TEAM_LEAD);
     }
 
@@ -76,28 +79,42 @@ public class MemberServiceTest {
     @DisplayName("멤버 비활성화")
     void deactivate_member() {
         // given
-        Member saved = createMember("hong@yanus.com", MemberRole.MEMBER);
+        Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
 
         // when
-        memberService.deactivate(saved.getId());
+        memberService.deactivate(member.getId());
 
         // then
-        assertThat(memberRepository.findById(saved.getId()).get().getStatus())
+        assertThat(memberRepository.findById(member.getId()).get().getStatus())
                 .isEqualTo(MemberStatus.INACTIVE);
+    }
+
+    @Test
+    @DisplayName("멤버 활성화")
+    void activate_member() {
+        // given
+        Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
+
+        // when
+        memberService.activate(member.getId());
+
+        // then
+        assertThat(memberRepository.findById(member.getId()).get().getStatus())
+                .isEqualTo(MemberStatus.ACTIVE);
     }
 
     @Test
     @DisplayName("프로필 이름 수정")
     void update_profile_name() {
         // given
-        Member saved = createMember("hong@yanus.com", MemberRole.MEMBER);
+        Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
         ProfileUpdateRequest request = new ProfileUpdateRequest("김철수", null);
 
         // when
-        memberService.updateProfile(saved.getId(), request);
+        memberService.updateProfile(member.getId(), request);
 
         // then
-        assertThat(memberRepository.findById(saved.getId()).get().getName())
+        assertThat(memberRepository.findById(member.getId()).get().getName())
                 .isEqualTo("김철수");
     }
 
@@ -105,14 +122,14 @@ public class MemberServiceTest {
     @DisplayName("프로필 비밀번호 수정")
     void update_profile_password() {
         // given
-        Member saved = createMember("hong@yanus.com", MemberRole.MEMBER);
+        Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
         ProfileUpdateRequest request = new ProfileUpdateRequest(null, "newPassword123");
 
         // when
-        memberService.updateProfile(saved.getId(), request);
+        memberService.updateProfile(member.getId(), request);
 
         // then
-        assertThat(memberRepository.findById(saved.getId()).get().getPassword())
+        assertThat(memberRepository.findById(member.getId()).get().getPassword())
                 .isNotEqualTo("encoded");
     }
 }
