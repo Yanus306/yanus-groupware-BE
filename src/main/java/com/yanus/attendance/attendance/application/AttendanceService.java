@@ -44,6 +44,13 @@ public class AttendanceService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<AttendanceResponse> getAttendancesByDate(LocalDate date) {
+        return attendanceRepository.findAllByWorkDate(date).stream()
+                .map(AttendanceResponse::from)
+                .toList();
+    }
+
     private Member findMember(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
