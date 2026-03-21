@@ -65,8 +65,23 @@ public class AttendanceTest {
         attendance.checkOut(checkOutTime);
 
         // when & then
-        assertThatThrownBy(() -> attendance.checkOut(checkOutTime))
+        assertThatThrownBy(() -> attendance.checkOut(checkOutTime.plusHours(1)))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("퇴근");
+    }
+
+    @Test
+    @DisplayName("퇴근시간이 출근시간보다 이전이면 예외 발생")
+    void validate_check_out_time() {
+        // given
+        Member member = create();
+        LocalDateTime checkInTime = LocalDateTime.now();
+        LocalDateTime checkOutTime = LocalDateTime.now().minusHours(1);
+        Attendance attendance = Attendance.checkIn(member, checkInTime);
+
+        //when & then
+        assertThatThrownBy(() -> attendance.checkOut(checkOutTime))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("출근");
     }
 }
