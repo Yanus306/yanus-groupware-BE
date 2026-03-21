@@ -1,11 +1,13 @@
 package com.yanus.attendance.attendance.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.AttendanceStatus;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
+import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
@@ -51,5 +53,18 @@ public class AttendanceServiceTest {
         assertThat(response.status()).isEqualTo(AttendanceStatus.WORKING);
         assertThat(response.checkInTime()).isNotNull();
         assertThat(response.checkOutTime()).isNull();
+    }
+
+    @Test
+    @DisplayName("오늘 이미 출근한 경우 예외 발생")
+    void already_checked_in_error() {
+        // given
+        Member member = createMember();
+        attendanceService.checkIn(member.getId());
+
+        // when & then
+        assertThatThrownBy(() -> attendanceService.checkIn(member.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("이미 출근");
     }
 }
