@@ -24,6 +24,7 @@ public enum ErrorCode {
     // Attendance
     ALREADY_CLOCKED_IN(409, "ALREADY_CLOCKED_IN", "이미 출근 처리되었습니다."),
     NOT_CLOCKED_IN(400, "NOT_CLOCKED_IN", "출근 상태가 아닙니다."),
+    TWICE_CHECK_OUT(409, "NOT_DOUBLE_CHECK_OUT", "이미 퇴근 처리되었습니다."),
 
     // Leave
     LEAVE_REQUEST_NOT_FOUND(404, "LEAVE_REQUEST_NOT_FOUND", "존재하지 않는 휴가 신청입니다."),
