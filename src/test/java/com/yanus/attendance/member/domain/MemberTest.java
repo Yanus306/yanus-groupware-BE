@@ -99,7 +99,7 @@ public class MemberTest {
         member.updateProfile(null, "new_password", passwordEncoder);
 
         // then
-        assertThat(member.getPassword()).isEqualTo("new_password");
+        assertThat(passwordEncoder.matches("new_password", member.getPassword())).isTrue();
     }
 
     @Test

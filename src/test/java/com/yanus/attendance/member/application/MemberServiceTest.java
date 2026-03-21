@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
+import com.yanus.attendance.member.FakeMemberQueryRepository;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
@@ -22,12 +23,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class MemberServiceTest {
 
     private MemberService memberService;
+    private FakeMemberQueryRepository memberQueryRepository;
     private FakeMemberRepository memberRepository;
 
     @BeforeEach
     void setUp() {
         memberRepository = new FakeMemberRepository();
-        memberService = new MemberService(memberRepository, new BCryptPasswordEncoder());
+        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder());
     }
 
     private Member createMember(String email, MemberRole role) {
