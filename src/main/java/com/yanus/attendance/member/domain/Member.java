@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Table(name = "member")
@@ -41,6 +42,10 @@ public class Member {
     @Column(name = "role", nullable = false, length = 20)
     private MemberRole role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private MemberStatus status;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
@@ -48,14 +53,36 @@ public class Member {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public static Member create(String name, String email, String encodedPassword, MemberRole role, Team team) {
+    public static Member create(String name, String email, String encodedPassword, MemberRole role, MemberStatus status, Team team) {
         Member member = new Member();
         member.name = name;
         member.email = email;
         member.password = encodedPassword;
         member.role = role;
+        member.status = MemberStatus.ACTIVE;
         member.team = team;
         member.createdAt = LocalDateTime.now();
         return member;
+    }
+
+    public void deactivate() {
+        this.status = MemberStatus.INACTIVE;
+    }
+
+    public void activate() {
+        this.status = MemberStatus.ACTIVE;
+    }
+
+    public void changeRole(MemberRole role) {
+        this.role = role;
+    }
+
+    public void updateProfile(String name, String encodedPassword, PasswordEncoder passwordEncoder) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (encodedPassword != null) {
+            this.password = passwordEncoder.encode(encodedPassword);
+        }
     }
 }
