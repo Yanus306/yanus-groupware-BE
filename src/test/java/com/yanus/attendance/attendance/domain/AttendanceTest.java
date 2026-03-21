@@ -19,7 +19,8 @@ public class AttendanceTest {
     }
 
     @Test
-    @DisplayName("출근 시 WORKING 상태로 생성") {
+    @DisplayName("출근 시 WORKING 상태로 생성")
+    void check_in() {
         // given
         Member member = create();
         LocalDateTime checkInTime = LocalDateTime.now();
