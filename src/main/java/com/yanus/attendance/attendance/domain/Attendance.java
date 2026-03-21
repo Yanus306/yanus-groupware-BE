@@ -51,4 +51,8 @@ public class Attendance {
         return attendance;
     }
 
+    public void checkOut(LocalDateTime checkOutTime) {
+        this.checkOutTime = checkOutTime;
+        this.status = AttendanceStatus.LEFT;
+    }
 }
