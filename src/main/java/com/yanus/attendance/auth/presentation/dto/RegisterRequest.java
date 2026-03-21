@@ -6,5 +6,6 @@ public record RegisterRequest(
         String name,
         String email,
         String password,
-        Team team
-) {}
+        Long teamId
+) {
+}

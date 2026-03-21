@@ -13,6 +13,9 @@ import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
+import com.yanus.attendance.member.domain.MemberStatus;
+import com.yanus.attendance.team.domain.Team;
+import com.yanus.attendance.team.domain.TeamRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +29,7 @@ public class AuthService {
 
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final TeamRepository teamRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
@@ -35,12 +39,16 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
+        Team team = teamRepository.findById(request.teamId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
         Member member = Member.create(
                 request.name(),
                 request.email(),
                 passwordEncoder.encode(request.password()),
                 MemberRole.MEMBER,
-                request.team()
+                MemberStatus.ACTIVE,
+                team
         );
         memberRepository.save(member);
     }
