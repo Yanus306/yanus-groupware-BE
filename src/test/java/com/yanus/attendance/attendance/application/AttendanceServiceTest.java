@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.AttendanceStatus;
+import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
