@@ -15,6 +15,8 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamName;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -89,6 +91,21 @@ public class AttendanceServiceTest {
 
         // when
         List<AttendanceResponse> responses = attendanceService.getMyAttendances(member.getId());
+
+        // then
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("오늘 출근하는 모든 사람 조회")
+    void get_attendances_by_date() {
+        // given
+        Member member = createMember();
+        LocalDate date = LocalDateTime.now().toLocalDate();
+        attendanceService.checkIn(member.getId());
+
+        // when
+        List<AttendanceResponse> responses = attendanceService.getAttendancesByDate(date);
 
         // then
         assertThat(responses).hasSize(1);
