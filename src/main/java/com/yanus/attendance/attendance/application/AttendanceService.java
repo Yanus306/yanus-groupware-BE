@@ -9,6 +9,7 @@ import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,14 @@ public class AttendanceService {
         Attendance attendance = findTodayAttendance(memberId);
         attendance.checkOut(LocalDateTime.now());
         return AttendanceResponse.from(attendance);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AttendanceResponse> getMyAttendances(Long memberId) {
+        return attendanceRepository.findAllByMemberId(memberId)
+                .stream()
+                .map(AttendanceResponse::from)
+                .toList();
     }
 
     private Member findMember(Long memberId) {
