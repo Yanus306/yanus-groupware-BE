@@ -11,7 +11,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,21 +40,21 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(memberService.findById(memberId)));
     }
 
-    @GetMapping("/{memberId}/role")
+    @PatchMapping("/{memberId}/role")
     public ResponseEntity<ApiResponse<Void>> changeRole(
             @PathVariable Long memberId,
-            @RequestParam RoleChangeRequest request) {
+            @RequestBody RoleChangeRequest request) {
         memberService.changeRole(memberId, request);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
-    @GetMapping("/{memberId}")
+    @DeleteMapping("/{memberId}")
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable Long memberId) {
         memberService.deactivate(memberId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
-    @GetMapping("/{memberId}")
+    @PatchMapping("/{memberId}/activate")
     public ResponseEntity<ApiResponse<Void>> activate(@PathVariable Long memberId) {
         memberService.activate(memberId);
         return ResponseEntity.ok(ApiResponse.success());
