@@ -1,6 +1,6 @@
 CREATE TABLE attendance
 (
-    id             BIGSERIAL PRIMARY KEY,
+    attendance_id  BIGSERIAL PRIMARY KEY,
     member_id      BIGINT      NOT NULL REFERENCES member (id),
     work_date      DATE        NOT NULL,
     check_in_time  TIMESTAMP   NOT NULL,
