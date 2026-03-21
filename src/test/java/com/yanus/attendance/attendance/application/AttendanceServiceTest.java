@@ -79,4 +79,18 @@ public class AttendanceServiceTest {
         assertThatThrownBy(() -> attendanceService.checkOut(member.getId()))
                 .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    @DisplayName("내 출근 기록 조회")
+    void get_my_attendances() {
+        // given
+        Member member = createMember();
+        attendanceService.checkIn(member.getId());
+
+        // when
+        List<AttendanceResponse> responses = attendanceService.getMyAttendances(member.getId());
+
+        // then
+        assertThat(responses).hasSize(1);
+    }
 }
