@@ -55,7 +55,7 @@ public class Attendance {
 
     public void checkOut(LocalDateTime checkOutTime) {
         validateTwiceCheckOut();
-        validateCheckIn(checkOutTime);
+        validateCheckOutTime(checkOutTime);
         this.checkOutTime = checkOutTime;
         this.status = AttendanceStatus.LEFT;
     }
@@ -66,9 +66,9 @@ public class Attendance {
         }
     }
 
-    private void validateCheckIn(LocalDateTime checkOutTime) {
+    private void validateCheckOutTime(LocalDateTime checkOutTime) {
         if (checkOutTime.isBefore(checkInTime)) {
-            throw new BusinessException(ErrorCode.ALREADY_CHECKED_IN);
+            throw new BusinessException(ErrorCode.INVALID_CHECKOUT_TIME);
         }
     }
 }

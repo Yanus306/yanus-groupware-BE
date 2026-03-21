@@ -82,6 +82,6 @@ public class AttendanceTest {
         //when & then
         assertThatThrownBy(() -> attendance.checkOut(checkOutTime))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("출근");
+                .hasMessageContaining("퇴근 시간은 출근 시간");
     }
 }
