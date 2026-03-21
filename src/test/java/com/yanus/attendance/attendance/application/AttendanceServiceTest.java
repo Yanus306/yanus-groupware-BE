@@ -15,6 +15,7 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamName;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,5 +67,16 @@ public class AttendanceServiceTest {
         assertThatThrownBy(() -> attendanceService.checkIn(member.getId()))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("이미 출근");
+    }
+
+    @Test
+    @DisplayName("출근 기록 없이 체크아웃 시 예외 발생")
+    void check_out_without_check_in_error() {
+        // given
+        Member member = createMember();
+
+        // when & then
+        assertThatThrownBy(() -> attendanceService.checkOut(member.getId()))
+                .isInstanceOf(BusinessException.class);
     }
 }
