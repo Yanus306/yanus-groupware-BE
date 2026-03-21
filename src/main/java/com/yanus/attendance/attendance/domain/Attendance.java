@@ -1,5 +1,7 @@
 package com.yanus.attendance.attendance.domain;
 
+import com.yanus.attendance.global.exception.BusinessException;
+import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -52,7 +54,14 @@ public class Attendance {
     }
 
     public void checkOut(LocalDateTime checkOutTime) {
+        validateTwiceCheckOut();
         this.checkOutTime = checkOutTime;
         this.status = AttendanceStatus.LEFT;
+    }
+
+    private void validateTwiceCheckOut() {
+        if (status == AttendanceStatus.LEFT) {
+            throw new BusinessException(ErrorCode.TWICE_CHECK_OUT);
+        }
     }
 }
