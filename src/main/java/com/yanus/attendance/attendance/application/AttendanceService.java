@@ -29,6 +29,12 @@ public class AttendanceService {
         return AttendanceResponse.from(attendance);
     }
 
+    public AttendanceResponse checkOut(Long memberId) {
+        Attendance attendance = findTodayAttendance(memberId);
+        attendance.checkOut(LocalDateTime.now());
+        return AttendanceResponse.from(attendance);
+    }
+
     private Member findMember(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
@@ -39,5 +45,10 @@ public class AttendanceService {
                 .ifPresent(attendance -> {
                     throw new BusinessException(ErrorCode.ALREADY_CHECKED_IN);
                 });
+    }
+
+    private Attendance findTodayAttendance(Long memberId) {
+        return attendanceRepository.findByMemberIdAndWorkDate(memberId, LocalDate.now())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CHECKED_IN));
     }
 }
