@@ -373,3 +373,286 @@ ERROR No matching keys found for [gh:jyt6640]
 - Jenkins는 초기 단계에서 필수는 아니므로 GitHub Actions 기반으로 먼저 진행하는 것이 적절했음
 
 ---
+
+# 도메인 연결 및 Swagger 외부 접속 설정
+
+## 1. IP 주소로 직접 Swagger에 접속하던 문제
+
+#### 증상
+```text
+http://220.69.241.22:8080/swagger-ui/index.html
+```
+처럼 공인 IP와 포트가 그대로 드러나는 형태로 Swagger에 접속해야 했음
+
+#### 원인
+- 백엔드 서버가 8080 포트로 직접 외부에 노출되어 있었음
+- 도메인 연결 및 리버스 프록시 구성이 없는 상태였음
+
+#### 해결
+1. `yanus.bond` 도메인 구매
+2. Cloudflare에 도메인 등록
+3. `api.yanus.bond` 서브도메인을 서버 공인 IP(`220.69.241.22`)에 연결
+4. 이후 Nginx를 사용해 `80 → 8080` 프록시 구조로 변경
+
+---
+
+## 2. Cloudflare에 잘못된 DNS 레코드가 자동 등록된 문제
+
+#### 증상
+Cloudflare에서 도메인 추가 시 아래와 같은 레코드가 자동으로 감지됨
+
+```text
+A      yanus.bond   75.2.85.42
+A      yanus.bond   99.83.196.71
+CNAME  www          yanus.bond
+```
+
+하지만 실제 백엔드 서버 IP는 `220.69.241.22`였음
+
+#### 원인
+- Cloudflare가 기존 DNS 정보를 자동 스캔하면서 현재 프로젝트와 무관한 레코드를 가져왔음
+
+#### 해결
+자동 감지된 기존 레코드를 삭제하고, 실제 서버 IP로 직접 DNS 레코드 재등록
+
+```text
+A   api   220.69.241.22
+A   @     220.69.241.22
+```
+
+---
+
+## 3. Cloudflare 네임서버 적용 전까지 Pending 상태가 유지된 문제
+
+#### 증상
+Cloudflare에서 아래와 같은 메시지가 표시됨
+
+```text
+Waiting for your registrar to propagate your new nameservers
+```
+
+#### 원인
+- 도메인 구매 사이트에 등록된 기존 네임서버가 아직 Cloudflare 네임서버로 변경되지 않았거나
+- 변경 후 DNS 전파가 완료되지 않은 상태였음
+
+#### 해결
+호스팅 도메인 관리 페이지에서 기존 네임서버
+
+```text
+ns1.hosting.co.kr
+ns2.hosting.co.kr
+ns3.hosting.co.kr
+ns4.hosting.co.kr
+```
+
+를 Cloudflare에서 제공한 네임서버 2개로 변경 후 전파 완료까지 대기
+
+```text
+olivia.ns.cloudflare.com
+seamus.ns.cloudflare.com
+```
+
+---
+
+## 4. api.yanus.bond:8080은 접속되지만 api.yanus.bond는 바로 동작하지 않던 문제
+
+#### 증상
+```text
+http://api.yanus.bond:8080/swagger-ui/index.html  → 접속됨
+http://api.yanus.bond/swagger-ui/index.html       → 접속 안 되거나 느림
+```
+
+#### 원인
+- Spring Boot는 8080 포트에서만 직접 서비스 중이었음
+- 80 포트에서 요청을 받아 8080으로 넘겨주는 리버스 프록시 구성이 없었음
+
+#### 해결
+서버에 Nginx 설치 후 `api.yanus.bond` 요청을 `127.0.0.1:8080`으로 전달하도록 설정
+
+```nginx
+server {
+    listen 80;
+    server_name api.yanus.bond;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+1. `/etc/nginx/sites-available/yanus` 생성
+2. `/etc/nginx/sites-enabled/yanus`에 심볼릭 링크 추가
+3. `nginx -t`로 설정 검사 후 재시작
+
+---
+
+## 5. Nginx 설정 후에도 기본 페이지가 열리던 문제
+
+#### 증상
+서버 내부에서 아래 명령 실행 시 Swagger가 아니라 기본 Nginx 응답이 반환됨
+
+```bash
+curl -I http://127.0.0.1
+```
+
+#### 원인
+- Nginx 기본 사이트(`default`)가 여전히 활성화되어 있었음
+- `server_name api.yanus.bond`에 맞는 설정 블록 대신 기본 블록이 먼저 처리되었음
+
+#### 해결
+기본 사이트 비활성화
+
+```bash
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+---
+
+## 6. Nginx는 정상인데 루트 경로(/)에서 403이 발생한 문제
+
+#### 증상
+```bash
+curl -I -H "Host: api.yanus.bond" http://127.0.0.1
+```
+실행 시 `HTTP/1.1 403` 반환
+
+#### 원인
+- 루트 경로(`/`)는 애플리케이션에서 허용되지 않은 경로였음
+- Nginx 문제라기보다 Spring Security 또는 애플리케이션 라우팅 구조상 `/`가 보호 또는 미구현 상태였음
+
+#### 해결
+루트 경로 대신 실제 Swagger 경로로 재테스트
+
+```bash
+curl -I -H "Host: api.yanus.bond" http://127.0.0.1/swagger-ui/index.html
+```
+
+Swagger 경로에서 `200 OK` 응답 확인 → `Nginx → Spring` 프록시 정상 동작 확인
+
+---
+
+## 7. Cloudflare를 사용할 때 521 Web server is down이 발생한 문제
+
+#### 증상
+외부 브라우저에서 접속 시 Cloudflare가 다음 에러를 반환함
+
+```text
+521 Web server is down
+```
+
+#### 원인
+- Cloudflare는 접근 가능했지만 `Cloudflare → 원본 서버(Origin)` 연결이 실패함
+- 프록시, 공유기 포트포워딩, 서버 접근 가능 여부를 함께 확인할 필요가 있었음
+
+#### 해결
+UFW 방화벽 상태 및 Nginx 리슨 포트 확인
+
+```bash
+sudo ufw status
+sudo ss -ltnp | grep ':80'
+```
+
+Cloudflare `api` 레코드를 일시적으로 `Proxied → DNS only`로 변경하여 Cloudflare 프록시 우회
+→ 원본 서버 자체와 Nginx 설정은 정상임을 분리 확인
+
+---
+
+## 8. 서버 내부에서는 정상인데 외부 접속 시 Swagger 정적 리소스 로딩이 매우 느린 문제
+
+#### 증상
+Swagger `index.html`은 열리지만 아래 파일들이 오래 대기하거나 로딩되지 않음
+
+```text
+swagger-ui.css
+swagger-ui-bundle.js
+swagger-ui-standalone-preset.js
+swagger-initializer.js
+```
+
+브라우저에서는 빈 화면처럼 보이거나 매우 느리게 표시됨
+
+#### 원인
+- 8080 직결 환경에서는 비교적 빠르게 동작했지만 `80 → Nginx → 8080` 구조로 변경하면서 외부 정적 리소스 로딩 체감이 느려짐
+- Cloudflare, 포트포워딩, 외부망, 브라우저의 다중 정적 파일 요청이 함께 얽히면서 체감 지연이 커졌음
+- 애플리케이션 코드나 Swagger 설정 자체보다는 네트워크 경로와 프록시 환경 영향이 더 컸음
+
+#### 해결
+- `api` 레코드를 `DNS only` 상태로 두고 원인 분리
+- 내부 `curl` 테스트로 정적 리소스가 애플리케이션에서 정상 제공되는지 확인
+- 8080 외부 포트포워딩 제거 방향으로 정리
+- 외부 노출 포트를 `80`, `443` 중심으로 단순화
+
+---
+
+## 9. HTTP 포트에서 HTTPS 요청이 들어와 Tomcat이 요청 헤더를 파싱하지 못한 문제
+
+#### 증상
+애플리케이션 로그에 아래와 같은 에러가 출력됨
+
+```text
+Invalid character found in method name [0x16 0x03 0x01 ...]
+HTTP method names must be tokens
+```
+
+#### 원인
+- HTTP만 받는 8080 포트에 HTTPS(TLS) 요청이 직접 들어왔음
+- 브라우저, 외부 스캐너, 혹은 잘못된 접근 경로로 인해 HTTPS 패킷이 HTTP 포트에 전달됨
+
+#### 해결
+- 원인 자체는 애플리케이션 장애가 아니라 프로토콜 불일치임을 확인
+- 외부에서 8080으로 직접 접근하지 않도록 구조 정리
+- 공유기 포트포워딩에서 `8080 → 8080` 규칙 제거
+- 최종적으로 외부는 `80/443`, 내부 앱은 `8080`만 사용하도록 정리
+
+---
+
+## 10. Nginx에 443 SSL 설정을 넣었지만 인증서 파일이 없어 실패한 문제
+
+#### 증상
+`nginx -t` 수행 시 아래 에러 발생
+
+```text
+cannot load certificate "/etc/ssl/certs/cloudflare-origin.pem"
+No such file or directory
+```
+
+#### 원인
+- Nginx 설정 파일에 `ssl_certificate`, `ssl_certificate_key`를 먼저 추가했지만
+- 실제 Cloudflare Origin 인증서 파일이 서버에 아직 생성되지 않았음
+
+#### 해결
+- 443 서버 블록을 우선 제거하여 HTTP 구성 복구
+- 80 포트 리버스 프록시만 남긴 상태에서 정상 동작 확인
+- 이후 HTTPS 적용 시 Cloudflare Origin Certificate를 발급받아 아래 경로에 저장하는 방식으로 진행 예정
+
+```text
+/etc/ssl/certs/cloudflare-origin.pem
+/etc/ssl/private/cloudflare-origin.key
+```
+
+---
+
+## 11. SwaggerConfig와 SecurityConfig가 문제 원인처럼 보였지만 실제 핵심 원인은 아니었던 문제
+
+#### 증상
+Swagger 화면이 느리게 로딩되거나 일부 리소스가 늦게 표시되어 `SwaggerConfig`, `SecurityConfig` 문제 가능성을 의심함
+
+#### 원인
+- `SwaggerConfig`는 OpenAPI 메타데이터와 JWT 인증 스키마만 정의하고 있었음
+- `SecurityConfig`도 `/swagger-ui/**`, `/v3/api-docs/**`를 `permitAll()`로 허용하고 있어 큰 문제는 없었음
+- 실제 병목은 애플리케이션 설정이 아니라 외부 접근 경로, 프록시, DNS, 브라우저 리소스 요청 흐름에 더 가까웠음
+
+#### 해결
+- Swagger 허용 경로가 이미 열려 있음을 확인
+- 코드보다는 인프라 경로 문제에 집중하여 진단 진행
+- 필요 시 아래 경로까지 추가 허용 가능하도록 검토
+
+```text
+"/swagger-ui.html"
+```
