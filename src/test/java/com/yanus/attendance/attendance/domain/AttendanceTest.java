@@ -34,4 +34,21 @@ public class AttendanceTest {
         assertThat(attendance.getWorkDate()).isEqualTo(checkInTime.toLocalDate());
         assertThat(attendance.getCheckOutTime()).isNull();
     }
+
+    @Test
+    @DisplayName("퇴근 시 LEFT 상태로 변경")
+    void check_out() {
+        // given
+        Member member = create();
+        LocalDateTime checkInTime = LocalDateTime.now();
+        LocalDateTime checkOutTime = LocalDateTime.now().plusHours(1);
+        Attendance attendance = Attendance.checkIn(member, checkInTime);
+
+        // when
+        attendance.checkOut(checkOutTime);
+
+        // then
+        assertThat(attendance.getStatus()).isEqualTo(AttendanceStatus.LEFT);
+        assertThat(attendance.getCheckOutTime()).isEqualTo(checkOutTime);
+    }
 }
