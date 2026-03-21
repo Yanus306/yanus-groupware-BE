@@ -6,8 +6,12 @@ import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamName;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 public class MemberTest {
+
+    public final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private Member createMember() {
         Team team = Team.create(TeamName.BACKEND);
@@ -79,7 +83,7 @@ public class MemberTest {
         Member member = createMember();
 
         // when
-        member.updateProfile("김민성", null);
+        member.updateProfile("김민성", null, passwordEncoder);
 
         // then
         assertThat(member.getName()).isEqualTo("김민성");
@@ -92,7 +96,7 @@ public class MemberTest {
         Member member = createMember();
 
         // when
-        member.updateProfile(null, "new_password");
+        member.updateProfile(null, "new_password", passwordEncoder);
 
         // then
         assertThat(member.getPassword()).isEqualTo("new_password");
@@ -105,9 +109,9 @@ public class MemberTest {
         Member member = createMember();
 
         // when
-        MemberRole result = member.changeRole(MemberRole.MEMBER);
+        member.changeRole(MemberRole.MEMBER);
 
         // then
-        assertThat(result).isEqualTo(MemberRole.MEMBER);
+        assertThat(member.getRole()).isEqualTo(MemberRole.MEMBER);
     }
 }

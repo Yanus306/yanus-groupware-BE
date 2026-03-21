@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Table(name = "member")
@@ -76,12 +77,12 @@ public class Member {
         this.role = role;
     }
 
-    public void updateProfile(String name, String encodedPassword) {
+    public void updateProfile(String name, String encodedPassword, PasswordEncoder passwordEncoder) {
         if (name != null) {
             this.name = name;
         }
         if (encodedPassword != null) {
-            this.password = encodedPassword;
+            this.password = passwordEncoder.encode(encodedPassword);
         }
     }
 }
