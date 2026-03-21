@@ -1,7 +1,9 @@
 package com.yanus.attendance.attendance.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
@@ -50,5 +52,21 @@ public class AttendanceTest {
         // then
         assertThat(attendance.getStatus()).isEqualTo(AttendanceStatus.LEFT);
         assertThat(attendance.getCheckOutTime()).isEqualTo(checkOutTime);
+    }
+
+    @Test
+    @DisplayName("이미 퇴근한 경우 퇴근을 다시 누르면 예외 처리")
+    void twice_check_out_error() {
+        // given
+        Member member = create();
+        LocalDateTime checkInTime = LocalDateTime.now();
+        LocalDateTime checkOutTime = LocalDateTime.now().plusHours(1);
+        Attendance attendance = Attendance.checkIn(member, checkInTime);
+        attendance.checkOut(checkOutTime);
+
+        // when & then
+        assertThatThrownBy(() -> attendance.checkOut(checkOutTime))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("퇴근");
     }
 }
