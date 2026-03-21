@@ -60,7 +60,8 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             set -e
-            cp /home/yanus/app/attendance-0.0.1-SNAPSHOT.jar /home/yanus/app/app.jar
+            ls -R /home/yanus/app
+            cp /home/yanus/app/build/libs/attendance-0.0.1-SNAPSHOT.jar /home/yanus/app/app.jar
             chown yanus:yanus /home/yanus/app/app.jar
             sudo systemctl restart yanus
             sudo systemctl status yanus --no-pager
