@@ -7,6 +7,7 @@ import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class AttendanceService {
 
     public AttendanceResponse checkIn(Long memberId) {
         Member member = findMember(memberId);
+        validateNotAlreadyCheckedIn(memberId);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.now());
         attendanceRepository.save(attendance);
         return AttendanceResponse.from(attendance);
@@ -30,5 +32,12 @@ public class AttendanceService {
     private Member findMember(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private void validateNotAlreadyCheckedIn(Long memberId) {
+        attendanceRepository.findByMemberIdAndWorkDate(memberId, LocalDate.now())
+                .ifPresent(attendance -> {
+                    throw new BusinessException(ErrorCode.ALREADY_CHECKED_IN);
+                });
     }
 }
