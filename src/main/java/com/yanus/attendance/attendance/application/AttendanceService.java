@@ -3,6 +3,7 @@ package com.yanus.attendance.attendance.application;
 import com.yanus.attendance.attendance.domain.Attendance;
 import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
+import com.yanus.attendance.attendance.domain.AttendanceStatus;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
@@ -59,6 +60,13 @@ public class AttendanceService {
         return attendanceQueryRepository.findAllByFilter(date, teamName).stream()
                 .map(AttendanceResponse::from)
                 .toList();
+    }
+
+    public void autoCheckOut(LocalDate workDate) {
+        List<Attendance> workingAttendances =
+                attendanceRepository.findAllByWorkDateAndStatus(workDate, AttendanceStatus.WORKING);
+        LocalDateTime checkOutTime = workDate.atTime(23, 59, 59);
+        workingAttendances.forEach(attendance -> attendance.checkOut(checkOutTime));
     }
 
     private Member findMember(Long memberId) {

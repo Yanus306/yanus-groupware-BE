@@ -1,6 +1,7 @@
 package com.yanus.attendance.attendance.infrastructure;
 
 import com.yanus.attendance.attendance.domain.Attendance;
+import com.yanus.attendance.attendance.domain.AttendanceStatus;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -13,4 +14,6 @@ public interface AttendanceSpringDataRepository extends JpaRepository<Attendance
     List<Attendance> findAllByMemberId(Long memberId);
 
     List<Attendance> findAllByWorkDate(LocalDate workDate);
+
+    List<Attendance> findAllByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status);
 }
