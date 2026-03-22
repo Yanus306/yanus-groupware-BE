@@ -2,6 +2,7 @@ package com.yanus.attendance.attendance.infrastructure;
 
 import com.yanus.attendance.attendance.domain.Attendance;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
+import com.yanus.attendance.attendance.domain.AttendanceStatus;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -32,5 +33,10 @@ public class AttendanceJpaRepository implements AttendanceRepository {
     @Override
     public List<Attendance> findAllByWorkDate(LocalDate workDate) {
         return repository.findAllByWorkDate(workDate);
+    }
+
+    @Override
+    public List<Attendance> findAllByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status) {
+        return repository.findAllByWorkDateAndStatus(workDate, status);
     }
 }

@@ -3,7 +3,9 @@ package com.yanus.attendance.attendance.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.yanus.attendance.attendance.FakeAttendanceQueryRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
+import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.AttendanceStatus;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
@@ -27,13 +29,15 @@ public class AttendanceServiceTest {
 
     private AttendanceService attendanceService;
     private AttendanceRepository attendanceRepository;
+    private AttendanceQueryRepository attendanceQueryRepository;
     private MemberRepository memberRepository;
 
     @BeforeEach
     void setUp() {
         attendanceRepository = new FakeAttendanceRepository();
         memberRepository = new FakeMemberRepository();
-        attendanceService = new AttendanceService(attendanceRepository, memberRepository);
+        AttendanceQueryRepository attendanceQueryRepository = new FakeAttendanceQueryRepository(attendanceRepository);
+        attendanceService = new AttendanceService(attendanceRepository, memberRepository, attendanceQueryRepository);
     }
 
     private Member createMember() {
@@ -109,5 +113,52 @@ public class AttendanceServiceTest {
 
         // then
         assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("팀 필터로 출퇴근 기록 조회")
+    void get_attendances_by_filter_with_team() {
+        // given
+        Member member = createMember();
+        LocalDate date = LocalDate.now();
+        attendanceService.checkIn(member.getId());
+
+        // when
+        List<AttendanceResponse> responses = attendanceService.getAttendancesByFilter(date, TeamName.BACKEND);
+
+        // then
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("팀 필터 없이 전체 출퇴근 기록 조회")
+    void get_attendances_by_filter_without_team() {
+        // given
+        Member member = createMember();
+        LocalDate date = LocalDate.now();
+        attendanceService.checkIn(member.getId());
+
+        // when
+        List<AttendanceResponse> responses = attendanceService.getAttendancesByFilter(date, null);
+
+        // then
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("자정 자동 퇴근 처리")
+    void auto_check_out() {
+        // given
+        Member member = createMember();
+        LocalDate date = LocalDate.now();
+        attendanceService.checkIn(member.getId());
+
+        // when
+        attendanceService.autoCheckOut(date);
+        List<AttendanceResponse> responses = attendanceService.getMyAttendances(member.getId());
+
+        // then
+        assertThat(responses.get(0).status()).isEqualTo(AttendanceStatus.LEFT);
+        assertThat(responses.get(0).checkOutTime()).isEqualTo(date.atTime(23, 59, 59));
     }
 }
