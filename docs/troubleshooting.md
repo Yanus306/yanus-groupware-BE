@@ -923,3 +923,84 @@ No checks have been added
 - 이후 `CI / test` 형태의 체크를 required check로 연결할 수 있도록 정리
 
 ---
+
+# ATTENDANCE 도메인
+
+## 1. V5 SQL - BIGINT만 선언하면 PostgreSQL에서 자동 증가가 되지 않음
+
+**증상**
+```
+attendance_id가 null로 저장되거나 PK 자동 생성이 안 됨
+```
+
+**원인**
+`BIGINT PRIMARY KEY`로만 선언하면 PostgreSQL에서 자동 증가가 되지 않음.
+MySQL에서는 `AUTO_INCREMENT`를 별도로 붙이지만, PostgreSQL에서는 `BIGSERIAL`을 사용해야 함.
+
+**해결**
+```sql
+-- Before
+attendance_id BIGINT PRIMARY KEY
+
+-- After
+attendance_id BIGSERIAL PRIMARY KEY
+```
+
+---
+
+## 2. V5 SQL - 외래키 참조 컬럼 오류
+
+**증상**
+```
+ERROR: column "id" referenced in foreign key constraint does not exist
+```
+
+**원인**
+`member` 테이블의 PK 컬럼명은 `member_id`인데 `REFERENCES member(id)`로 잘못 참조함.
+
+**해결**
+```sql
+-- Before
+member_id BIGINT NOT NULL REFERENCES member(id)
+
+-- After
+member_id BIGINT NOT NULL REFERENCES member(member_id)
+```
+
+---
+
+## 3. 동일 경로에 두 메서드가 매핑되어 contextLoads() 실패
+
+**증상**
+```
+AttendanceApplicationTests > contextLoads() FAILED
+    Caused by: java.lang.IllegalStateException at AbstractHandlerMethodMapping.java:677
+```
+
+**원인**
+ATT-006 구현 시 `getAttendancesByFilter()` 메서드를 추가하면서 기존 `getAttendancesByDate()` 메서드를 삭제하지 않아 `GET /api/v1/attendances`에 두 메서드가 중복 매핑됨.
+
+**해결**
+`AttendanceController`에서 기존 `getAttendancesByDate()` 메서드 삭제.
+`AttendanceService`에서도 동일하게 삭제.
+
+---
+
+# TASK 도메인
+
+## 1. TaskSpringDataRepository에 JpaRepository 메서드 중복 선언
+
+**증상**
+컴파일은 되지만 불필요한 오버라이딩으로 코드가 지저분해짐.
+
+**원인**
+`JpaRepository<Task, Long>`을 상속하면 `save()`, `findById()`, `deleteById()`가 이미 제공되는데 인터페이스에 동일 메서드를 다시 선언함.
+
+**해결**
+`TaskSpringDataRepository`에서 중복 선언 제거. `JpaRepository` 상속만으로 충분.
+```java
+public interface TaskSpringDataRepository extends JpaRepository<Task, Long> {
+}
+```
+
+---
