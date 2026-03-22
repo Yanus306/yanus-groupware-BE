@@ -1,12 +1,13 @@
 package com.yanus.attendance.attendance;
 
 import com.yanus.attendance.attendance.domain.Attendance;
+import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
 import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDate;
 import java.util.List;
 
-public class FakeAttendanceQueryRepository implements AttendanceRepository{
+public class FakeAttendanceQueryRepository implements AttendanceQueryRepository {
 
     private final AttendanceRepository attendanceRepository;
 

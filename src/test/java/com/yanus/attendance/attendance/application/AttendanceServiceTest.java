@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeAttendanceQueryRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
+import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.AttendanceStatus;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
@@ -28,6 +29,7 @@ public class AttendanceServiceTest {
 
     private AttendanceService attendanceService;
     private AttendanceRepository attendanceRepository;
+    private AttendanceQueryRepository attendanceQueryRepository;
     private MemberRepository memberRepository;
 
     @BeforeEach
