@@ -144,4 +144,21 @@ public class AttendanceServiceTest {
         // then
         assertThat(responses).hasSize(1);
     }
+
+    @Test
+    @DisplayName("자정 자동 퇴근 처리")
+    void auto_check_out() {
+        // given
+        Member member = createMember();
+        LocalDate date = LocalDate.now();
+        attendanceService.checkIn(member.getId());
+
+        // when
+        attendanceService.autoCheckOut(date);
+        List<AttendanceResponse> responses = attendanceService.getMyAttendances(member.getId());
+
+        // then
+        assertThat(responses.get(0).status()).isEqualTo(AttendanceStatus.LEFT);
+        assertThat(responses.get(0).checkOutTime()).isEqualTo(date.atTime(23, 59, 59));
+    }
 }
