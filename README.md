@@ -7,7 +7,21 @@
 ## 프로젝트 소개
 
 동아리/팀 단위로 사용할 수 있는 그룹웨어 백엔드 서버입니다.
-출퇴근 관리, 회원 관리, 휴가 신청 등 조직 운영에 필요한 기능을 제공합니다.
+출퇴근 관리, 회원 관리, 휴가 신청, 업무 관리, 캘린더 등 조직 운영에 필요한 기능을 제공합니다.
+
+---
+
+## 구현 현황
+
+| 도메인 | 기능 | 상태 |
+|--------|------|------|
+| **Team** | 팀 초기 데이터 구성 | ✅ 완료 |
+| **Auth** | 이메일 로그인, JWT 발급/재발급/로그아웃, 내 정보 조회 | ✅ 완료 |
+| **Member** | 회원 목록/상세 조회, 역할 변경, 활성화/비활성화, 프로필 수정 | ✅ 완료 |
+| **Attendance** | 출근/퇴근 체크인, 내 기록 조회, 관리자 조회(팀/날짜 필터), 자정 자동 퇴근, 개인 근무 일정 설정 | ✅ 완료 |
+| **Leave** | 휴가 신청, 본인/팀 목록 조회, 승인/반려 | ✅ 완료 |
+| **Task** | 개인/팀 Task 생성, 완료 토글, 수정/삭제, 목록 조회(날짜 범위 필터) | ✅ 완료 |
+| **Calendar** | 이벤트 생성/수정/삭제, 날짜 범위 조회, 생성자 기준 조회 | ✅ 완료 |
 
 ---
 
@@ -25,8 +39,9 @@
 | Docs | SpringDoc OpenAPI (Swagger UI) |
 | Test | JUnit5, AssertJ, Mockito, Testcontainers |
 | Build | Gradle |
-| CI | GitHub Actions |
+| CI/CD | GitHub Actions |
 | Container | Docker, Docker Compose |
+| Infra | 온프레미스 서버 (Nginx 리버스 프록시, systemd) |
 
 ---
 
@@ -48,17 +63,32 @@ presentation → application → domain ← infrastructure
 ```
 com.yanus.attendance
 ├── global/
-│   ├── config/          # Security, QueryDSL, Swagger
+│   ├── config/          # Security, QueryDSL, Swagger, Scheduling
 │   ├── exception/       # BusinessException, ErrorCode, GlobalExceptionHandler
 │   └── response/        # ApiResponse
 ├── team/
 ├── auth/
 ├── member/
-└── attendance/
-    ├── domain/           # Attendance, AttendanceStatus, AttendanceRepository
-    ├── application/      # AttendanceService
-    ├── infrastructure/   # AttendanceJpaRepository
-    └── presentation/     # AttendanceController, dto/
+├── attendance/
+│   ├── domain/           # Attendance, WorkSchedule, Repository 인터페이스
+│   ├── application/      # AttendanceService, WorkScheduleService, AttendanceScheduler
+│   ├── infrastructure/   # JPA 구현체, QueryDSL
+│   └── presentation/     # Controller, dto/
+├── leave/
+│   ├── domain/           # LeaveRequest, LeaveCategory, LeaveStatus
+│   ├── application/      # LeaveService
+│   ├── infrastructure/   # JPA 구현체
+│   └── presentation/     # Controller, dto/
+├── task/
+│   ├── domain/           # Task, TaskPriority, Repository 인터페이스
+│   ├── application/      # TaskService
+│   ├── infrastructure/   # JPA 구현체, QueryDSL
+│   └── presentation/     # Controller, dto/
+└── calendar/
+    ├── domain/           # CalendarEvent, Repository 인터페이스
+    ├── application/      # CalendarEventService
+    ├── infrastructure/   # JPA 구현체
+    └── presentation/     # Controller, dto/
 ```
 
 ---
