@@ -34,6 +34,8 @@ public enum ErrorCode {
     LEAVE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "LEAVE_REQUEST_NOT_FOUND", "휴가 신청을 찾을 수 없습니다."),
     ALREADY_REVIEWED(HttpStatus.BAD_REQUEST, "ALREADY_REVIEWED", "이미 처리된 휴가 신청입니다."),
 
+    // Task
+    TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "TASK_NOT_FOUND", "태스크를 찾을 수 없습니다."),
 
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "서버 오류가 발생했습니다.");
 
