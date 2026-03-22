@@ -37,6 +37,11 @@ public enum ErrorCode {
     // Task
     TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "TASK_NOT_FOUND", "태스크를 찾을 수 없습니다."),
 
+    // Calendar
+    CALENDAR_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CALENDAR_EVENT_NOT_FOUND", "캘린더 이벤트를 찾을 수 없습니다."),
+    INVALID_CALENDAR_END_TIME(HttpStatus.BAD_REQUEST, "INVALID_CALENDAR_END_TIME", "종료 일시는 시작 일시 이후여야 합니다."),
+
+
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;
