@@ -28,6 +28,7 @@ public enum ErrorCode {
     ALREADY_CHECKED_OUT(HttpStatus.BAD_REQUEST, "ATT_003", "이미 퇴근 처리되었습니다."),
     INVALID_CHECKOUT_TIME(HttpStatus.BAD_REQUEST, "ATT_004", "퇴근 시간은 출근 시간 이후여야 합니다."),
     ATTENDANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "ATT_005", "출근 기록을 찾을 수 없습니다."),
+    INVALID_WORK_SCHEDULE_TIME(HttpStatus.BAD_REQUEST, "ATT_006", "종료 시간은 시작 시간 이후여야 합니다."),
 
     // Leave
     LEAVE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "LEAVE_REQUEST_NOT_FOUND", "존재하지 않는 휴가 신청입니다."),

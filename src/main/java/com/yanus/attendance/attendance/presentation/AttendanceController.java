@@ -3,6 +3,7 @@ package com.yanus.attendance.attendance.presentation;
 import com.yanus.attendance.attendance.application.AttendanceService;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.response.ApiResponse;
+import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +42,10 @@ public class AttendanceController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByDate(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(ApiResponse.success(attendanceService.getAttendancesByDate(date)));
+    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByFilter(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) TeamName teamName
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(attendanceService.getAttendancesByFilter(date, teamName)));
     }
 }
