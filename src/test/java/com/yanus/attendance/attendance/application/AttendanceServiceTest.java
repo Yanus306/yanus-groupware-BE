@@ -3,6 +3,7 @@ package com.yanus.attendance.attendance.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.yanus.attendance.attendance.FakeAttendanceQueryRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.AttendanceStatus;
@@ -33,7 +34,8 @@ public class AttendanceServiceTest {
     void setUp() {
         attendanceRepository = new FakeAttendanceRepository();
         memberRepository = new FakeMemberRepository();
-        attendanceService = new AttendanceService(attendanceRepository, memberRepository);
+        AttendanceQueryRepository attendanceQueryRepository = new FakeAttendanceQueryRepository(attendanceRepository);
+        attendanceService = new AttendanceService(attendanceRepository, memberRepository, attendanceQueryRepository);
     }
 
     private Member createMember() {
@@ -106,6 +108,36 @@ public class AttendanceServiceTest {
 
         // when
         List<AttendanceResponse> responses = attendanceService.getAttendancesByDate(date);
+
+        // then
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("팀 필터로 출퇴근 기록 조회")
+    void get_attendances_by_filter_with_team() {
+        // given
+        Member member = createMember();
+        LocalDate date = LocalDate.now();
+        attendanceService.checkIn(member.getId());
+
+        // when
+        List<AttendanceResponse> responses = attendanceService.getAttendancesByFilter(date, TeamName.BACKEND);
+
+        // then
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("팀 필터 없이 전체 출퇴근 기록 조회")
+    void get_attendances_by_filter_without_team() {
+        // given
+        Member member = createMember();
+        LocalDate date = LocalDate.now();
+        attendanceService.checkIn(member.getId());
+
+        // when
+        List<AttendanceResponse> responses = attendanceService.getAttendancesByFilter(date, null);
 
         // then
         assertThat(responses).hasSize(1);
