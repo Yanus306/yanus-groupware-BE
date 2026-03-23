@@ -33,6 +33,12 @@ dependencies {
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
 	implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
+	implementation('io.minio:minio:8.5.7') {
+		exclude group: 'com.google.guava', module: 'guava'
+		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
+	}
+	implementation 'com.google.guava:guava:32.1.3-jre'
+	implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 	annotationProcessor 'com.querydsl:querydsl-apt:5.1.0:jakarta'
 	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
 	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
