@@ -4,6 +4,7 @@ import com.yanus.attendance.global.response.ApiResponse;
 import com.yanus.attendance.leave.application.LeaveService;
 import com.yanus.attendance.leave.presentation.dto.LeaveCreateRequest;
 import com.yanus.attendance.leave.presentation.dto.LeaveResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "휴가", description = "휴가 등록, 조회, 승인, 거부")
 @RestController
 @RequestMapping("/api/v1/leaves")
 @RequiredArgsConstructor

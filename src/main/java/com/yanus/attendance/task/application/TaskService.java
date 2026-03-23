@@ -13,6 +13,7 @@ import com.yanus.attendance.task.presentation.dto.TaskResponse;
 import com.yanus.attendance.task.presentation.dto.TaskUpdateRequest;
 import com.yanus.attendance.team.domain.TeamRepository;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,19 +30,22 @@ public class TaskService {
 
     public TaskResponse create(Long memberId, TaskCreateRequest request) {
         Member creator = findMember(memberId);
+        List<Member> members = resolveMembers(request.memberIds());
 
         if (request.isTeamTask()) {
             Member assignee = request.assigneeId() != null ? findMember(request.assigneeId()) : creator;
             Task task = Task.createTeam(creator, assignee, creator.getTeam(),
-                    request.title(), request.date(), request.time(), request.priority());
+                    request.title(), request.date(), request.time(), request.priority(), members);
             taskRepository.save(task);
             return TaskResponse.from(task);
         }
 
-        Task task = Task.createPersonal(creator, request.title(), request.date(), request.time(), request.priority());
+        Task task = Task.createPersonal(creator, request.title(), request.date(),
+                request.time(), request.priority(), members);
         taskRepository.save(task);
         return TaskResponse.from(task);
     }
+
 
     public TaskResponse toggleDone(Long taskId) {
         Task task = findTask(taskId);
@@ -51,9 +55,12 @@ public class TaskService {
 
     public TaskResponse update(Long taskId, TaskUpdateRequest request) {
         Task task = findTask(taskId);
+        List<Member> members = resolveMembers(request.memberIds());
         task.update(request.title(), request.date(), request.time(), request.priority());
+        task.updateMembers(members);
         return TaskResponse.from(task);
     }
+
 
     public void delete(Long taskId) {
         taskRepository.deleteById(taskId);
@@ -81,5 +88,12 @@ public class TaskService {
     private Member findMember(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private List<Member> resolveMembers(List<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return memberRepository.findAllByIds(memberIds);
     }
 }

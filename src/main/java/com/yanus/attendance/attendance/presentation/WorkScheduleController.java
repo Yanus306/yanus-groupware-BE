@@ -4,6 +4,7 @@ import com.yanus.attendance.attendance.application.WorkScheduleService;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleRequest;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleResponse;
 import com.yanus.attendance.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "근무 일정", description = "근무 일정 등록, 확인")
 @RestController
 @RequestMapping("/api/v1/work-schedules")
 @RequiredArgsConstructor
