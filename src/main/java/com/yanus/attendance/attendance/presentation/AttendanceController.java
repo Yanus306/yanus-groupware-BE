@@ -3,6 +3,8 @@ package com.yanus.attendance.attendance.presentation;
 import com.yanus.attendance.attendance.application.AttendanceService;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.response.ApiResponse;
+import com.yanus.attendance.team.domain.TeamName;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "출근", description = "출근, 퇴근, 상태 확인, 팀 출근 확인")
 @RestController
 @RequestMapping("/api/v1/attendances")
 @RequiredArgsConstructor
@@ -41,8 +44,10 @@ public class AttendanceController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByDate(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(ApiResponse.success(attendanceService.getAttendancesByDate(date)));
+    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByFilter(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) TeamName teamName
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(attendanceService.getAttendancesByFilter(date, teamName)));
     }
 }

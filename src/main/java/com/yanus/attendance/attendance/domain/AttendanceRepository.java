@@ -13,4 +13,6 @@ public interface AttendanceRepository {
     List<Attendance> findAllByMemberId(Long memberId);
 
     List<Attendance> findAllByWorkDate(LocalDate workDate);
+
+    List<Attendance> findAllByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status);
 }

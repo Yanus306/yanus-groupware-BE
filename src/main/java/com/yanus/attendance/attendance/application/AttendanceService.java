@@ -1,12 +1,15 @@
 package com.yanus.attendance.attendance.application;
 
 import com.yanus.attendance.attendance.domain.Attendance;
+import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
+import com.yanus.attendance.attendance.domain.AttendanceStatus;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
+import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +24,7 @@ public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final MemberRepository memberRepository;
+    private final AttendanceQueryRepository attendanceQueryRepository;
 
     public AttendanceResponse checkIn(Long memberId) {
         Member member = findMember(memberId);
@@ -49,6 +53,20 @@ public class AttendanceService {
         return attendanceRepository.findAllByWorkDate(date).stream()
                 .map(AttendanceResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AttendanceResponse> getAttendancesByFilter(LocalDate date, TeamName teamName) {
+        return attendanceQueryRepository.findAllByFilter(date, teamName).stream()
+                .map(AttendanceResponse::from)
+                .toList();
+    }
+
+    public void autoCheckOut(LocalDate workDate) {
+        List<Attendance> workingAttendances =
+                attendanceRepository.findAllByWorkDateAndStatus(workDate, AttendanceStatus.WORKING);
+        LocalDateTime checkOutTime = workDate.atTime(23, 59, 59);
+        workingAttendances.forEach(attendance -> attendance.checkOut(checkOutTime));
     }
 
     private Member findMember(Long memberId) {

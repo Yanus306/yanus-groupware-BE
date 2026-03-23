@@ -2,6 +2,7 @@ package com.yanus.attendance.attendance;
 
 import com.yanus.attendance.attendance.domain.Attendance;
 import com.yanus.attendance.attendance.domain.AttendanceRepository;
+import com.yanus.attendance.attendance.domain.AttendanceStatus;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +43,14 @@ public class FakeAttendanceRepository implements AttendanceRepository {
     public List<Attendance> findAllByWorkDate(LocalDate workDate) {
         return store.values().stream()
                 .filter(a -> a.getWorkDate().equals(workDate))
+                .toList();
+    }
+
+    @Override
+    public List<Attendance> findAllByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status) {
+        return store.values().stream()
+                .filter(a -> a.getWorkDate().equals(workDate))
+                .filter(a -> a.getStatus() == status)
                 .toList();
     }
 }
