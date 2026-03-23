@@ -46,3 +46,5 @@ application-prod.properties
 ### Local Dev ###
 CLAUDE.md
 task.md
+
+.sdkmanrc
