@@ -11,11 +11,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,11 +60,19 @@ public class Task {
     @JoinColumn(name = "created_by")
     private Member createdBy;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "task_members",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "member_id")
+    )
+    private List<Member> members = new ArrayList<>();
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
 
-    public static Task createPersonal(Member createdBy, String title, LocalDate date, LocalTime time, TaskPriority priority) {
+    public static Task createPersonal(Member createdBy, String title, LocalDate date, LocalTime time, TaskPriority priority, List<Member> members) {
         Task task = new Task();
         task.createdBy = createdBy;
         task.assignee = createdBy;
@@ -70,12 +82,13 @@ public class Task {
         task.priority = priority;
         task.done = false;
         task.isTeamTask = false;
+        task.members = members != null ? new ArrayList<>(members) : new ArrayList<>();
         task.createdAt = LocalDateTime.now();
         task.updatedAt = LocalDateTime.now();
         return task;
     }
 
-    public static Task createTeam(Member createdBy, Member assignee, Team team, String title, LocalDate date, LocalTime time, TaskPriority priority) {
+    public static Task createTeam(Member createdBy, Member assignee, Team team, String title, LocalDate date, LocalTime time, TaskPriority priority, List<Member> members) {
         Task task = new Task();
         task.createdBy = createdBy;
         task.assignee = assignee;
@@ -86,6 +99,7 @@ public class Task {
         task.priority = priority;
         task.done = false;
         task.isTeamTask = true;
+        task.members = members != null ? new ArrayList<>(members) : new ArrayList<>();
         task.createdAt = LocalDateTime.now();
         task.updatedAt = LocalDateTime.now();
         return task;
@@ -101,6 +115,14 @@ public class Task {
         this.date = date;
         this.time = time;
         this.priority = priority;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateMembers(List<Member> members) {
+        this.members.clear();
+        if (members != null) {
+            this.members.addAll(members);
+        }
         this.updatedAt = LocalDateTime.now();
     }
 }
