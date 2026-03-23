@@ -11,5 +11,5 @@ public interface DriveFileRepository {
 
     List<DriveFile> findAllByUploadedById(Long uploadedById);
 
-    void deletedById(Long id);
+    void deleteById(Long id);
 }
