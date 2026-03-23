@@ -1,5 +1,6 @@
 package com.yanus.attendance.task.presentation;
 
+import com.github.dockerjava.api.model.Task;
 import com.yanus.attendance.global.response.ApiResponse;
 import com.yanus.attendance.task.application.TaskService;
 import com.yanus.attendance.task.presentation.dto.TaskCreateRequest;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Task(name = "과제", "과제 등록, 수정, 완료, 삭제, 조회")
 @RestController
 @RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
