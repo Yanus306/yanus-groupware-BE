@@ -3,6 +3,7 @@ package com.yanus.attendance.member;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -35,5 +36,12 @@ public class FakeMemberRepository implements MemberRepository {
     public boolean existsByEmail(String email) {
         return store.values().stream()
                 .anyMatch(m -> m.getEmail().equals(email));
+    }
+
+    @Override
+    public List<Member> findAllByIds(List<Long> ids) {
+        return store.values().stream()
+                .filter(m -> ids.contains(m.getId()))
+                .toList();
     }
 }

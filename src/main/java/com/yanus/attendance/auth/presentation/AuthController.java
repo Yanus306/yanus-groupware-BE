@@ -7,6 +7,7 @@ import com.yanus.attendance.auth.presentation.dto.MeResponse;
 import com.yanus.attendance.auth.presentation.dto.RefreshRequest;
 import com.yanus.attendance.auth.presentation.dto.RegisterRequest;
 import com.yanus.attendance.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "인증", description = "회원가입, 로그인, 리프레쉬, 로그아웃, 확인")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
