@@ -4,6 +4,7 @@ import com.yanus.attendance.calendar.application.CalendarEventService;
 import com.yanus.attendance.calendar.presentation.dto.CalendarEventCreateRequest;
 import com.yanus.attendance.calendar.presentation.dto.CalendarEventResponse;
 import com.yanus.attendance.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "일정", description = "일정 생성, 조회, 삭제, 수정, 확인")
 @RestController
 @RequestMapping("/api/v1/events")
 @RequiredArgsConstructor

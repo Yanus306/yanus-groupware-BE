@@ -7,6 +7,7 @@ import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
 import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
 import com.yanus.attendance.team.domain.TeamName;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "멤버", description = "멤버 조회, 멤버 수정, 역할 수정, 상태 비활성화, 상태 활성화")
 @RestController
 @RequestMapping("/api/v1/members")
 @RequiredArgsConstructor
