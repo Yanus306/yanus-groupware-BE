@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "드라이브", description = "파일 업로드, 가져오기, 다운로드, 삭제")
+@Tag(name = "드라이브", description = "파일 로드, 가져오기, 다운로드, 삭제")
 @RestController
 @RequestMapping("/api/v1/drive")
 @RequiredArgsConstructor
