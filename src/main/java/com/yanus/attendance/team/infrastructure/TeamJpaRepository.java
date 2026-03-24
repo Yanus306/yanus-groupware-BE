@@ -6,6 +6,8 @@ import com.yanus.attendance.team.domain.TeamRepository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -28,9 +30,20 @@ public class TeamJpaRepository implements TeamRepository {
     }
 
     @Override
-    public Optional<Team> findByName(TeamName name) {
+    public Optional<Team> findByName(String name) {
         return port.findByName(name);
     }
+
+    @Override
+    public boolean existsByMembersTeamId(Long teamId) {
+        return port.existsMemberByTeamId(teamId);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        port.deleteById(id);
+    }
+
 
     @Override
     public List<Team> findAll() {
@@ -39,5 +52,8 @@ public class TeamJpaRepository implements TeamRepository {
 }
 
 interface TeamJpaRepositoryPort extends JpaRepository<Team, Long> {
-    Optional<Team> findByName(TeamName name);
+    Optional<Team> findByName(String name);
+
+    @Query("SELECT COUNT(m) > 0 FROM Member m WHERE m.team.id = :teamId")
+    boolean existsMemberByTeamId(@Param("teamId") Long teamId);
 }

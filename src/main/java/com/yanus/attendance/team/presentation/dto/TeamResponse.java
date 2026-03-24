@@ -7,6 +7,6 @@ public record TeamResponse(
         String name
 ) {
     public static TeamResponse from(Team team) {
-        return new TeamResponse(team.getId(), team.getName().name());
+        return new TeamResponse(team.getId(), team.getName());
     }
 }
