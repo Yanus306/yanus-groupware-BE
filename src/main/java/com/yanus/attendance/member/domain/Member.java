@@ -85,4 +85,8 @@ public class Member {
             this.password = passwordEncoder.encode(encodedPassword);
         }
     }
+
+    public boolean isInactive() {
+        return this.status == MemberStatus.INACTIVE;
+    }
 }

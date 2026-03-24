@@ -62,6 +62,10 @@ public class AuthService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
+        if (member.isInactive()) {
+            throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
+        }
+
         String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
         String refreshTokenValue = jwtTokenProvider.createRefreshToken(member.getId());
 
