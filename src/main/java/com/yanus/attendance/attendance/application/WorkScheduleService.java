@@ -66,7 +66,7 @@ public class WorkScheduleService {
                 .map(entry -> new MemberWorkScheduleResponse(
                         entry.getKey().getId(),
                         entry.getKey().getName(),
-                        entry.getKey().getTeam().getName().name(),
+                        entry.getKey().getTeam().getName(),
                         entry.getValue().stream().map(WorkScheduleResponse::from).toList()
                 ))
                 .toList();

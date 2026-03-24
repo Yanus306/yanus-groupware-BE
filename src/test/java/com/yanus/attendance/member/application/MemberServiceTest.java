@@ -14,7 +14,6 @@ import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
 import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,7 @@ public class MemberServiceTest {
     }
 
     private Member createMember(String email, MemberRole role) {
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         return memberRepository.save(Member.create("정용태", email, "encoded", role, MemberStatus.ACTIVE, team));
     }
 

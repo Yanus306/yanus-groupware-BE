@@ -17,7 +17,7 @@ public record MemberResponse(
                 member.getEmail(),
                 member.getRole().name(),
                 member.getStatus().name(),
-                member.getTeam().getName().name()
+                member.getTeam().getName()
         );
     }
 }
