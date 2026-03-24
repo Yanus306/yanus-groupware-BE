@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeWorkScheduleRepository;
 import com.yanus.attendance.attendance.domain.WorkScheduleRepository;
+import com.yanus.attendance.attendance.presentation.dto.MemberWorkScheduleResponse;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleRequest;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleResponse;
 import com.yanus.attendance.global.exception.BusinessException;
@@ -118,4 +119,48 @@ public class WorkScheduleServiceTest {
         assertThatThrownBy(() -> workScheduleService.deleteWorkSchedule(member.getId(), DayOfWeek.MONDAY))
                 .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    @DisplayName("팀 멤버 근무 일정 조회")
+    void get_team_work_schedules() {
+        // given
+        Member member1 = create();
+        Member member2 = memberRepository.save(
+                Member.create("김철수", "kim@naver.com", "password", MemberRole.MEMBER, MemberStatus.ACTIVE, member1.getTeam()));
+
+        workScheduleService.setWorkSchedule(member1.getId(),
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+        workScheduleService.setWorkSchedule(member2.getId(),
+                new WorkScheduleRequest(DayOfWeek.TUESDAY, LocalTime.of(10, 0), LocalTime.of(19, 0)));
+
+        // when
+        List<MemberWorkScheduleResponse> responses =
+                workScheduleService.getTeamWorkSchedules(member1.getTeam().getId());
+
+        // then
+        assertThat(responses).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("전체 근무 일정 조회 (관리자)")
+    void get_all_work_schedules() {
+        // given
+        Member member1 = create();
+        Team team2 = Team.create(TeamName.FRONTEND);
+        ReflectionTestUtils.setField(team2, "id", 2L);
+        Member member2 = memberRepository.save(
+                Member.create("김철수", "kim@naver.com", "password", MemberRole.MEMBER, MemberStatus.ACTIVE, team2));
+
+        workScheduleService.setWorkSchedule(member1.getId(),
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+        workScheduleService.setWorkSchedule(member2.getId(),
+                new WorkScheduleRequest(DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+
+        // when
+        List<MemberWorkScheduleResponse> responses = workScheduleService.getAllWorkSchedules();
+
+        // then
+        assertThat(responses).hasSize(2);
+    }
+
 }
