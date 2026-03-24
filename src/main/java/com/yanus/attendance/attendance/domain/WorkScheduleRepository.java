@@ -11,4 +11,10 @@ public interface WorkScheduleRepository {
     Optional<WorkSchedule> findByMemberIdAndDayOfWeek(Long memberId, DayOfWeek dayOfWeek);
 
     List<WorkSchedule> findAllByMemberId(Long memberId);
+
+    List<WorkSchedule> findAllByMemberTeamId(Long teamId);
+
+    List<WorkSchedule> findAll();
+
+    void deleteByMemberIdAndDayOfWeek(Long memberId, DayOfWeek dayOfWeek);
 }

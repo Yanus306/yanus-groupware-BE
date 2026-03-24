@@ -28,4 +28,19 @@ public class WorkScheduleJpaRepository implements WorkScheduleRepository {
     public List<WorkSchedule> findAllByMemberId(Long memberId) {
         return repository.findAllByMemberId(memberId);
     }
+
+    @Override
+    public List<WorkSchedule> findAllByMemberTeamId(Long teamId) {
+        return repository.findAllByMemberTeamId(teamId);
+    }
+
+    @Override
+    public List<WorkSchedule> findAll() {
+        return repository.findAll();
+    }
+
+    @Override
+    public void deleteByMemberIdAndDayOfWeek(Long memberId, DayOfWeek dayOfWeek) {
+        repository.deleteByMemberIdAndDayOfWeek(memberId, dayOfWeek);
+    }
 }
