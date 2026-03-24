@@ -1,6 +1,7 @@
 package com.yanus.attendance.team.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.global.exception.BusinessException;
@@ -24,6 +25,66 @@ public class TeamServiceTest {
         teamRepository = new FakeTeamRepository();
         teamService = new TeamService(teamRepository);
     }
+
+    @Test
+    @DisplayName("팀 이름으로 팀 생성")
+    void 팀_생성_성공() {
+        // given
+        String name = "1팀";
+
+        // when
+        TeamResponse result = teamService.createTeam(name);
+
+        // then
+        assertThat(result.name()).isEqualTo("1팀");
+    }
+
+    @Test
+    @DisplayName("중복 팀 이름 생성 시 예외 발생")
+    void 중복_팀_이름_예외() {
+        // given
+        teamRepository.save(Team.create("1팀"));
+
+        // when & then
+        assertThatThrownBy(() -> teamService.createTeam("1팀"))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_ALREADY_EXISTS);
+    }
+
+    @Test
+    @DisplayName("멤버 없는 팀 삭제 성공")
+    void 팀_삭제_성공() {
+        // given
+        teamRepository.save(Team.create("빈팀"));
+
+        // when & then
+        assertThatCode(() -> teamService.deleteTeam(1L))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("멤버 있는 팀 삭제 시 예외 발생")
+    void 멤버_있는_팀_삭제_예외() {
+        // given
+        FakeTeamRepository fakeRepo = new FakeTeamRepository(true); // hasMember = true
+        TeamService service = new TeamService(fakeRepo);
+        fakeRepo.save(Team.create("1팀"));
+
+        // when & then
+        assertThatThrownBy(() -> service.deleteTeam(1L))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_HAS_MEMBERS);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 팀 삭제 시 예외 발생")
+    void 없는_팀_삭제_예외() {
+        // when & then
+        assertThatThrownBy(() -> teamService.deleteTeam(999L))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
+    }
+
 
     @Test
     @DisplayName("전체 팀 목록 조회")
