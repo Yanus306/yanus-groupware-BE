@@ -1004,3 +1004,182 @@ public interface TaskSpringDataRepository extends JpaRepository<Task, Long> {
 ```
 
 ---
+
+## 2. Task 다중 멤버 추가 후 기존 테스트 컴파일 오류
+
+**증상**
+```
+constructor TaskCreateRequest in record TaskCreateRequest cannot be applied to given types;
+required: String,LocalDate,LocalTime,TaskPriority,Long,boolean,List<Long>
+found:    String,LocalDate,LocalTime,TaskPriority,<null>,boolean
+```
+
+**원인**
+TASK-008 다중 멤버 기능 추가로 `TaskCreateRequest`, `TaskUpdateRequest` record에 `memberIds` 파라미터가 추가됐는데, 기존 테스트 코드는 이전 생성자 시그니처를 그대로 사용하고 있었음.
+
+**해결**
+기존 테스트의 `TaskCreateRequest` 호출에 `null` 추가, `TaskUpdateRequest` 호출에도 `null` 추가.
+```java
+// Before
+new TaskCreateRequest("제목", LocalDate.now(), null, TaskPriority.HIGH, null, false)
+
+// After
+new TaskCreateRequest("제목", LocalDate.now(), null, TaskPriority.HIGH, null, false, null)
+```
+
+---
+
+## 3. TaskTest에서 QTask 정적 import 충돌
+
+**증상**
+```
+import static com.yanus.attendance.task.domain.QTask.task 로 인해
+로컬 변수 task와 정적 필드 task가 충돌하여 컴파일 오류 발생
+```
+
+**원인**
+`QTask.task` 정적 필드를 import했는데 테스트 내부에서 `Task task = Task.createPersonal(...)` 형태의 로컬 변수도 `task`로 선언되어 네이밍 충돌 발생.
+
+**해결**
+`TaskTest.java`에서 `import static com.yanus.attendance.task.domain.QTask.task` 제거.
+도메인 단위 테스트에서는 QueryDSL Q클래스를 사용할 필요가 없음.
+
+---
+
+## 4. Task 도메인 테스트에서 createPersonal/createTeam 파라미터 누락
+
+**증상**
+```
+method createPersonal in class Task cannot be applied to given types;
+required: Member,String,LocalDate,LocalTime,TaskPriority,List<Member>
+found:    Member,String,LocalDate,LocalTime,TaskPriority
+```
+
+**원인**
+TASK-008로 `createPersonal`, `createTeam`에 `List<Member> members` 파라미터가 추가됐는데 기존 도메인 테스트는 파라미터 없이 호출하고 있었음.
+
+**해결**
+도메인 테스트의 모든 `createPersonal`, `createTeam` 호출에 마지막 인자로 `null` 추가.
+
+---
+
+## 5. FakeMemberRepository에 findAllByIds 미구현
+
+**증상**
+```
+FakeMemberRepository is not abstract and does not override abstract method findAllByIds(List<Long>) in MemberRepository
+```
+
+**원인**
+TASK-008 구현으로 `MemberRepository` 인터페이스에 `findAllByIds(List<Long>)` 메서드가 추가됐는데 `FakeMemberRepository`에 구현하지 않음.
+
+**해결**
+`FakeMemberRepository`에 메서드 추가.
+```java
+@Override
+public List<Member> findAllByIds(List<Long> ids) {
+    return store.values().stream()
+            .filter(m -> ids.contains(m.getId()))
+            .toList();
+}
+```
+
+---
+
+## 6. TaskServiceTest에 java.util.List import 누락
+
+**증상**
+```
+cannot find symbol
+symbol: variable List
+location: class TaskServiceTest
+```
+
+**원인**
+`List.of(...)` 사용 시 `java.util.List` import가 누락됨.
+
+**해결**
+```java
+import java.util.List;
+```
+
+---
+
+# CALENDAR 도메인
+
+## 1. 도메인 테스트 CRUD 범위 혼동
+
+**증상**
+도메인 테스트에 Create/Read/Update/Delete를 모두 넣으려 했으나 일부는 도메인 로직이 없는 경우였음.
+
+**원인**
+도메인 테스트는 엔티티 비즈니스 로직(유효성 검증, 상태 변경)만 테스트해야 하는데, Read/Delete는 Repository 레벨 동작이라 도메인 테스트 대상이 아님.
+
+**해결**
+도메인 테스트 = 엔티티 동작 (create 필드 검증, update 필드 변경, 유효성 검증 예외)
+CRUD 전체 = 서비스 테스트에서 커버.
+도메인 테스트에 `update_with_invalid_end_time` 추가로 마무리.
+
+---
+
+# DRIVE 도메인
+
+## 1. MinIO 의존성 로딩 실패 (Spring Boot 3 의존성 충돌)
+
+**증상**
+```
+MinIO Bean이 생성되지 않거나 의존성 충돌로 빌드 실패
+```
+
+**원인**
+MinIO 8.5.x는 내부적으로 `okhttp3`, `guava`를 사용하는데 Spring Boot 3 환경에서 버전 충돌이 발생할 수 있음.
+
+**해결**
+`build.gradle`에서 충돌 의존성 제외 후 명시적 버전 지정.
+```groovy
+implementation('io.minio:minio:8.5.7') {
+    exclude group: 'com.google.guava', module: 'guava'
+    exclude group: 'com.squareup.okhttp3', module: 'okhttp'
+}
+implementation 'com.google.guava:guava:32.1.3-jre'
+implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+```
+
+---
+
+## 2. CI에서 MinIO 환경변수 미설정으로 contextLoads() 실패
+
+**증상**
+```
+AttendanceApplicationTests > contextLoads() FAILED
+    Caused by: org.springframework.util.PlaceholderResolutionException
+```
+
+**원인**
+DRIVE 도메인 추가로 `application.properties`에 `${MINIO_ENDPOINT}` 등 MinIO 관련 플레이스홀더가 추가됐는데 CI 환경(GitHub Actions)에 해당 환경변수가 설정되지 않아 Spring Context 로딩 실패.
+
+**해결**
+`src/test/resources/application.properties`에 테스트용 기본값 추가.
+```properties
+minio.endpoint=http://localhost:9000
+minio.access-key=test
+minio.secret-key=testpassword
+minio.bucket=test-bucket
+```
+테스트 환경은 실제 MinIO에 연결하지 않으므로 가짜 값으로도 Context 로딩 가능.
+
+---
+
+## 3. DriveFile 엔티티에 bucket 컬럼 불필요
+
+**증상**
+설계 초기에 `drive_file` 테이블에 `bucket` 컬럼을 포함했으나 실제로는 필요 없음.
+
+**원인**
+버킷명은 `application.properties`의 `minio.bucket`으로 중앙 관리되기 때문에 파일별로 DB에 저장할 필요가 없음.
+
+**해결**
+`DriveFile` 엔티티와 V11 마이그레이션에서 `bucket` 컬럼 제거.
+`DriveFile.create()` 파라미터에서도 `bucket` 제거.
+
+---
