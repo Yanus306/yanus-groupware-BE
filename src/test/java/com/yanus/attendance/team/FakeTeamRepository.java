@@ -14,6 +14,15 @@ public class FakeTeamRepository implements TeamRepository {
 
     private final Map<Long, Team> store = new HashMap<>();
     private Long sequence = 1L;
+    private final boolean hasMember;
+
+    public FakeTeamRepository() { this.hasMember = false; }
+    public FakeTeamRepository(boolean hasMember) { this.hasMember = hasMember; }
+
+    @Override
+    public boolean existsByMembersTeamId(Long teamId) {
+        return hasMember;
+    }
 
     @Override
     public Team save(Team team) {
@@ -32,11 +41,6 @@ public class FakeTeamRepository implements TeamRepository {
         return store.values().stream()
                 .filter(team -> team.getName().equals(name))
                 .findFirst();
-    }
-
-    @Override
-    public boolean existsByMembersTeamId(Long teamId) {
-        return false;
     }
 
     @Override
