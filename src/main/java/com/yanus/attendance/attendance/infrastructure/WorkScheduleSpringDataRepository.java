@@ -11,4 +11,6 @@ public interface WorkScheduleSpringDataRepository extends JpaRepository<WorkSche
     Optional<WorkSchedule> findByMemberIdAndDayOfWeek(Long memberId, DayOfWeek dayOfWeek);
 
     List<WorkSchedule> findAllByMemberId(Long memberId);
+
+    void deleteByMemberIdAndDayOfWeek(Long memberId, DayOfWeek dayOfWeek);
 }
