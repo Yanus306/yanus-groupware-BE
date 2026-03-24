@@ -1,6 +1,7 @@
 package com.yanus.attendance.attendance.presentation;
 
 import com.yanus.attendance.attendance.application.WorkScheduleService;
+import com.yanus.attendance.attendance.presentation.dto.MemberWorkScheduleResponse;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleRequest;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleResponse;
 import com.yanus.attendance.global.response.ApiResponse;
@@ -38,6 +39,17 @@ public class WorkScheduleController {
             @AuthenticationPrincipal Long memberId
     ) {
         return ResponseEntity.ok(ApiResponse.success(workScheduleService.getMyWorkSchedules(memberId)));
+    }
+
+    @GetMapping("/team/{teamId}")
+    public ResponseEntity<ApiResponse<List<MemberWorkScheduleResponse>>> getTeamWorkSchedules(
+            @PathVariable Long teamId) {
+        return ResponseEntity.ok(ApiResponse.success(workScheduleService.getTeamWorkSchedules(teamId)));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<MemberWorkScheduleResponse>>> getAllWorkSchedules() {
+        return ResponseEntity.ok(ApiResponse.success(workScheduleService.getAllWorkSchedules()));
     }
 
     @DeleteMapping("/{dayOfWeek}")
