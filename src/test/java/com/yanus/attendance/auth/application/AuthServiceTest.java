@@ -12,10 +12,12 @@ import com.yanus.attendance.auth.presentation.dto.RegisterRequest;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;
+import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamName;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -154,5 +156,24 @@ class AuthServiceTest {
 
         // then
         assertThat(refreshTokenRepository.findByToken(loginResponse.refreshToken())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("비활성화된 멤버가 로그인하면 예외 발생")
+    void inactive_member_loging_throw_error() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+
+        // 비활성화 처리
+        Member member = memberRepository.findByEmail("hong@yanus.com").get();
+        member.deactivate();
+
+        LoginRequest request = new LoginRequest("hong@yanus.com", "password123");
+
+        // when & then
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_INACTIVE);
     }
 }
