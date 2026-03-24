@@ -28,11 +28,22 @@ public class FakeTeamRepository implements TeamRepository {
     }
 
     @Override
-    public Optional<Team> findByName(TeamName name) {
+    public Optional<Team> findByName(String name) {
         return store.values().stream()
-                .filter(team -> team.getName() == name)
+                .filter(team -> team.getName().equals(name))
                 .findFirst();
     }
+
+    @Override
+    public boolean existsByMembersTeamId(Long teamId) {
+        return false;
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        store.remove(id);
+    }
+
 
     @Override
     public List<Team> findAll() {
