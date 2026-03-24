@@ -6,7 +6,6 @@ import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test;
 public class TaskTest {
 
     private Member createMember() {
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         return Member.create("정용태", "jyt6640@naver.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
     }
 
@@ -84,7 +83,7 @@ public class TaskTest {
     void create_team_task() {
         // given
         Member member = createMember();
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
 
         // when
         Task task = Task.createTeam(member, member, team, "팀 작업", LocalDate.now(), null, TaskPriority.MEDIUM, null);
@@ -100,7 +99,7 @@ public class TaskTest {
         // given
         Member creator = createMember();
         Member member2 = Member.create("김철수", "kim@naver.com", "password", MemberRole.MEMBER, MemberStatus.ACTIVE, creator.getTeam());
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         List<Member> members = List.of(creator, member2);
 
         // when

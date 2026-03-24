@@ -9,7 +9,6 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +28,7 @@ public class MemberQueryServiceTest {
         memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder());
     }
 
-    private Member saveMember(TeamName teamName, MemberRole role) {
+    private Member saveMember(String teamName, MemberRole role) {
         Team team = Team.create(teamName);
         Member member = memberRepository.save(
                 Member.create("정용태", "jyt6640@naver.com", "encoded", role, MemberStatus.ACTIVE, team));
@@ -41,8 +40,8 @@ public class MemberQueryServiceTest {
     @DisplayName("전체 멤버 조회")
     void find_all_member() {
         // given
-        saveMember(TeamName.FRONTEND, MemberRole.MEMBER);
-        saveMember(TeamName.BACKEND, MemberRole.MEMBER);
+        saveMember("1팀", MemberRole.MEMBER);
+        saveMember("2팀", MemberRole.MEMBER);
 
         // when
         List<MemberResponse> result = memberService.findAll(null, null);
@@ -55,11 +54,11 @@ public class MemberQueryServiceTest {
     @DisplayName("팀으로 필터링")
     void filter_by_team() {
         // given
-        saveMember(TeamName.FRONTEND, MemberRole.MEMBER);
-        saveMember(TeamName.BACKEND, MemberRole.MEMBER);
+        saveMember("1팀", MemberRole.MEMBER);
+        saveMember("2팀", MemberRole.MEMBER);
 
         // when
-        List<MemberResponse> result = memberService.findAll(TeamName.FRONTEND, null);
+        List<MemberResponse> result = memberService.findAll("1팀", null);
 
         // then
         assertThat(result).hasSize(1);
@@ -69,12 +68,12 @@ public class MemberQueryServiceTest {
     @DisplayName("역할로 필터링")
     void filter_by_role() {
         // given
-        saveMember(TeamName.FRONTEND, MemberRole.MEMBER);
-        saveMember(TeamName.BACKEND, MemberRole.ADMIN);
-        saveMember(TeamName.BACKEND, MemberRole.TEAM_LEAD);
+        saveMember("1팀", MemberRole.MEMBER);
+        saveMember("2팀", MemberRole.ADMIN);
+        saveMember("2팀", MemberRole.TEAM_LEAD);
 
         // when
-        List<MemberResponse> result = memberService.findAll(TeamName.BACKEND, MemberRole.ADMIN);
+        List<MemberResponse> result = memberService.findAll("2팀", MemberRole.ADMIN);
 
         // then
         assertThat(result).hasSize(1);

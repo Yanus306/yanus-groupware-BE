@@ -15,7 +15,6 @@ import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,7 +48,7 @@ class AuthServiceTest {
     }
 
     private Team savedTeam() {
-        return teamRepository.save(Team.create(TeamName.BACKEND));
+        return teamRepository.save(Team.create("1팀"));
     }
 
     @Test
