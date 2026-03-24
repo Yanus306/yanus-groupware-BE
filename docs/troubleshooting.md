@@ -1183,3 +1183,64 @@ minio.bucket=test-bucket
 `DriveFile.create()` 파라미터에서도 `bucket` 제거.
 
 ---
+
+# WORK SCHEDULE 도메인
+
+## 1. 근무 일정 삭제 시 존재하지 않는 요일 예외 처리 누락
+
+**증상**
+존재하지 않는 요일로 `DELETE /api/v1/work-schedules/{dayOfWeek}` 요청 시 500 에러 반환.
+
+**원인**
+`deleteByMemberIdAndDayOfWeek()` 호출 전에 존재 여부 확인 로직이 없었음.
+
+**해결**
+삭제 전 `findByMemberIdAndDayOfWeek()`로 존재 여부 확인 후 없으면 `WORK_SCHEDULE_NOT_FOUND` 예외 발생.
+```java
+workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, dayOfWeek)
+        .orElseThrow(() -> new BusinessException(ErrorCode.WORK_SCHEDULE_NOT_FOUND));
+workScheduleRepository.deleteByMemberIdAndDayOfWeek(memberId, dayOfWeek);
+```
+
+---
+
+## 2. 팀/전체 근무 일정 조회 응답 구조 설계
+
+**증상**
+멤버별 근무 일정을 조회할 때 단순 리스트로 반환하면 같은 멤버의 요일별 일정이 각각 분리되어 응답됨.
+
+**원인**
+`WorkSchedule` 엔티티는 요일(day_of_week)별로 한 행씩 저장되는 구조이기 때문.
+
+**해결**
+`MemberWorkScheduleResponse` DTO를 추가하여 멤버별로 그룹핑 후 반환.
+```java
+schedules.stream()
+    .collect(Collectors.groupingBy(WorkSchedule::getMember))
+    .entrySet().stream()
+    .map(entry -> new MemberWorkScheduleResponse(...))
+    .toList();
+```
+
+---
+
+# AUTH 도메인
+
+## 1. 비활성화(INACTIVE) 멤버 로그인 차단 누락 (#88)
+
+**증상**
+관리자가 멤버를 `INACTIVE` 처리해도 해당 멤버가 정상적으로 로그인 가능.
+
+**원인**
+`AuthService.login()`에서 비밀번호 검증만 하고 `status` 체크 로직이 없었음.
+
+**해결**
+`Member.isInactive()` 메서드 추가 후 로그인 시 상태 체크.
+```java
+if (member.isInactive()) {
+    throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
+}
+```
+`ErrorCode.MEMBER_INACTIVE(HttpStatus.FORBIDDEN)` 추가.
+
+---

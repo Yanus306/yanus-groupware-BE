@@ -16,7 +16,6 @@ import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +37,7 @@ public class LeaveServiceTest {
     }
 
     private Member createMember() {
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         ReflectionTestUtils.setField(team, "id", 1L);
         Member member = Member.create("정용태", "jyt6640@naver.com", "password123", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
         return memberRepository.save(member);
@@ -95,7 +94,7 @@ public class LeaveServiceTest {
         Member member = createMember();
         Member reviewer = memberRepository.save(
                 Member.create("리뷰어", "reviewer@naver.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE,
-                        Team.create(TeamName.BACKEND)));
+                        Team.create("1팀")));
         LeaveResponse created = leaveService.create(member.getId(), new LeaveCreateRequest(LeaveCategory.VACATION, "연차", LocalDate.now()));
 
         // when
@@ -112,7 +111,7 @@ public class LeaveServiceTest {
         Member member = createMember();
         Member reviewer = memberRepository.save(
                 Member.create("리뷰어", "reviewer@naver.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE,
-                        Team.create(TeamName.BACKEND)));
+                        Team.create("1팀")));
         LeaveResponse created = leaveService.create(member.getId(), new LeaveCreateRequest(LeaveCategory.VACATION, "연차", LocalDate.now()));
 
         // when
@@ -129,7 +128,7 @@ public class LeaveServiceTest {
         Member member = createMember();
         Member reviewer = memberRepository.save(
                 Member.create("리뷰어", "reviewer@naver.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE,
-                        Team.create(TeamName.BACKEND)));
+                        Team.create("1팀")));
         LeaveResponse created = leaveService.create(member.getId(), new LeaveCreateRequest(LeaveCategory.VACATION, "연차", LocalDate.now()));
         leaveService.approve(created.id(), reviewer.getId());
 

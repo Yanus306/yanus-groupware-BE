@@ -2,8 +2,6 @@ package com.yanus.attendance.team.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -24,14 +22,13 @@ public class Team {
     @Column(name = "team_id")
     private Long id;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "name", nullable = false, unique = true, length = 50)
-    private TeamName name;
+    private String name;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public static Team create(TeamName name) {
+    public static Team create(String name) {
         Team team = new Team();
         team.name = name;
         team.createdAt = LocalDateTime.now();
