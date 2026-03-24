@@ -17,7 +17,6 @@ import com.yanus.attendance.task.presentation.dto.TaskCreateRequest;
 import com.yanus.attendance.task.presentation.dto.TaskResponse;
 import com.yanus.attendance.task.presentation.dto.TaskUpdateRequest;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -41,7 +40,7 @@ public class TaskServiceTest {
     }
 
     private Member createMember() {
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         ReflectionTestUtils.setField(team, "id", 1L);
         Member member = Member.create("정용태", "jyt6640@naver.com", "password123", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
         return memberRepository.save(member);

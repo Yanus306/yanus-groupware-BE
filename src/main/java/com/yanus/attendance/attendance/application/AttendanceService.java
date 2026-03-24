@@ -9,7 +9,6 @@ import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
-import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -56,7 +55,7 @@ public class AttendanceService {
     }
 
     @Transactional(readOnly = true)
-    public List<AttendanceResponse> getAttendancesByFilter(LocalDate date, TeamName teamName) {
+    public List<AttendanceResponse> getAttendancesByFilter(LocalDate date, String teamName) {
         return attendanceQueryRepository.findAllByFilter(date, teamName).stream()
                 .map(AttendanceResponse::from)
                 .toList();

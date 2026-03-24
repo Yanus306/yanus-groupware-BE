@@ -9,7 +9,11 @@ public interface TeamRepository {
 
     Optional<Team> findById(Long id);
 
-    Optional<Team> findByName(TeamName name);
+    Optional<Team> findByName(String name);
 
     List<Team> findAll();
+
+    boolean existsByMembersTeamId(Long teamId);
+
+    void deleteById(Long id);
 }

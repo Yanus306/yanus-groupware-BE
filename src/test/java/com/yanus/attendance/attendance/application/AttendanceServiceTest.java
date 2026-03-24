@@ -16,7 +16,6 @@ import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,7 +40,7 @@ public class AttendanceServiceTest {
     }
 
     private Member createMember() {
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         ReflectionTestUtils.setField(team, "id", 1L);
         Member member = Member.create("정용태", "jyt6640@naver.com", "password123", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
         return memberRepository.save(member);
@@ -124,7 +123,7 @@ public class AttendanceServiceTest {
         attendanceService.checkIn(member.getId());
 
         // when
-        List<AttendanceResponse> responses = attendanceService.getAttendancesByFilter(date, TeamName.BACKEND);
+        List<AttendanceResponse> responses = attendanceService.getAttendancesByFilter(date, "1팀");
 
         // then
         assertThat(responses).hasSize(1);
