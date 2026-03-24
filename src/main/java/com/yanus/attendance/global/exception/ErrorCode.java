@@ -21,6 +21,7 @@ public enum ErrorCode {
     // Member
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND", "존재하지 않는 회원입니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "EMAIL_ALREADY_EXISTS", "이미 사용 중인 이메일입니다."),
+    MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_INACTIVE", "비활성화된 계정입니다."),
 
     // Attendance
     ALREADY_CHECKED_IN(HttpStatus.BAD_REQUEST, "ALREADY_CHECKED_IN", "이미 출근 처리되었습니다."),
