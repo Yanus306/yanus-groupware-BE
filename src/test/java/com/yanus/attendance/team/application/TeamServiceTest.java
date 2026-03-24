@@ -7,9 +7,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import com.yanus.attendance.team.FakeTeamRepository;
-import com.yanus.attendance.team.presentation.dto.TeamResponse;
+import com.yanus.attendance.team.presentation.dto.TeamCreateRequest;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +32,7 @@ public class TeamServiceTest {
         String name = "1팀";
 
         // when
-        TeamResponse result = teamService.createTeam(name);
+        TeamCreateRequest result = teamService.createTeam(name);
 
         // then
         assertThat(result.name()).isEqualTo("1팀");
@@ -90,11 +89,11 @@ public class TeamServiceTest {
     @DisplayName("전체 팀 목록 조회")
     void find_all() {
         // given
-        teamRepository.save(Team.create(TeamName.FRONTEND));
-        teamRepository.save(Team.create(TeamName.BACKEND));
+        teamRepository.save(Team.create("1팀"));
+        teamRepository.save(Team.create("2팀"));
 
         // when
-        List<TeamResponse> result = teamService.findAll();
+        List<TeamCreateRequest> result = teamService.findAll();
 
         // then
         assertThat(result).hasSize(2);
@@ -104,10 +103,10 @@ public class TeamServiceTest {
     @DisplayName("팀 조회")
     void find_by_id() {
         // given
-        teamRepository.save(Team.create(TeamName.BACKEND));
+        teamRepository.save(Team.create("2팀"));
 
         // when
-        TeamResponse result = teamService.findById(1L);
+        TeamCreateRequest result = teamService.findById(1L);
 
         // then
         assertThat(result.name()).isEqualTo("BACKEND");
