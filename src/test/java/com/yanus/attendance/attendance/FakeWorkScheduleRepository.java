@@ -24,14 +24,6 @@ public class FakeWorkScheduleRepository implements WorkScheduleRepository {
     }
 
     @Override
-    public Optional<WorkSchedule> findByMemberIdAndDayOfWeek(Long memberId, DayOfWeek dayOfWeek) {
-        return store.values().stream()
-                .filter(s -> s.getMember().getId().equals(memberId))
-                .filter(s -> s.getDayOfWeek() == dayOfWeek)
-                .findFirst();
-    }
-
-    @Override
     public List<WorkSchedule> findAllByMemberId(Long memberId) {
         return store.values().stream()
                 .filter(s -> s.getMember().getId().equals(memberId))
