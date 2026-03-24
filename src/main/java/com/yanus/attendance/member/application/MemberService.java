@@ -9,7 +9,6 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
 import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
-import com.yanus.attendance.team.domain.TeamName;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,7 +30,7 @@ public class MemberService {
         return MemberResponse.from(member);
     }
 
-    public List<MemberResponse> findAll(TeamName teamName, MemberRole role) {
+    public List<MemberResponse> findAll(String teamName, MemberRole role) {
         return memberQueryRepository.findAllByFilter(teamName, role)
                 .stream()
                 .map(MemberResponse::from)

@@ -8,7 +8,6 @@ import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test;
 public class AttendanceTest {
 
     private Member create() {
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         return Member.create("정용태", "jyt6640@naver.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
     }
 

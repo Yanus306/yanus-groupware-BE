@@ -1,7 +1,6 @@
 package com.yanus.attendance.team;
 
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import com.yanus.attendance.team.domain.TeamRepository;
 import java.util.ArrayList;
 import java.util.HashMap;

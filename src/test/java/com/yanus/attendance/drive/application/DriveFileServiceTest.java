@@ -15,7 +15,6 @@ import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +36,7 @@ public class DriveFileServiceTest {
     }
 
     private Member createMember() {
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         ReflectionTestUtils.setField(team, "id", 1L);
         Member member = Member.create("정용태", "jyt6640@naver.com", "password123", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
         return memberRepository.save(member);

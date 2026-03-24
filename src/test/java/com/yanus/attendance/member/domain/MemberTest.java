@@ -3,7 +3,6 @@ package com.yanus.attendance.member.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,7 +13,7 @@ public class MemberTest {
     public final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private Member createMember() {
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         return Member.create("정용태", "jyt6640@gmail.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
     }
 
@@ -22,7 +21,7 @@ public class MemberTest {
     @DisplayName("멤버 생성")
     void create_member() {
         // given
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         String name = "정용태";
         String email = "jyt6640@naver.com";
         String encodedPassword = "encoded_password";

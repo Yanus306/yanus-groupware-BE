@@ -109,7 +109,7 @@ public class TeamServiceTest {
         TeamCreateRequest result = teamService.findById(1L);
 
         // then
-        assertThat(result.name()).isEqualTo("BACKEND");
+        assertThat(result.name()).isEqualTo("2팀");
     }
 
     @Test

@@ -15,7 +15,6 @@ import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamName;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
@@ -37,7 +36,7 @@ public class WorkScheduleServiceTest {
     }
 
     private Member create() {
-        Team team = Team.create(TeamName.BACKEND);
+        Team team = Team.create("1팀");
         ReflectionTestUtils.setField(team, "id", 1L);
         Member member = Member.create("정용태", "jyt6640@naver.com", "password123", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
         return memberRepository.save(member);
@@ -146,7 +145,7 @@ public class WorkScheduleServiceTest {
     void get_all_work_schedules() {
         // given
         Member member1 = create();
-        Team team2 = Team.create(TeamName.FRONTEND);
+        Team team2 = Team.create("2팀");
         ReflectionTestUtils.setField(team2, "id", 2L);
         Member member2 = memberRepository.save(
                 Member.create("김철수", "kim@naver.com", "password", MemberRole.MEMBER, MemberStatus.ACTIVE, team2));

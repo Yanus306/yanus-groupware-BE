@@ -7,7 +7,6 @@ import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.QAttendance;
 import com.yanus.attendance.member.domain.QMember;
 import com.yanus.attendance.team.domain.QTeam;
-import com.yanus.attendance.team.domain.TeamName;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,7 @@ public class AttendanceQueryRepositoryImpl implements AttendanceQueryRepository 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Attendance> findAllByFilter(LocalDate date, TeamName teamName) {
+    public List<Attendance> findAllByFilter(LocalDate date, String teamName) {
         QAttendance attendance = QAttendance.attendance;
         QMember member = QMember.member;
         QTeam team = QTeam.team;
