@@ -6,7 +6,6 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
 import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
-import com.yanus.attendance.team.domain.TeamName;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,7 @@ public class MemberController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<MemberResponse>>> findAll(
-            @RequestParam(required = false) TeamName teamName,
+            @RequestParam(required = false) String teamName,
             @RequestParam(required = false) MemberRole role) {
         return ResponseEntity.ok(ApiResponse.success(memberService.findAll(teamName, role)));
     }

@@ -26,12 +26,12 @@ public class Team {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "name", nullable = false, unique = true, length = 50)
-    private TeamName name;
+    private String name;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public static Team create(TeamName name) {
+    public static Team create(String name) {
         Team team = new Team();
         team.name = name;
         team.createdAt = LocalDateTime.now();

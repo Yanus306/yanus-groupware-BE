@@ -11,13 +11,13 @@ public class TeamTest {
     @DisplayName("팀 이름으로 Team을 생성")
     void create_team() {
         // given
-        TeamName name = TeamName.BACKEND;
+        String name = "1팀";
 
         // when
         Team team = Team.create(name);
 
         // then
-        assertThat(team.getName()).isEqualTo(TeamName.BACKEND);
+        assertThat(team.getName()).isEqualTo(name);
         assertThat(team.getCreatedAt()).isNotNull();
     }
 }

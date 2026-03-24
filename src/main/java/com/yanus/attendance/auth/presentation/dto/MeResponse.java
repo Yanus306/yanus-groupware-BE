@@ -14,7 +14,7 @@ public record MeResponse(
                 member.getId(),
                 member.getName(),
                 member.getEmail(),
-                member.getTeam().getName().name(),
+                member.getTeam().getName(),
                 member.getRole().name()
         );
     }
