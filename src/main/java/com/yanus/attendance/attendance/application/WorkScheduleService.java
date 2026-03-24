@@ -8,6 +8,7 @@ import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -44,5 +45,11 @@ public class WorkScheduleService {
         return workScheduleRepository.findAllByMemberId(memberId).stream()
                 .map(WorkScheduleResponse::from)
                 .toList();
+    }
+
+    public void deleteWorkSchedule(Long memberId, DayOfWeek dayOfWeek) {
+        workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, dayOfWeek)
+                .orElseThrow(() -> new BusinessException(ErrorCode.WORK_SCHEDULE_NOT_FOUND));
+        workScheduleRepository.deleteByMemberIdAndDayOfWeek(memberId, dayOfWeek);
     }
 }
