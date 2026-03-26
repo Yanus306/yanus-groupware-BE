@@ -90,4 +90,21 @@ public class DriveFileServiceTest {
         assertThatThrownBy(() -> driveFileService.download(uploaded.id()))
                 .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    @DisplayName("전체 파일 목록 조회 테스트")
+    void get_all_files() {
+        // given
+        Member member = createMember();
+        MockMultipartFile file1 = new MockMultipartFile("file", "a.pdf", "application/pdf", "a".getBytes());
+        MockMultipartFile file2 = new MockMultipartFile("file", "b.png", "image/png", "b".getBytes());
+        driveFileService.upload(member.getId(), file1);
+        driveFileService.upload(member.getId(), file2);
+
+        // when
+        List<DriveFileResponse> responses = driveFileService.getAllFiles();
+
+        // then
+        assertThat(responses).hasSize(2);
+    }
 }
