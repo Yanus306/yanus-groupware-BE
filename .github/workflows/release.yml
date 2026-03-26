@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 머지 커밋 타이틀에서 버전 추출
+        id: version
+        run: |
+          TITLE=$(git log -1 --pretty=%s)
+          echo "title=$TITLE"
+          VERSION=$(echo "$TITLE" | grep -oP '\[v\K[^\]]+' || true)
+          echo "version=$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: 릴리즈 생성
+        if: steps.version.outputs.version != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
