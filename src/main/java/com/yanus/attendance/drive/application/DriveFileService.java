@@ -57,6 +57,13 @@ public class DriveFileService {
         driveFileRepository.deleteById(fileId);
     }
 
+    @Transactional(readOnly = true)
+    public List<DriveFileResponse> getAllFiles() {
+        return driveFileRepository.findAll().stream()
+                .map(DriveFileResponse::from)
+                .toList();
+    }
+
     private DriveFile findFile(Long fileId) {
         return driveFileRepository.findById(fileId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.DRIVE_FILE_NOT_FOUND));
