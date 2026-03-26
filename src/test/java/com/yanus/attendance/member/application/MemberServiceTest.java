@@ -13,6 +13,7 @@ import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
 import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
+import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.domain.Team;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,11 +25,13 @@ public class MemberServiceTest {
     private MemberService memberService;
     private FakeMemberQueryRepository memberQueryRepository;
     private FakeMemberRepository memberRepository;
+    private FakeTeamRepository teamRepository;
 
     @BeforeEach
     void setUp() {
         memberRepository = new FakeMemberRepository();
-        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder());
+        teamRepository = new FakeTeamRepository();
+        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository);
     }
 
     private Member createMember(String email, MemberRole role) {
@@ -132,5 +135,48 @@ public class MemberServiceTest {
         // then
         assertThat(memberRepository.findById(member.getId()).get().getPassword())
                 .isNotEqualTo("encoded");
+    }
+
+    @Test
+    @DisplayName("멤버 팀 변경")
+    void change_member_team() {
+        // given
+        Team teamA = teamRepository.save(Team.create("1팀"));
+        Team teamB = teamRepository.save(Team.create("2팀"));
+        Member member = memberRepository.save(
+                Member.create("정용태", "jyt@naver.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
+
+        // when
+        memberService.changeTeam(member.getId(), teamB.getId());
+
+        // then
+        Member updated = memberRepository.findById(member.getId()).get();
+        assertThat(updated.getTeam().getId()).isEqualTo(teamB.getId());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 멤버 팀 변경 시 예외 발생")
+    void does_not_exist_member_chang_team_error() {
+        // given
+        Team team = teamRepository.save(Team.create("1팀"));
+
+        // when & then
+        assertThatThrownBy(() -> memberService.changeTeam(999L, team.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 팀으로 변경 시 예외 발생")
+    void does_not_exist_team_error() {
+        // given
+        Team team = teamRepository.save(Team.create("1팀"));
+        Member member = memberRepository.save(
+                Member.create("정용태", "jyt@naver.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, team));
+
+        // when & then`
+        assertThatThrownBy(() -> memberService.changeTeam(member.getId(), 999L))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
     }
 }
