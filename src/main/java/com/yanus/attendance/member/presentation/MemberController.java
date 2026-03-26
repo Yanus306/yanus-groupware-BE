@@ -6,6 +6,7 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
 import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
+import com.yanus.attendance.member.presentation.dto.TeamChangeRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +59,14 @@ public class MemberController {
     @PatchMapping("/{memberId}/activate")
     public ResponseEntity<ApiResponse<Void>> activate(@PathVariable Long memberId) {
         memberService.activate(memberId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @PatchMapping("/{memberId}/team")
+    public ResponseEntity<ApiResponse<Void>> changeTeam(
+            @PathVariable Long memberId,
+            @RequestBody TeamChangeRequest request) {
+        memberService.changeTeam(memberId, request.teamId());
         return ResponseEntity.ok(ApiResponse.success());
     }
 
