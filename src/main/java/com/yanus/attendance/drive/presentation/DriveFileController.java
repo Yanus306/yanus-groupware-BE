@@ -34,12 +34,6 @@ public class DriveFileController {
         return ResponseEntity.ok(ApiResponse.success(driveFileService.upload(memberId, file)));
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<DriveFileResponse>>> getMyFiles(
-            @AuthenticationPrincipal Long memberId) {
-        return ResponseEntity.ok(ApiResponse.success(driveFileService.getMyFiles(memberId)));
-    }
-
     @GetMapping("/{fileId}/download")
     public ResponseEntity<byte[]> download(
             @PathVariable Long fileId) {
