@@ -89,4 +89,8 @@ public class Member {
     public boolean isInactive() {
         return this.status == MemberStatus.INACTIVE;
     }
+
+    public void changeTeam(Team team) {
+        this.team = team;
+    }
 }
