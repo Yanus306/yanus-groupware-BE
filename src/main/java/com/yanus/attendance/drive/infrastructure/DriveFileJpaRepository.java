@@ -32,4 +32,9 @@ public class DriveFileJpaRepository implements DriveFileRepository {
     public void deleteById(Long id) {
         repository.deleteById(id);
     }
+
+    @Override
+    public List<DriveFile> findAll() {
+        return repository.findAll();
+    }
 }
