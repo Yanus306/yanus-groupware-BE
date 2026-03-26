@@ -56,4 +56,9 @@ public class DriveFileController {
         driveFileService.delete(fileId);
         return ResponseEntity.ok(ApiResponse.success());
     }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<DriveFileResponse>>> getAllFiles() {
+        return ResponseEntity.ok(ApiResponse.success(driveFileService.getAllFiles()));
+    }
 }
