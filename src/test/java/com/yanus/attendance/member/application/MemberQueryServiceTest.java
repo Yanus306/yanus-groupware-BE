@@ -8,7 +8,9 @@ import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
+import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.domain.Team;
+import com.yanus.attendance.team.domain.TeamRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class MemberQueryServiceTest {
 
     private MemberService memberService;
+    private FakeTeamRepository teamRepository;
     private FakeMemberRepository memberRepository;
     private FakeMemberQueryRepository memberQueryRepository;
 
@@ -25,7 +28,7 @@ public class MemberQueryServiceTest {
     void setUp() {
         memberRepository = new FakeMemberRepository();
         memberQueryRepository = new FakeMemberQueryRepository();
-        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder());
+        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository);
     }
 
     private Member saveMember(String teamName, MemberRole role) {
