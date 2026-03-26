@@ -2,6 +2,7 @@ package com.yanus.attendance.drive;
 
 import com.yanus.attendance.drive.domain.DriveFile;
 import com.yanus.attendance.drive.domain.DriveFileRepository;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,5 +38,10 @@ public class FakeDriveFileRepository implements DriveFileRepository {
     @Override
     public void deleteById(Long id) {
         store.remove(id);
+    }
+
+    @Override
+    public List<DriveFile> findAll() {
+        return new ArrayList<>(store.values());
     }
 }
