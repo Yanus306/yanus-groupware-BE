@@ -30,8 +30,8 @@ public class MemberServiceTest {
     @BeforeEach
     void setUp() {
         memberRepository = new FakeMemberRepository();
-        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder());
         teamRepository = new FakeTeamRepository();
+        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository);
     }
 
     private Member createMember(String email, MemberRole role) {
@@ -150,8 +150,8 @@ public class MemberServiceTest {
         memberService.changeTeam(member.getId(), teamB.getId());
 
         // then
-        Member update = memberRepository.findById(member.getId()).get();
-        assertThat(memberRepository.findById(update.getTeam().getId())).isEqualTo(teamB.getId());
+        Member updated = memberRepository.findById(member.getId()).get();
+        assertThat(updated.getTeam().getId()).isEqualTo(teamB.getId());
     }
 
     @Test
@@ -174,7 +174,7 @@ public class MemberServiceTest {
         Member member = memberRepository.save(
                 Member.create("정용태", "jyt@naver.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, team));
 
-        // when & then
+        // when & then`
         assertThatThrownBy(() -> memberService.changeTeam(member.getId(), 999L))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
