@@ -43,13 +43,15 @@ public class WorkScheduleController {
 
     @GetMapping("/team/{teamId}")
     public ResponseEntity<ApiResponse<List<MemberWorkScheduleResponse>>> getTeamWorkSchedules(
+            @AuthenticationPrincipal Long actorId,
             @PathVariable Long teamId) {
-        return ResponseEntity.ok(ApiResponse.success(workScheduleService.getTeamWorkSchedules(teamId)));
+        return ResponseEntity.ok(ApiResponse.success(workScheduleService.getTeamWorkSchedules(actorId, teamId)));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<MemberWorkScheduleResponse>>> getAllWorkSchedules() {
-        return ResponseEntity.ok(ApiResponse.success(workScheduleService.getAllWorkSchedules()));
+    public ResponseEntity<ApiResponse<List<MemberWorkScheduleResponse>>> getAllWorkSchedules(
+            @AuthenticationPrincipal Long actorId) {
+        return ResponseEntity.ok(ApiResponse.success(workScheduleService.getAllWorkSchedules(actorId)));
     }
 
     @DeleteMapping("/{dayOfWeek}")
