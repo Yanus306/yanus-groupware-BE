@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -50,11 +51,13 @@ public class JwtTokenProvider {
     public String createRefreshToken(Long memberId) {
         return Jwts.builder()
                 .subject(String.valueOf(memberId))
+                .id(UUID.randomUUID().toString())   // 추가
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
                 .signWith(secretKey)
                 .compact();
     }
+
 
     public Long getMemberId(String token) {
         return Long.parseLong(getClaims(token).getSubject());
