@@ -52,7 +52,8 @@ class AuthServiceTest {
     }
 
     @Test
-    void 회원가입_성공() {
+    @DisplayName("회원가입 성공")
+    void register_success() {
         // given
         Team team = savedTeam();
         RegisterRequest request = new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId());
@@ -65,7 +66,8 @@ class AuthServiceTest {
     }
 
     @Test
-    void 이메일_중복이면_예외를_던진다() {
+    @DisplayName("이메일 중복 시 예외 발생")
+    void duplicate_email_throw_error() {
         // given
         Team team = savedTeam();
         RegisterRequest request = new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId());
@@ -78,7 +80,8 @@ class AuthServiceTest {
     }
 
     @Test
-    void 로그인_성공() {
+    @DisplayName("로그인 성공")
+    void login_success() {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
@@ -94,7 +97,8 @@ class AuthServiceTest {
     }
 
     @Test
-    void 존재하지_않는_이메일로_로그인하면_예외를_던진다() {
+    @DisplayName("존재하지 않는 이메일로 로그인 시 예외 발생")
+    void not_exist_email_throw_error() {
         // given
         LoginRequest request = new LoginRequest("none@yanus.com", "password123");
 
@@ -105,7 +109,8 @@ class AuthServiceTest {
     }
 
     @Test
-    void 비밀번호가_틀리면_예외를_던진다() {
+    @DisplayName("비밀번호가 틀리면 예외 발생")
+    void incorrect_password_throw_error() {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
@@ -118,7 +123,8 @@ class AuthServiceTest {
     }
 
     @Test
-    void RefreshToken으로_AccessToken을_재발급한다() {
+    @DisplayName("리프레쉬 토큰으로 엑세스 토큰을 재발급")
+    void refresh_token_reissue_access_token() {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
@@ -130,10 +136,13 @@ class AuthServiceTest {
 
         // then
         assertThat(response.accessToken()).isNotBlank();
+        assertThat(response.refreshToken()).isNotBlank();
+        assertThat(response.refreshToken()).isNotEqualTo(loginResponse.refreshToken());
     }
 
     @Test
-    void 만료된_RefreshToken으로_재발급하면_예외를_던진다() {
+    @DisplayName("만료된 리프레쉬 토큰으로 재발급 시 예외 발생")
+    void invalid_refresh_token_throw_error() {
         // given
         RefreshRequest request = new RefreshRequest("invalid-refresh-token");
 
@@ -144,7 +153,8 @@ class AuthServiceTest {
     }
 
     @Test
-    void 로그아웃_시_RefreshToken이_삭제된다() {
+    @DisplayName("로그아웃 시 리프레쉬 토큰 삭제")
+    void logout_removes_refresh_token() {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
@@ -163,16 +173,65 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
-
-        // 비활성화 처리
         Member member = memberRepository.findByEmail("hong@yanus.com").get();
         member.deactivate();
-
         LoginRequest request = new LoginRequest("hong@yanus.com", "password123");
 
         // when & then
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_INACTIVE);
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰 재발급 시 새 토큰 발급")
+    void refresh_token_reissue_new_token() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("김인직", "asdasd@naver.com", "asdasd12", team.getId()));
+        LoginResponse loginResponse = authService.login(new LoginRequest("asdasd@naver.com", "asdasd12"));
+        String oldRefreshToken = loginResponse.refreshToken();
+
+        // when
+        LoginResponse response = authService.refresh(new RefreshRequest(oldRefreshToken));
+
+        // then
+        assertThat(response.refreshToken()).isNotEqualTo(oldRefreshToken);
+        assertThat(response.accessToken()).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("사용된 리프레시 토큰 재사용 시 예외 발생")
+    void used_refresh_token_throw_error() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
+        String oldRefreshToken = loginResponse.refreshToken();
+        authService.refresh(new RefreshRequest(oldRefreshToken)); // 1회 사용
+
+        // when & then
+        assertThatThrownBy(() -> authService.refresh(new RefreshRequest(oldRefreshToken)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TOKEN_REUSED);
+    }
+
+    @Test
+    @DisplayName("재사용 감지 시 해당 계정 전체 토큰 무효화")
+    void reissue_token_invalidates_account_tokens() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
+        String oldRefreshToken = loginResponse.refreshToken();
+        LoginResponse rotated = authService.refresh(new RefreshRequest(oldRefreshToken));
+
+        assertThatThrownBy(() -> authService.refresh(new RefreshRequest(oldRefreshToken)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TOKEN_REUSED);
+
+        assertThatThrownBy(() -> authService.refresh(new RefreshRequest(rotated.refreshToken())))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.REFRESH_TOKEN_NOT_FOUND);
     }
 }
