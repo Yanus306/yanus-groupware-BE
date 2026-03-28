@@ -15,7 +15,7 @@ jobs:
       - name: 머지 커밋 타이틀에서 버전 추출
         id: version
         run: |
-          TITLE=$(git log -1 --pretty=%s)
+          TITLE=$(git log -1 --pretty=%B)   # %s → %B (전체 메시지)
           echo "title=$TITLE"
           VERSION=$(echo "$TITLE" | grep -oP '\[v\K[^\]]+' || true)
           echo "version=$VERSION"
