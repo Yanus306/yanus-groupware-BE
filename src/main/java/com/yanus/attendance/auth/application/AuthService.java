@@ -84,6 +84,11 @@ public class AuthService {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.refreshToken())
                 .orElseThrow(() -> new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
+        if (refreshToken.isRevoked()) {
+            refreshTokenRepository.deleteByMemberId(refreshToken.getMemberId());
+            throw new BusinessException(ErrorCode.TOKEN_REUSED);
+        }
+
         if (refreshToken.isExpired()) {
             throw new BusinessException(ErrorCode.EXPIRED_TOKEN);
         }
@@ -91,9 +96,17 @@ public class AuthService {
         Member member = memberRepository.findById(refreshToken.getMemberId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        String newAccessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
+        refreshToken.revoke();
 
-        return new LoginResponse(newAccessToken, request.refreshToken(), "Bearer");
+        String newAccessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
+        String newRefreshTokenValue = jwtTokenProvider.createRefreshToken(member.getId());
+        refreshTokenRepository.save(RefreshToken.create(
+                newRefreshTokenValue,
+                member.getId(),
+                LocalDateTime.now().plusDays(7)
+        ));
+
+        return new LoginResponse(newAccessToken, newRefreshTokenValue, "Bearer");
     }
 
     @Transactional
