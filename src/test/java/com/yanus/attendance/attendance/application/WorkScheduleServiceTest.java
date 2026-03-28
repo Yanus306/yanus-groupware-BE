@@ -9,6 +9,7 @@ import com.yanus.attendance.attendance.presentation.dto.MemberWorkScheduleRespon
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleRequest;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleResponse;
 import com.yanus.attendance.global.exception.BusinessException;
+import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
@@ -27,6 +28,7 @@ public class WorkScheduleServiceTest {
 
     private WorkScheduleService workScheduleService;
     private MemberRepository memberRepository;
+    private long teamIdSeq = 1L;
 
     @BeforeEach
     void setUp() {
@@ -36,9 +38,13 @@ public class WorkScheduleServiceTest {
     }
 
     private Member create() {
-        Team team = Team.create("1팀");
-        ReflectionTestUtils.setField(team, "id", 1L);
-        Member member = Member.create("정용태", "jyt6640@naver.com", "password123", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
+        return createMember("1팀", MemberRole.ADMIN);
+    }
+
+    private Member createMember(String teamName, MemberRole role) {
+        Team team = Team.create(teamName);
+        ReflectionTestUtils.setField(team, "id", teamIdSeq++);
+        Member member = Member.create("테스터", role.name() + teamName + "@yanus.com", "password123", role, MemberStatus.ACTIVE, team);
         return memberRepository.save(member);
     }
 
@@ -134,7 +140,7 @@ public class WorkScheduleServiceTest {
 
         // when
         List<MemberWorkScheduleResponse> responses =
-                workScheduleService.getTeamWorkSchedules(member1.getTeam().getId());
+                workScheduleService.getTeamWorkSchedules(member1.getId(), member1.getTeam().getId());
 
         // then
         assertThat(responses).hasSize(2);
@@ -156,10 +162,77 @@ public class WorkScheduleServiceTest {
                 new WorkScheduleRequest(DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
 
         // when
-        List<MemberWorkScheduleResponse> responses = workScheduleService.getAllWorkSchedules();
+        List<MemberWorkScheduleResponse> responses = workScheduleService.getAllWorkSchedules(member1.getId());
 
         // then
         assertThat(responses).hasSize(2);
     }
 
+    @Test
+    @DisplayName("ADMIN이 아닌 멤버가 전체 근무 일정 조회 시 예외 발생")
+    void not_admin_get_all_work_schedules_forbidden() {
+        // given
+        Member member = createMember("1팀", MemberRole.MEMBER);
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleService.getAllWorkSchedules(member.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("ADMIN은 전체 근무 일정 조회 성공")
+    void admin_get_all_work_schedules_success() {
+        // given
+        Member admin = createMember("1팀", MemberRole.ADMIN);
+        workScheduleService.setWorkSchedule(admin.getId(),
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+
+        // when
+        List<MemberWorkScheduleResponse> responses = workScheduleService.getAllWorkSchedules(admin.getId());
+
+        // then
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("TEAM_LEAD가 자신의 팀 근무 일정 조회 성공")
+    void team_lead_get_own_team_work_schedules_success() {
+        // given
+        Member teamLead = createMember("1팀", MemberRole.TEAM_LEAD);
+        workScheduleService.setWorkSchedule(teamLead.getId(),
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+
+        // when
+        List<MemberWorkScheduleResponse> responses =
+                workScheduleService.getTeamWorkSchedules(teamLead.getId(), teamLead.getTeam().getId());
+
+        // then
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("TEAM_LEAD가 다른 팀 근무 일정 조회 시 예외 발생")
+    void team_lead_get_other_team_work_schedules_forbidden() {
+        // given
+        Member teamLead = createMember("1팀", MemberRole.TEAM_LEAD);
+        Member otherTeamMember = createMember("2팀", MemberRole.MEMBER);
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleService.getTeamWorkSchedules(teamLead.getId(), otherTeamMember.getTeam().getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("MEMBER가 팀 근무 일정 조회 시 예외 발생")
+    void member_get_team_work_schedules_forbidden() {
+        // given
+        Member member = createMember("1팀", MemberRole.MEMBER);
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleService.getTeamWorkSchedules(member.getId(), member.getTeam().getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
 }
