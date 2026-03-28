@@ -18,7 +18,7 @@ public class AuditLogService {
     private final AuditLogRepository auditLogRepository;
 
     public void log(Long actorId, MemberRole actorRole, Long targetId, AuditAction action, String previousValue, String newValue) {
-        auditLogRepository.save(AuditLog.create(actorId, actorRole, targetId, action, previousValue, newValue))
+        auditLogRepository.save(AuditLog.create(actorId, actorRole, targetId, action, previousValue, newValue));
     }
 
     @Transactional(readOnly = true)
