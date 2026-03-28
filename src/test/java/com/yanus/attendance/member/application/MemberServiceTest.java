@@ -3,6 +3,9 @@ package com.yanus.attendance.member.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.yanus.attendance.audit.FakeAuditLogRepository;
+import com.yanus.attendance.audit.application.AuditLogService;
+import com.yanus.attendance.audit.domain.AuditAction;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberQueryRepository;
@@ -26,12 +29,16 @@ public class MemberServiceTest {
     private FakeMemberQueryRepository memberQueryRepository;
     private FakeMemberRepository memberRepository;
     private FakeTeamRepository teamRepository;
+    private FakeAuditLogRepository auditLogRepository;
+    private AuditLogService auditLogService;
 
     @BeforeEach
     void setUp() {
         memberRepository = new FakeMemberRepository();
         teamRepository = new FakeTeamRepository();
-        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository);
+        auditLogRepository = new FakeAuditLogRepository();
+        auditLogService = new AuditLogService(auditLogRepository);
+        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository, auditLogService);
     }
 
     private Member createMember(String email, MemberRole role) {
@@ -329,5 +336,55 @@ public class MemberServiceTest {
         assertThatThrownBy(() -> memberService.changeTeam(actor.getId(), target.getId(), teamB.getId()))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("역할 변경 시 감사 로그 저장")
+    void 역할_변경_시_감사_로그_저장() {
+        // given
+        Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+        RoleChangeRequest request = new RoleChangeRequest(MemberRole.TEAM_LEAD);
+
+        // when
+        memberService.changeRole(admin.getId(), target.getId(), request);
+
+        // then
+        assertThat(auditLogRepository.findAll()).hasSize(1);
+        assertThat(auditLogRepository.findAll().get(0).getAction()).isEqualTo(AuditAction.ROLE_CHANGE);
+    }
+
+    @Test
+    @DisplayName("비활성화 시 감사 로그 저장")
+    void 비활성화_시_감사_로그_저장() {
+        // given
+        Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+
+        // when
+        memberService.deactivate(admin.getId(), target.getId());
+
+        // then
+        assertThat(auditLogRepository.findAll()).hasSize(1);
+        assertThat(auditLogRepository.findAll().get(0).getAction()).isEqualTo(AuditAction.DEACTIVATE);
+    }
+
+    @Test
+    @DisplayName("팀 변경 시 감사 로그 저장")
+    void 팀_변경_시_감사_로그_저장() {
+        // given
+        Team teamA = teamRepository.save(Team.create("1팀"));
+        Team teamB = teamRepository.save(Team.create("2팀"));
+        Member admin = memberRepository.save(
+                Member.create("관리자", "admin@yanus.com", "encoded", MemberRole.ADMIN, MemberStatus.ACTIVE, teamA));
+        Member target = memberRepository.save(
+                Member.create("팀원", "target@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
+
+        // when
+        memberService.changeTeam(admin.getId(), target.getId(), teamB.getId());
+
+        // then
+        assertThat(auditLogRepository.findAll()).hasSize(1);
+        assertThat(auditLogRepository.findAll().get(0).getAction()).isEqualTo(AuditAction.TEAM_CHANGE);
     }
 }
