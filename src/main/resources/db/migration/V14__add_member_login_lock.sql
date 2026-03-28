@@ -1,0 +1,2 @@
+ALTER TABLE member ADD COLUMN login_fail_count INT NOT NULL DEFAULT 0;
+ALTER TABLE member ADD COLUMN locked_until TIMESTAMP NULL;

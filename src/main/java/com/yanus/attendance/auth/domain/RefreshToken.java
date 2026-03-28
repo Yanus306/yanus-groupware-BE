@@ -31,6 +31,17 @@ public class RefreshToken {
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
+    @Column(name = "revoked", nullable = false)
+    private boolean revoked = false;
+
+    public void revoke() {
+        this.revoked = true;
+    }
+
+    public boolean isRevoked() {
+        return revoked;
+    }
+
     public static RefreshToken create(String token, Long memberId, LocalDateTime expiresAt) {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.token = token;
