@@ -41,21 +41,24 @@ public class MemberService {
     }
 
     @Transactional
-    public void changeRole(Long memberId, RoleChangeRequest request) {
+    public void changeRole(Long actorId, Long memberId, RoleChangeRequest request) {
+        validateAdmin(actorId);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         member.changeRole(request.role());
     }
 
     @Transactional
-    public void deactivate(Long memberId) {
+    public void deactivate(Long actorId, Long memberId) {
+        validateAdmin(actorId);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         member.deactivate();
     }
 
     @Transactional
-    public void activate(Long memberId) {
+    public void activate(Long actorId, Long memberId) {
+        validateAdmin(actorId);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         member.activate();
@@ -69,11 +72,35 @@ public class MemberService {
     }
 
     @Transactional
-    public void changeTeam(Long memberId, Long TeamId) {
-        Member member = memberRepository.findById(memberId)
+    public void changeTeam(Long actorId, Long memberId, Long teamId) {
+        Member actor = memberRepository.findById(actorId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-        Team team = teamRepository.findById(TeamId)
+        Member target = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
-        member.changeTeam(team);
+
+        validateTeamChangePermission(actor, target);
+        target.changeTeam(team);
+    }
+
+    private void validateAdmin(Long actorId) {
+        Member actor = memberRepository.findById(actorId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        if(actor.getRole() != MemberRole.ADMIN) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    private void validateTeamChangePermission(Member actor, Member target) {
+        if (actor.getRole() == MemberRole.ADMIN) {
+            return;
+        }
+        if (actor.getRole() == MemberRole.TEAM_LEAD
+                && actor.getTeam().getId().equals(target.getTeam().getId())
+                && !target.isInactive()) {
+            return;
+        }
+        throw new BusinessException(ErrorCode.FORBIDDEN);
     }
 }
