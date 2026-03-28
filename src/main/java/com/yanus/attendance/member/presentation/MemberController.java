@@ -10,6 +10,7 @@ import com.yanus.attendance.member.presentation.dto.TeamChangeRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,35 +39,42 @@ public class MemberController {
     }
 
     @GetMapping("/{memberId}")
-    public ResponseEntity<ApiResponse<MemberResponse>> findById(@PathVariable Long memberId) {
+    public ResponseEntity<ApiResponse<MemberResponse>> findById(
+            @PathVariable Long memberId) {
         return ResponseEntity.ok(ApiResponse.success(memberService.findById(memberId)));
     }
 
     @PatchMapping("/{memberId}/role")
     public ResponseEntity<ApiResponse<Void>> changeRole(
+            @AuthenticationPrincipal Long actorId,
             @PathVariable Long memberId,
             @RequestBody RoleChangeRequest request) {
-        memberService.changeRole(memberId, request);
+        memberService.changeRole(actorId, memberId, request);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
     @DeleteMapping("/{memberId}")
-    public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable Long memberId) {
-        memberService.deactivate(memberId);
+    public ResponseEntity<ApiResponse<Void>> deactivate(
+            @AuthenticationPrincipal Long actorId,
+            @PathVariable Long memberId) {
+        memberService.deactivate(actorId, memberId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
     @PatchMapping("/{memberId}/activate")
-    public ResponseEntity<ApiResponse<Void>> activate(@PathVariable Long memberId) {
-        memberService.activate(memberId);
+    public ResponseEntity<ApiResponse<Void>> activate(
+            @AuthenticationPrincipal Long actorId,
+            @PathVariable Long memberId) {
+        memberService.activate(actorId, memberId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
     @PatchMapping("/{memberId}/team")
     public ResponseEntity<ApiResponse<Void>> changeTeam(
+            @AuthenticationPrincipal Long actorId,
             @PathVariable Long memberId,
             @RequestBody TeamChangeRequest request) {
-        memberService.changeTeam(memberId, request.teamId());
+        memberService.changeTeam(actorId, memberId, request.teamId());
         return ResponseEntity.ok(ApiResponse.success());
     }
 
