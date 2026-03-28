@@ -163,16 +163,65 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
-
-        // 비활성화 처리
         Member member = memberRepository.findByEmail("hong@yanus.com").get();
         member.deactivate();
-
         LoginRequest request = new LoginRequest("hong@yanus.com", "password123");
 
         // when & then
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_INACTIVE);
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰 재발급 시 새 토큰 발급")
+    void refresh_token_reissue_new_token() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("김인직", "asdasd@naver.com", "asdasd12", team.getId()));
+        LoginResponse loginResponse = authService.login(new LoginRequest("asdasd@naver.com", "asdasd12"));
+        String oldRefreshToken = loginResponse.refreshToken();
+
+        // when
+        LoginResponse response = authService.refresh(new RefreshRequest(oldRefreshToken));
+
+        // then
+        assertThat(response.refreshToken()).isNotEqualTo(oldRefreshToken);
+        assertThat(response.accessToken()).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("사용된 리프레시 토큰 재사용 시 예외 발생")
+    void used_refresh_token_throw_error() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
+        String oldRefreshToken = loginResponse.refreshToken();
+        authService.refresh(new RefreshRequest(oldRefreshToken)); // 1회 사용
+
+        // when & then
+        assertThatThrownBy(() -> authService.refresh(new RefreshRequest(oldRefreshToken)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TOKEN_REUSED);
+    }
+
+    @Test
+    @DisplayName("재사용 감지 시 해당 계정 전체 토큰 무효화")
+    void reissue_token_invalidates_account_tokens() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
+        String oldRefreshToken = loginResponse.refreshToken();
+        LoginResponse rotated = authService.refresh(new RefreshRequest(oldRefreshToken));
+
+        assertThatThrownBy(() -> authService.refresh(new RefreshRequest(oldRefreshToken)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TOKEN_REUSED);
+
+        assertThatThrownBy(() -> authService.refresh(new RefreshRequest(rotated.refreshToken())))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.REFRESH_TOKEN_NOT_FOUND);
     }
 }
