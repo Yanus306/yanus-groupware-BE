@@ -1,5 +1,7 @@
 package com.yanus.attendance.member.application;
 
+import com.yanus.attendance.audit.application.AuditLogService;
+import com.yanus.attendance.audit.domain.AuditAction;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
@@ -26,6 +28,7 @@ public class MemberService {
     private final MemberQueryRepository memberQueryRepository;
     private final PasswordEncoder passwordEncoder;
     private final TeamRepository teamRepository;
+    private final AuditLogService auditLogService;
 
     public MemberResponse findById(Long memberId) {
         Member member = memberRepository.findById(memberId)
@@ -42,26 +45,33 @@ public class MemberService {
 
     @Transactional
     public void changeRole(Long actorId, Long memberId, RoleChangeRequest request) {
-        validateAdmin(actorId);
+        Member actor = validateAdmin(actorId);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        String previousRole = member.getRole().name();
         member.changeRole(request.role());
+        auditLogService.log(actorId, actor.getRole(), memberId,
+                AuditAction.ROLE_CHANGE, previousRole, request.role().name());
     }
 
     @Transactional
     public void deactivate(Long actorId, Long memberId) {
-        validateAdmin(actorId);
+        Member actor = validateAdmin(actorId);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         member.deactivate();
+        auditLogService.log(actorId, actor.getRole(), memberId,
+                AuditAction.DEACTIVATE, "ACTIVE", "INACTIVE");
     }
 
     @Transactional
     public void activate(Long actorId, Long memberId) {
-        validateAdmin(actorId);
+        Member actor = validateAdmin(actorId);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         member.activate();
+        auditLogService.log(actorId, actor.getRole(), memberId,
+                AuditAction.ACTIVATE, "INACTIVE", "ACTIVE");
     }
 
     @Transactional
@@ -79,17 +89,20 @@ public class MemberService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
-
         validateTeamChangePermission(actor, target);
+        String previousTeam = target.getTeam().getName();
         target.changeTeam(team);
+        auditLogService.log(actorId, actor.getRole(), memberId,
+                AuditAction.TEAM_CHANGE, previousTeam, team.getName());
     }
 
-    private void validateAdmin(Long actorId) {
+    private Member validateAdmin(Long actorId) {
         Member actor = memberRepository.findById(actorId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-        if(actor.getRole() != MemberRole.ADMIN) {
+        if (actor.getRole() != MemberRole.ADMIN) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
+        return actor;
     }
 
     private void validateTeamChangePermission(Member actor, Member target) {
