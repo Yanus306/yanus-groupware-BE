@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,15 +38,17 @@ public class TeamController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<TeamCreateRequest>> createTeam(
+            @AuthenticationPrincipal Long memberId,
             @RequestBody TeamCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(teamService.createTeam(request.name())));
+                .body(ApiResponse.success(teamService.createTeam(memberId, request.name())));
     }
 
     @DeleteMapping("/{teamId}")
     public ResponseEntity<Void> deleteTeam(
+            @AuthenticationPrincipal Long memberId,
             @PathVariable Long teamId) {
-        teamService.deleteTeam(teamId);
+        teamService.deleteTeam(memberId, teamId);
         return ResponseEntity.noContent().build();
     }
 }
