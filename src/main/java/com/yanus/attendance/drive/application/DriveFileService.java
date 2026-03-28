@@ -30,6 +30,7 @@ public class DriveFileService {
 
     public DriveFileResponse upload(Long memberId, MultipartFile file) {
         Member member = findMember(memberId);
+        validateDriveAccess(member);
         String storedName = UUID.randomUUID() + "_" + file.getOriginalFilename();
         storageService.upload(file, storedName);
         DriveFile driveFile = DriveFile.create(member, file.getOriginalFilename(), storedName,
@@ -46,19 +47,22 @@ public class DriveFileService {
     }
 
     @Transactional(readOnly = true)
-    public byte[] download(Long fileId) {
+    public byte[] download(Long actorId, Long fileId) {
+        validateDriveAccess(findMember(actorId));
         DriveFile file = findFile(fileId);
         return storageService.download(file.getStoredName());
     }
 
-    public void delete(Long fileId) {
+    public void delete(Long actorId, Long fileId) {
         DriveFile file = findFile(fileId);
+        validateDriveAccess(findMember(actorId));
         storageService.delete(file.getStoredName());
         driveFileRepository.deleteById(fileId);
     }
 
     @Transactional(readOnly = true)
-    public List<DriveFileResponse> getAllFiles() {
+    public List<DriveFileResponse> getAllFiles(Long actorId) {
+        validateDriveAccess(findMember(actorId));
         return driveFileRepository.findAll().stream()
                 .map(DriveFileResponse::from)
                 .toList();
@@ -72,5 +76,11 @@ public class DriveFileService {
     private Member findMember(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private void validateDriveAccess(Member actor) {
+        if (actor.getTeam().getName().equals("신입")) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
     }
 }
