@@ -1,5 +1,5 @@
 CREATE TABLE audit_log (
-    audit_log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    audit_log_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     actor_id     BIGINT       NOT NULL,
     actor_role   VARCHAR(20)  NOT NULL,
     target_id    BIGINT       NOT NULL,
