@@ -17,6 +17,8 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN", "만료된 토큰입니다."),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "REFRESH_TOKEN_NOT_FOUND", "Refresh Token이 존재하지 않습니다."),
+    TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "TOKEN_REUSED", "이미 사용된 토큰입니다. 재로그인이 필요합니다."),
+    ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "ACCOUNT_LOCKED", "로그인 시도 횟수를 초과하여 계정이 잠겼습니다. 30분 후 재시도해주세요."),
 
     // Member
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND", "존재하지 않는 회원입니다."),
@@ -36,6 +38,7 @@ public enum ErrorCode {
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "존재하지 않는 팀입니다."),
     TEAM_ALREADY_EXISTS(HttpStatus.CONFLICT, "TEAM_ALREADY_EXISTS", "이미 존재하는 팀 이름입니다."),
     TEAM_HAS_MEMBERS(HttpStatus.BAD_REQUEST, "TEAM_HAS_MEMBERS", "소속 멤버가 있어 팀을 삭제할 수 없습니다."),
+    TEAM_CANNOT_DELETE(HttpStatus.BAD_REQUEST, "TEAM_CANNOT_DELETE", "삭제할 수 없는 팀입니다."),
 
     // Leave
     LEAVE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "LEAVE_REQUEST_NOT_FOUND", "휴가 신청을 찾을 수 없습니다."),
