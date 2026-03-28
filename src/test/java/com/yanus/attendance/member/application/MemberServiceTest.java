@@ -3,6 +3,9 @@ package com.yanus.attendance.member.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.yanus.attendance.audit.FakeAuditLogRepository;
+import com.yanus.attendance.audit.application.AuditLogService;
+import com.yanus.attendance.audit.domain.AuditAction;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberQueryRepository;
@@ -35,7 +38,7 @@ public class MemberServiceTest {
         teamRepository = new FakeTeamRepository();
         auditLogRepository = new FakeAuditLogRepository();
         auditLogService = new AuditLogService(auditLogRepository);
-        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository);
+        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository, auditLogService);
     }
 
     private Member createMember(String email, MemberRole role) {
