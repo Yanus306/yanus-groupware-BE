@@ -68,11 +68,12 @@ public class MemberServiceTest {
     @DisplayName("멤버 역할 변경")
     void change_role() {
         // given
+        Member actorId = createMember("asdasd@asdasd.com", MemberRole.ADMIN);
         Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
         RoleChangeRequest request = new RoleChangeRequest(MemberRole.TEAM_LEAD);
 
         // when
-        memberService.changeRole(member.getId(), request);
+        memberService.changeRole(actorId.getId(), member.getId(), request);
 
         // then
         assertThat(memberRepository.findById(member.getId()).get().getRole())
@@ -83,10 +84,11 @@ public class MemberServiceTest {
     @DisplayName("멤버 비활성화")
     void deactivate_member() {
         // given
+        Member actorId = createMember("asdasd@asdasd.com", MemberRole.ADMIN);
         Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
 
         // when
-        memberService.deactivate(member.getId());
+        memberService.deactivate(actorId.getId(), member.getId());
 
         // then
         assertThat(memberRepository.findById(member.getId()).get().getStatus())
@@ -98,9 +100,10 @@ public class MemberServiceTest {
     void activate_member() {
         // given
         Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
+        Member actorId = createMember("asdasd@asdasd.com", MemberRole.ADMIN);
 
         // when
-        memberService.activate(member.getId());
+        memberService.activate(actorId.getId(), member.getId());
 
         // then
         assertThat(memberRepository.findById(member.getId()).get().getStatus())
@@ -143,11 +146,13 @@ public class MemberServiceTest {
         // given
         Team teamA = teamRepository.save(Team.create("1팀"));
         Team teamB = teamRepository.save(Team.create("2팀"));
+        Member actorId = memberRepository.save(
+                Member.create("정용태", "jyt21@naver.com", "encoded", MemberRole.ADMIN, MemberStatus.ACTIVE, teamA));
         Member member = memberRepository.save(
                 Member.create("정용태", "jyt@naver.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
 
         // when
-        memberService.changeTeam(member.getId(), teamB.getId());
+        memberService.changeTeam(actorId.getId(), member.getId(), teamB.getId());
 
         // then
         Member updated = memberRepository.findById(member.getId()).get();
@@ -161,7 +166,7 @@ public class MemberServiceTest {
         Team team = teamRepository.save(Team.create("1팀"));
 
         // when & then
-        assertThatThrownBy(() -> memberService.changeTeam(999L, team.getId()))
+        assertThatThrownBy(() -> memberService.changeTeam(999L, 120L, team.getId()))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_NOT_FOUND);
     }
@@ -171,11 +176,12 @@ public class MemberServiceTest {
     void does_not_exist_team_error() {
         // given
         Team team = teamRepository.save(Team.create("1팀"));
+        Member admin = createMember("asdasd@naver.com", MemberRole.ADMIN);
         Member member = memberRepository.save(
                 Member.create("정용태", "jyt@naver.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, team));
 
         // when & then`
-        assertThatThrownBy(() -> memberService.changeTeam(member.getId(), 999L))
+        assertThatThrownBy(() -> memberService.changeTeam(admin.getId(), member.getId(), 999L))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
     }
@@ -197,9 +203,10 @@ public class MemberServiceTest {
     @DisplayName("ADMIN이 아닌 멤버가 활성화 시도 시 예외 발생")
     void not_admin_member_activate_error() {
         // given
+        Member admin = createMember("asdasd@naver.com", MemberRole.ADMIN);
         Member actor = createMember("actor@yanus.com", MemberRole.MEMBER);
         Member target = createMember("target@yanus.com", MemberRole.MEMBER);
-        memberService.deactivate(actor.getId(), target.getId()); // 이건 나중에 ADMIN으로 바꿔야 하지만 일단 구조만
+        memberService.deactivate(admin.getId(), target.getId());
 
         // when & then
         assertThatThrownBy(() -> memberService.activate(actor.getId(), target.getId()))

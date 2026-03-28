@@ -59,7 +59,7 @@ public class Member {
         member.email = email;
         member.password = encodedPassword;
         member.role = role;
-        member.status = MemberStatus.ACTIVE;
+        member.status = status;
         member.team = team;
         member.createdAt = LocalDateTime.now();
         return member;
