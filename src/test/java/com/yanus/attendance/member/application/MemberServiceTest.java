@@ -252,4 +252,75 @@ public class MemberServiceTest {
         assertThat(memberRepository.findById(target.getId()).get().getStatus())
                 .isEqualTo(MemberStatus.ACTIVE);
     }
+
+    @Test
+    @DisplayName("TEAM_LEAD가 같은 팀 활성 멤버 팀 변경 성공")
+    void team_lead_can_change_team() {
+        // given
+        Team teamA = teamRepository.save(Team.create("1팀"));
+        Team teamB = teamRepository.save(Team.create("2팀"));
+        Member teamLead = memberRepository.save(
+                Member.create("팀장", "lead@yanus.com", "encoded", MemberRole.TEAM_LEAD, MemberStatus.ACTIVE, teamA));
+        Member target = memberRepository.save(
+                Member.create("팀원", "member@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
+
+        // when
+        memberService.changeTeam(teamLead.getId(), target.getId(), teamB.getId());
+
+        // then
+        assertThat(memberRepository.findById(target.getId()).get().getTeam().getId())
+                .isEqualTo(teamB.getId());
+    }
+
+    @Test
+    @DisplayName("TEAM_LEAD가 다른 팀 멤버 팀 변경 시 예외 발생")
+    void team_lead_can_not_change_other_team_error() {
+        // given
+        Team teamA = teamRepository.save(Team.create("1팀"));
+        Team teamB = teamRepository.save(Team.create("2팀"));
+        Team teamC = teamRepository.save(Team.create("3팀"));
+        Member teamLead = memberRepository.save(
+                Member.create("팀장", "lead@yanus.com", "encoded", MemberRole.TEAM_LEAD, MemberStatus.ACTIVE, teamA));
+        Member target = memberRepository.save(
+                Member.create("팀원", "member@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamB));
+
+        // when & then
+        assertThatThrownBy(() -> memberService.changeTeam(teamLead.getId(), target.getId(), teamC.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("TEAM_LEAD가 비활성 멤버 팀 변경 시 예외 발생")
+    void team_lead_can_not_change_inactive_member_error() {
+        // given
+        Team teamA = teamRepository.save(Team.create("1팀"));
+        Team teamB = teamRepository.save(Team.create("2팀"));
+        Member teamLead = memberRepository.save(
+                Member.create("팀장", "lead@yanus.com", "encoded", MemberRole.TEAM_LEAD, MemberStatus.ACTIVE, teamA));
+        Member target = memberRepository.save(
+                Member.create("팀원", "member@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.INACTIVE, teamA));
+
+        // when & then
+        assertThatThrownBy(() -> memberService.changeTeam(teamLead.getId(), target.getId(), teamB.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("MEMBER가 팀 변경 시도 시 예외 발생")
+    void member_can_not_change_team_error() {
+        // given
+        Team teamA = teamRepository.save(Team.create("1팀"));
+        Team teamB = teamRepository.save(Team.create("2팀"));
+        Member actor = memberRepository.save(
+                Member.create("일반", "member@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
+        Member target = memberRepository.save(
+                Member.create("팀원", "target@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
+
+        // when & then
+        assertThatThrownBy(() -> memberService.changeTeam(actor.getId(), target.getId(), teamB.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
 }
