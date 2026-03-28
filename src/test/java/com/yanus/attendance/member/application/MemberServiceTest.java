@@ -179,4 +179,77 @@ public class MemberServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
     }
+
+    @Test
+    @DisplayName("ADMIN이 아닌 멤버가 비활성화 시도 시 예외 발생")
+    void not_admin_member_deactivate_error() {
+        // given
+        Member actor = createMember("actor@yanus.com", MemberRole.MEMBER);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.deactivate(actor.getId(), target.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("ADMIN이 아닌 멤버가 활성화 시도 시 예외 발생")
+    void not_admin_member_activate_error() {
+        // given
+        Member actor = createMember("actor@yanus.com", MemberRole.MEMBER);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+        memberService.deactivate(actor.getId(), target.getId()); // 이건 나중에 ADMIN으로 바꿔야 하지만 일단 구조만
+
+        // when & then
+        assertThatThrownBy(() -> memberService.activate(actor.getId(), target.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("ADMIN은 역할 변경 가능")
+    void admin_can_change_role() {
+        // given
+        Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+        RoleChangeRequest request = new RoleChangeRequest(MemberRole.TEAM_LEAD);
+
+        // when
+        memberService.changeRole(admin.getId(), target.getId(), request);
+
+        // then
+        assertThat(memberRepository.findById(target.getId()).get().getRole())
+                .isEqualTo(MemberRole.TEAM_LEAD);
+    }
+
+    @Test
+    @DisplayName("ADMIN은 비활성화 가능")
+    void admin_can_deactivate_member() {
+        // given
+        Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+
+        // when
+        memberService.deactivate(admin.getId(), target.getId());
+
+        // then
+        assertThat(memberRepository.findById(target.getId()).get().getStatus())
+                .isEqualTo(MemberStatus.INACTIVE);
+    }
+
+    @Test
+    @DisplayName("ADMIN은 활성화 가능")
+    void admin_can_activate_member() {
+        // given
+        Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+
+        // when
+        memberService.activate(admin.getId(), target.getId());
+
+        // then
+        assertThat(memberRepository.findById(target.getId()).get().getStatus())
+                .isEqualTo(MemberStatus.ACTIVE);
+    }
 }
