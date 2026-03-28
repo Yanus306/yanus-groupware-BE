@@ -58,13 +58,24 @@ public class AuthService {
         Member member = memberRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
+        if (member.isLocked()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+        }
+
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
+            member.recordLoginFailure();
+            if (member.isLocked()) {
+                throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+            }
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
+
 
         if (member.isInactive()) {
             throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
         }
+
+        member.recordLoginSuccess();
 
         String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
         String refreshTokenValue = jwtTokenProvider.createRefreshToken(member.getId());
@@ -78,6 +89,7 @@ public class AuthService {
 
         return new LoginResponse(accessToken, refreshTokenValue, "Bearer");
     }
+
 
     @Transactional
     public LoginResponse refresh(RefreshRequest request) {

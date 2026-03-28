@@ -275,6 +275,6 @@ class AuthServiceTest {
         // then
         assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.UNAUTHORIZED); // 5번째에서 잠김
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ACCOUNT_LOCKED);
     }
 }
