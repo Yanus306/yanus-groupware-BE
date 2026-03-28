@@ -53,13 +53,35 @@ public class Member {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "login_fail_count", nullable = false)
+    private int loginFailCount = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
+
+    public void recordLoginFailure() {
+        this.loginFailCount++;
+        if (this.loginFailCount >= 5) {
+            this.lockedUntil = LocalDateTime.now().plusMinutes(30);
+        }
+    }
+
+    public void recordLoginSuccess() {
+        this.loginFailCount = 0;
+        this.lockedUntil = null;
+    }
+
+    public boolean isLocked() {
+        return lockedUntil != null && LocalDateTime.now().isBefore(lockedUntil);
+    }
+
     public static Member create(String name, String email, String encodedPassword, MemberRole role, MemberStatus status, Team team) {
         Member member = new Member();
         member.name = name;
         member.email = email;
         member.password = encodedPassword;
         member.role = role;
-        member.status = MemberStatus.ACTIVE;
+        member.status = status;
         member.team = team;
         member.createdAt = LocalDateTime.now();
         return member;

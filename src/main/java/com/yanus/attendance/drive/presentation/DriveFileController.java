@@ -36,8 +36,9 @@ public class DriveFileController {
 
     @GetMapping("/{fileId}/download")
     public ResponseEntity<byte[]> download(
+            @AuthenticationPrincipal Long actorId,
             @PathVariable Long fileId) {
-        byte[] data = driveFileService.download(fileId);
+        byte[] data = driveFileService.download(actorId, fileId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -46,13 +47,15 @@ public class DriveFileController {
 
     @DeleteMapping("/{fileId}")
     public ResponseEntity<ApiResponse<Void>> delete(
+            @AuthenticationPrincipal Long actorId,
             @PathVariable Long fileId) {
-        driveFileService.delete(fileId);
+        driveFileService.delete(actorId, fileId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<DriveFileResponse>>> getAllFiles() {
-        return ResponseEntity.ok(ApiResponse.success(driveFileService.getAllFiles()));
+    public ResponseEntity<ApiResponse<List<DriveFileResponse>>> getAllFiles(
+            @AuthenticationPrincipal Long actorId) {
+        return ResponseEntity.ok(ApiResponse.success(driveFileService.getAllFiles(actorId)));
     }
 }

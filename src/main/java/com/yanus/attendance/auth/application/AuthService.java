@@ -58,13 +58,24 @@ public class AuthService {
         Member member = memberRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
+        if (member.isLocked()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+        }
+
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
+            member.recordLoginFailure();
+            if (member.isLocked()) {
+                throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+            }
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
+
 
         if (member.isInactive()) {
             throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
         }
+
+        member.recordLoginSuccess();
 
         String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
         String refreshTokenValue = jwtTokenProvider.createRefreshToken(member.getId());
@@ -79,10 +90,16 @@ public class AuthService {
         return new LoginResponse(accessToken, refreshTokenValue, "Bearer");
     }
 
+
     @Transactional
     public LoginResponse refresh(RefreshRequest request) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.refreshToken())
                 .orElseThrow(() -> new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
+
+        if (refreshToken.isRevoked()) {
+            refreshTokenRepository.deleteByMemberId(refreshToken.getMemberId());
+            throw new BusinessException(ErrorCode.TOKEN_REUSED);
+        }
 
         if (refreshToken.isExpired()) {
             throw new BusinessException(ErrorCode.EXPIRED_TOKEN);
@@ -91,9 +108,17 @@ public class AuthService {
         Member member = memberRepository.findById(refreshToken.getMemberId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        String newAccessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
+        refreshToken.revoke();
 
-        return new LoginResponse(newAccessToken, request.refreshToken(), "Bearer");
+        String newAccessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
+        String newRefreshTokenValue = jwtTokenProvider.createRefreshToken(member.getId());
+        refreshTokenRepository.save(RefreshToken.create(
+                newRefreshTokenValue,
+                member.getId(),
+                LocalDateTime.now().plusDays(7)
+        ));
+
+        return new LoginResponse(newAccessToken, newRefreshTokenValue, "Bearer");
     }
 
     @Transactional
