@@ -47,7 +47,7 @@ public class DriveFileServiceTest {
     @DisplayName("파일 업로드")
     void upload_file() {
         // given
-        Member member = createMember();
+        Member member = createMember("개발팀", MemberRole.ADMIN);
         MockMultipartFile mockFile = new MockMultipartFile(
                 "file", "report.pdf", "application/pdf", "PDF 내용".getBytes());
 
@@ -63,7 +63,7 @@ public class DriveFileServiceTest {
     @DisplayName("내 파일 목록 조회")
     void get_my_files() {
         // given
-        Member member = createMember();
+        Member member = createMember("개발팀", MemberRole.ADMIN);
         MockMultipartFile file1 = new MockMultipartFile("file", "a.pdf", "application/pdf", "a".getBytes());
         MockMultipartFile file2 = new MockMultipartFile("file", "b.png", "image/png", "b".getBytes());
         driveFileService.upload(member.getId(), file1);
@@ -80,15 +80,15 @@ public class DriveFileServiceTest {
     @DisplayName("파일 삭제 후 조회 시 예외 발생")
     void delete_file() {
         // given
-        Member member = createMember();
+        Member member = createMember("개발팀", MemberRole.ADMIN);
         MockMultipartFile mockFile = new MockMultipartFile("file", "report.pdf", "application/pdf", "data".getBytes());
         DriveFileResponse uploaded = driveFileService.upload(member.getId(), mockFile);
 
         // when
-        driveFileService.delete(uploaded.id());
+        driveFileService.delete(member.getId(), uploaded.id());
 
         // then
-        assertThatThrownBy(() -> driveFileService.download(uploaded.id()))
+        assertThatThrownBy(() -> driveFileService.download(member.getId(), uploaded.id()))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -96,14 +96,14 @@ public class DriveFileServiceTest {
     @DisplayName("전체 파일 목록 조회 테스트")
     void get_all_files() {
         // given
-        Member member = createMember();
+        Member member = createMember("개발팀", MemberRole.ADMIN);
         MockMultipartFile file1 = new MockMultipartFile("file", "a.pdf", "application/pdf", "a".getBytes());
         MockMultipartFile file2 = new MockMultipartFile("file", "b.png", "image/png", "b".getBytes());
         driveFileService.upload(member.getId(), file1);
         driveFileService.upload(member.getId(), file2);
 
         // when
-        List<DriveFileResponse> responses = driveFileService.getAllFiles();
+        List<DriveFileResponse> responses = driveFileService.getAllFiles(member.getId());
 
         // then
         assertThat(responses).hasSize(2);
