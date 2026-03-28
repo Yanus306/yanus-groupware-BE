@@ -234,4 +234,47 @@ class AuthServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.REFRESH_TOKEN_NOT_FOUND);
     }
+
+    @Test
+    @DisplayName("로그인 5회 실패 시 계정이 잠김")
+    void 로그인_5회_실패_시_계정가_잠긴다() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+
+        // when
+        for (int i = 0; i < 5; i++) {
+            assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
+                    .isInstanceOf(BusinessException.class);
+        }
+
+        // then
+        assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "password123")))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ACCOUNT_LOCKED);
+    }
+
+    @Test
+    @DisplayName("로그인 성공 시 실패 횟수가 초기화")
+    void login_success_resets_failed_attempts() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        for (int i = 0; i < 4; i++) {
+            assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
+                    .isInstanceOf(BusinessException.class);
+        }
+        authService.login(new LoginRequest("hong@yanus.com", "password123"));
+
+        // when
+        for (int i = 0; i < 4; i++) {
+            assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
+                    .isInstanceOf(BusinessException.class);
+        }
+
+        // then
+        assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ACCOUNT_LOCKED);
+    }
 }
