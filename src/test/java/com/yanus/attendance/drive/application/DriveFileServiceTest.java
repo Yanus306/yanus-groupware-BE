@@ -9,6 +9,7 @@ import com.yanus.attendance.drive.domain.DriveFileRepository;
 import com.yanus.attendance.drive.domain.StorageService;
 import com.yanus.attendance.drive.presentation.dto.DriveFileResponse;
 import com.yanus.attendance.global.exception.BusinessException;
+import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
@@ -35,10 +36,10 @@ public class DriveFileServiceTest {
         driveFileService = new DriveFileService(driveFileRepository, storageService, memberRepository);
     }
 
-    private Member createMember() {
-        Team team = Team.create("1팀");
+    private Member createMember(String teamName, MemberRole role) {
+        Team team = Team.create(teamName);
         ReflectionTestUtils.setField(team, "id", 1L);
-        Member member = Member.create("정용태", "jyt6640@naver.com", "password123", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
+        Member member = Member.create("테스터", role.name() + "@yanus.com", "password123", role, MemberStatus.ACTIVE, team);
         return memberRepository.save(member);
     }
 
@@ -106,5 +107,74 @@ public class DriveFileServiceTest {
 
         // then
         assertThat(responses).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("신입팀 멤버가 파일 업로드 시 예외 발생")
+    void junior_team_member_upload_forbidden() {
+        // given
+        Member member = createMember("신입", MemberRole.MEMBER);
+        MockMultipartFile file = new MockMultipartFile("file", "a.pdf", "application/pdf", "a".getBytes());
+
+        // when & then
+        assertThatThrownBy(() -> driveFileService.upload(member.getId(), file))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("신입팀 멤버가 파일 다운로드 시 예외 발생")
+    void junior_team_member_download_forbidden() {
+        // given
+        Member admin = createMember("개발팀", MemberRole.ADMIN);
+        MockMultipartFile file = new MockMultipartFile("file", "a.pdf", "application/pdf", "a".getBytes());
+        DriveFileResponse uploaded = driveFileService.upload(admin.getId(), file);
+        Member member = createMember("신입", MemberRole.MEMBER);
+
+        // when & then
+        assertThatThrownBy(() -> driveFileService.download(member.getId(), uploaded.id()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("신입팀 멤버가 파일 삭제 시 예외 발생")
+    void junior_team_member_delete_forbidden() {
+        // given
+        Member admin = createMember("개발팀", MemberRole.ADMIN);
+        MockMultipartFile file = new MockMultipartFile("file", "a.pdf", "application/pdf", "a".getBytes());
+        DriveFileResponse uploaded = driveFileService.upload(admin.getId(), file);
+        Member member = createMember("신입", MemberRole.MEMBER);
+
+        // when & then
+        assertThatThrownBy(() -> driveFileService.delete(member.getId(), uploaded.id()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("신입팀 멤버가 전체 파일 목록 조회 시 예외 발생")
+    void junior_team_member_get_all_files_forbidden() {
+        // given
+        Member member = createMember("신입", MemberRole.MEMBER);
+
+        // when & then
+        assertThatThrownBy(() -> driveFileService.getAllFiles(member.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("신입팀이 아닌 멤버는 파일 업로드 성공")
+    void non_junior_team_member_upload_success() {
+        // given
+        Member member = createMember("개발팀", MemberRole.MEMBER);
+        MockMultipartFile file = new MockMultipartFile("file", "a.pdf", "application/pdf", "a".getBytes());
+
+        // when
+        DriveFileResponse response = driveFileService.upload(member.getId(), file);
+
+        // then
+        assertThat(response.originalName()).isEqualTo("a.pdf");
     }
 }
