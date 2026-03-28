@@ -192,4 +192,17 @@ public class TeamServiceTest {
         assertThatCode(() -> teamService.deleteTeam(admin.getId(), team.getId()))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    @DisplayName("신입팀 삭제 시 예외 발생")
+    void newbie_team_can_not_delete() {
+        // given
+        Member admin = createMember(MemberRole.ADMIN);
+        Team juniorTeam = teamRepository.save(Team.create("신입"));
+
+        // when & then
+        assertThatThrownBy(() -> teamService.deleteTeam(admin.getId(), juniorTeam.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_CANNOT_DELETE);
+    }
 }
