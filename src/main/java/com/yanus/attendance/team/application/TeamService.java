@@ -46,8 +46,11 @@ public class TeamService {
     @Transactional
     public void deleteTeam(Long actorId, Long teamId) {
         validateAdmin(actorId);
-        teamRepository.findById(teamId)
+        Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
+        if (team.getName().equals("신입")) {
+            throw new BusinessException(ErrorCode.TEAM_CANNOT_DELETE);
+        }
         if (teamRepository.existsByMembersTeamId(teamId)) {
             throw new BusinessException(ErrorCode.TEAM_HAS_MEMBERS);
         }
