@@ -36,6 +36,7 @@ public enum ErrorCode {
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "존재하지 않는 팀입니다."),
     TEAM_ALREADY_EXISTS(HttpStatus.CONFLICT, "TEAM_ALREADY_EXISTS", "이미 존재하는 팀 이름입니다."),
     TEAM_HAS_MEMBERS(HttpStatus.BAD_REQUEST, "TEAM_HAS_MEMBERS", "소속 멤버가 있어 팀을 삭제할 수 없습니다."),
+    TEAM_CANNOT_DELETE(HttpStatus.BAD_REQUEST, "TEAM_CANNOT_DELETE", "삭제할 수 없는 팀입니다."),
 
     // Leave
     LEAVE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "LEAVE_REQUEST_NOT_FOUND", "휴가 신청을 찾을 수 없습니다."),
