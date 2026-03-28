@@ -9,6 +9,7 @@ import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
+import com.yanus.attendance.member.domain.MemberRole;
 import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Optional;
@@ -50,12 +51,15 @@ public class WorkScheduleService {
     }
 
     @Transactional(readOnly = true)
-    public List<MemberWorkScheduleResponse> getTeamWorkSchedules(Long teamId) {
+    public List<MemberWorkScheduleResponse> getTeamWorkSchedules(Long actorId, Long teamId) {
+        Member actor = findMember(actorId);
+        validateTeamScheduleAccess(actor, teamId);
         return groupByMember(workScheduleRepository.findAllByMemberTeamId(teamId));
     }
 
     @Transactional(readOnly = true)
-    public List<MemberWorkScheduleResponse> getAllWorkSchedules() {
+    public List<MemberWorkScheduleResponse> getAllWorkSchedules(Long actorId) {
+        validateAdmin(actorId);
         return groupByMember(workScheduleRepository.findAll());
     }
 
@@ -76,5 +80,28 @@ public class WorkScheduleService {
         workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, dayOfWeek)
                 .orElseThrow(() -> new BusinessException(ErrorCode.WORK_SCHEDULE_NOT_FOUND));
         workScheduleRepository.deleteByMemberIdAndDayOfWeek(memberId, dayOfWeek);
+    }
+
+    private void validateAdmin(Long actorId) {
+        Member actor = findMember(actorId);
+        if (actor.getRole() != MemberRole.ADMIN) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    private void validateTeamScheduleAccess(Member actor, Long teamId) {
+        if (actor.getRole() == MemberRole.ADMIN) {
+            return;
+        }
+        if (actor.getRole() == MemberRole.TEAM_LEAD
+                && actor.getTeam().getId().equals(teamId)) {
+            return;
+        }
+        throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+
+    private Member findMember(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
     }
 }
