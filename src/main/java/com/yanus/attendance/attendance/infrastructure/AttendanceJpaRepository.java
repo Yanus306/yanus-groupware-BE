@@ -39,4 +39,9 @@ public class AttendanceJpaRepository implements AttendanceRepository {
     public List<Attendance> findAllByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status) {
         return repository.findAllByWorkDateAndStatus(workDate, status);
     }
+
+    @Override
+    public void delete(Attendance attendance) {
+        repository.delete(attendance);
+    }
 }
