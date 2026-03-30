@@ -86,15 +86,16 @@ public class AttendanceService {
     }
 
     @Transactional(readOnly = true)
-    public List<AttendanceRangeResponse> getAttendancesByRange(Member requester, Long targetMemberId, LocalDate startDate, LocalDate endDate) {
-        Member target = resolveTarget(requester, targetMemberId);
+    public List<AttendanceRangeResponse> getAttendancesByRange(Long requesterId, Long targetMemberId, LocalDate startDate, LocalDate endDate) {
+        Member target = resolveTarget(requesterId, targetMemberId);
         return attendanceRepository.findByMemberIdAndWorkDateBetween(target.getId(), startDate, endDate)
                 .stream()
                 .map(AttendanceRangeResponse::from)
                 .toList();
     }
 
-    private Member resolveTarget(Member requester, Long targetMemberId) {
+    private Member resolveTarget(Long requesterId, Long targetMemberId) {
+        Member requester = findMember(requesterId);
         if (requester.getRole() == MemberRole.ADMIN) {
             return memberRepository.findById(targetMemberId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
@@ -105,7 +106,7 @@ public class AttendanceService {
             validateSameTeam(requester, target);
             return target;
         }
-        if (!requester.getId().equals(targetMemberId)) {
+        if (!requesterId.equals(targetMemberId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
         return requester;

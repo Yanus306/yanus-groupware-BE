@@ -249,7 +249,7 @@ public class AttendanceServiceTest {
 
         // when
         List<AttendanceRangeResponse> result = attendanceService.getAttendancesByRange(
-                member, member.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31));
+                member.getId(), member.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31));
 
         // then
         assertThat(result).hasSize(1);
@@ -267,7 +267,7 @@ public class AttendanceServiceTest {
         // when & then
         assertThatNoException().isThrownBy(() ->
                 attendanceService.getAttendancesByRange(
-                        leader, target.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)));
+                        leader.getId(), target.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)));
     }
 
     @Test
@@ -282,7 +282,7 @@ public class AttendanceServiceTest {
         // when & then
         assertThatThrownBy(() ->
                 attendanceService.getAttendancesByRange(
-                        leader, other.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
+                        leader.getId(), other.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -296,7 +296,7 @@ public class AttendanceServiceTest {
         // when & then
         assertThatThrownBy(() ->
                 attendanceService.getAttendancesByRange(
-                        me, other.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
+                        me.getId(), other.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
                 .isInstanceOf(BusinessException.class);
     }
 }
