@@ -1,10 +1,13 @@
 package com.yanus.attendance.attendance.application;
 
+import static com.yanus.attendance.task.domain.Task.createTeam;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.given;
 
 import com.yanus.attendance.attendance.FakeAttendanceQueryRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
+import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
@@ -212,4 +215,71 @@ public class AttendanceServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ATTENDANCE_NOT_FOUND);
     }
+
+    @Test
+    @DisplayName("기간별 출근 내역 본인 조회")
+    void get_attendances_by_range() {
+        // given
+        Member member = createMember(MemberRole.MEMBER);
+        Attendance attendance = createAttendance(member, LocalDate.of(2026, 3, 4));
+        given(attendanceRepository.findByMemberIdAndWorkDateBetween(
+                member.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
+                .willReturn(List.of(attendance));
+
+        // when
+        List<AttendanceRangeResponse> result = attendanceService.getAttendancesByRange(
+                member, member.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31));
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).workDate()).isEqualTo(LocalDate.of(2026, 3, 4));
+    }
+
+    @Test
+    @DisplayName("팀장은 같은 팀 멤버 출근 내역 조회")
+    void team_lead_can_get_attendances_by_range() {
+        // given
+        Team team = createTeam();
+        Member leader = createMemberWithTeam(MemberRole.TEAM_LEAD, team);
+        Member target = createMemberWithTeam(MemberRole.MEMBER, team);
+        given(memberRepository.findById(target.getId())).willReturn(Optional.of(target));
+        given(attendanceRepository.findByMemberIdAndWorkDateBetween(any(), any(), any()))
+                .willReturn(List.of());
+
+        // when & then
+        assertThatNoException().isThrownBy(() ->
+                attendanceService.getAttendancesByRange(
+                        leader, target.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)));
+    }
+
+    @Test
+    @DisplayName("팀장은 다른 팀 멤버 출근 내역 조회 불가")
+    void team_lead_cannot_get_attendances_by_range() {
+        // given
+        Member leader = createMemberWithTeam(MemberRole.TEAM_LEAD, createTeam());
+        Member other = createMemberWithTeam(MemberRole.MEMBER, createTeam());
+        given(memberRepository.findById(other.getId())).willReturn(Optional.of(other));
+
+        // when & then
+        assertThatThrownBy(() ->
+                attendanceService.getAttendancesByRange(
+                        leader, other.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("멤버가 타인 출근 내역 조회 시 예외")
+    void member_cannot_get_attendances_by_range() {
+        // given
+        Member me = createMember(MemberRole.MEMBER);
+        Member other = createMember(MemberRole.MEMBER);
+        given(memberRepository.findById(other.getId())).willReturn(Optional.of(other));
+
+        // when & then
+        assertThatThrownBy(() ->
+                attendanceService.getAttendancesByRange(
+                        me, other.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
+                .isInstanceOf(BusinessException.class);
+    }
+
 }
