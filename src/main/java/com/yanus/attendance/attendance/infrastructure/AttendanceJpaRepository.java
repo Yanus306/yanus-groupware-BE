@@ -41,6 +41,11 @@ public class AttendanceJpaRepository implements AttendanceRepository {
     }
 
     @Override
+    public List<Attendance> findByMemberIdAndWorkDateBetween(Long memberId, LocalDate start, LocalDate end) {
+        return repository.findByMemberIdAndWorkDateBetween(memberId, start, end);
+    }
+
+    @Override
     public void delete(Attendance attendance) {
         repository.delete(attendance);
     }

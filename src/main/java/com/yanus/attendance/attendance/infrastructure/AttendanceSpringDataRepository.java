@@ -16,4 +16,6 @@ public interface AttendanceSpringDataRepository extends JpaRepository<Attendance
     List<Attendance> findAllByWorkDate(LocalDate workDate);
 
     List<Attendance> findAllByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status);
+
+    List<Attendance> findByMemberIdAndWorkDateBetween(Long memberId, LocalDate startDate, LocalDate endDate);
 }
