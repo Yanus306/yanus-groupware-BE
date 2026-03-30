@@ -10,6 +10,7 @@ import com.yanus.attendance.attendance.domain.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.AttendanceStatus;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.exception.BusinessException;
+import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
@@ -160,4 +161,28 @@ public class AttendanceServiceTest {
         assertThat(responses.get(0).status()).isEqualTo(AttendanceStatus.LEFT);
         assertThat(responses.get(0).checkOutTime()).isEqualTo(date.atTime(23, 59, 59));
     }
-}
+
+    @Test
+    @DisplayName("허용된 IP로 체크인 성공")
+    void check_in_with_allowed_ip() {
+        // given
+        Member member = createMember();
+
+        // when
+        AttendanceResponse response = attendanceService.checkIn(member.getId(), "220.69.1.1");
+
+        // then
+        assertThat(response.status()).isEqualTo(AttendanceStatus.WORKING);
+    }
+
+    @Test
+    @DisplayName("허용되지 않은 IP로 체크인 시 예외 발생")
+    void check_in_with_not_allowed_ip() {
+        // given
+        Member member = createMember();
+
+        // when & then
+        assertThatThrownBy(() -> attendanceService.checkIn(member.getId(), "220.32.1.1"))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ACCOUNT_LOCKED);
+    }}
