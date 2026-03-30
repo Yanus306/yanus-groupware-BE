@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeAttendanceQueryRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
-import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
-import com.yanus.attendance.attendance.domain.AttendanceRepository;
-import com.yanus.attendance.attendance.domain.AttendanceStatus;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceQueryRepository;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
