@@ -93,8 +93,7 @@ public class WorkScheduleService {
         if (actor.getRole() == MemberRole.ADMIN) {
             return;
         }
-        if (actor.getRole() == MemberRole.TEAM_LEAD
-                && actor.getTeam().getId().equals(teamId)) {
+        if (actor.getTeam().getId().equals(teamId)) {
             return;
         }
         throw new BusinessException(ErrorCode.FORBIDDEN);
