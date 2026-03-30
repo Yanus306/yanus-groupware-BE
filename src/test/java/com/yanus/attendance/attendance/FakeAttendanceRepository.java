@@ -53,4 +53,9 @@ public class FakeAttendanceRepository implements AttendanceRepository {
                 .filter(a -> a.getStatus() == status)
                 .toList();
     }
+
+    @Override
+    public void delete(Attendance attendance) {
+        store.remove(attendance.getId());
+    }
 }
