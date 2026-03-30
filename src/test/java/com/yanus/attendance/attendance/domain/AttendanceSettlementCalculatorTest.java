@@ -2,6 +2,7 @@ package com.yanus.attendance.attendance.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.yanus.attendance.attendance.domain.attendance.AttendanceSettlementCalculator;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import org.junit.jupiter.api.DisplayName;
