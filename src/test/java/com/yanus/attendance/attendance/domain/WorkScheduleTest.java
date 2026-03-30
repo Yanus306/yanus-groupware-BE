@@ -29,7 +29,7 @@ public class WorkScheduleTest {
         LocalTime end = LocalTime.of(18, 0);
 
         // when
-        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY, start, end);
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY, start, end, null);
 
         // then
         assertThat(schedule.getDayOfWeek()).isEqualTo(DayOfWeek.MONDAY);
@@ -45,7 +45,7 @@ public class WorkScheduleTest {
 
         // when & then
         assertThatThrownBy(() ->
-                WorkSchedule.create(member, DayOfWeek.MONDAY, LocalTime.of(18, 0), LocalTime.of(9, 0)))
+                WorkSchedule.create(member, DayOfWeek.MONDAY, LocalTime.of(18, 0), LocalTime.of(9, 0), null))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("종료 시간");
     }
@@ -55,7 +55,7 @@ public class WorkScheduleTest {
     void update_work_schedule() {
         // given
         WorkSchedule schedule = WorkSchedule.create(createMember(), DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0));
+                LocalTime.of(9, 0), LocalTime.of(18, 0), null);
 
         // when
         schedule.update(LocalTime.of(10, 0), LocalTime.of(19, 0));

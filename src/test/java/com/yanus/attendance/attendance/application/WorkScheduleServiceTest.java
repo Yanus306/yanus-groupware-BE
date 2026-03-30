@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeWorkScheduleRepository;
+import com.yanus.attendance.attendance.domain.WeekPattern;
 import com.yanus.attendance.attendance.domain.WorkScheduleRepository;
 import com.yanus.attendance.attendance.presentation.dto.MemberWorkScheduleResponse;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleRequest;
@@ -53,7 +54,8 @@ public class WorkScheduleServiceTest {
     void set_work_schedule() {
         // given
         Member member = create();
-        WorkScheduleRequest request = new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0));
+        WorkScheduleRequest request = new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0),
+                WeekPattern.EVERY);
 
         // when
         WorkScheduleResponse response = workScheduleService.setWorkSchedule(member.getId(), request);
@@ -70,11 +72,11 @@ public class WorkScheduleServiceTest {
         // given
         Member member = create();
         workScheduleService.setWorkSchedule(member.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         WorkScheduleResponse response = workScheduleService.setWorkSchedule(member.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(10, 0), LocalTime.of(19, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // then
         assertThat(response.startTime()).isEqualTo(LocalTime.of(10, 0));
@@ -87,9 +89,9 @@ public class WorkScheduleServiceTest {
         // given
         Member member = create();
         workScheduleService.setWorkSchedule(member.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
         workScheduleService.setWorkSchedule(member.getId(),
-                new WorkScheduleRequest(DayOfWeek.TUESDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         List<WorkScheduleResponse> responses = workScheduleService.getMyWorkSchedules(member.getId());
@@ -104,7 +106,7 @@ public class WorkScheduleServiceTest {
         // given
         Member member = create();
         workScheduleService.setWorkSchedule(member.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         workScheduleService.deleteWorkSchedule(member.getId(), DayOfWeek.MONDAY);
@@ -134,9 +136,9 @@ public class WorkScheduleServiceTest {
                 Member.create("김철수", "kim@naver.com", "password", MemberRole.MEMBER, MemberStatus.ACTIVE, member1.getTeam()));
 
         workScheduleService.setWorkSchedule(member1.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
         workScheduleService.setWorkSchedule(member2.getId(),
-                new WorkScheduleRequest(DayOfWeek.TUESDAY, LocalTime.of(10, 0), LocalTime.of(19, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         List<MemberWorkScheduleResponse> responses =
@@ -157,9 +159,9 @@ public class WorkScheduleServiceTest {
                 Member.create("김철수", "kim@naver.com", "password", MemberRole.MEMBER, MemberStatus.ACTIVE, team2));
 
         workScheduleService.setWorkSchedule(member1.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
         workScheduleService.setWorkSchedule(member2.getId(),
-                new WorkScheduleRequest(DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         List<MemberWorkScheduleResponse> responses = workScheduleService.getAllWorkSchedules(member1.getId());
@@ -186,7 +188,7 @@ public class WorkScheduleServiceTest {
         // given
         Member admin = createMember("1팀", MemberRole.ADMIN);
         workScheduleService.setWorkSchedule(admin.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         List<MemberWorkScheduleResponse> responses = workScheduleService.getAllWorkSchedules(admin.getId());
@@ -201,7 +203,7 @@ public class WorkScheduleServiceTest {
         // given
         Member teamLead = createMember("1팀", MemberRole.TEAM_LEAD);
         workScheduleService.setWorkSchedule(teamLead.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         List<MemberWorkScheduleResponse> responses =
