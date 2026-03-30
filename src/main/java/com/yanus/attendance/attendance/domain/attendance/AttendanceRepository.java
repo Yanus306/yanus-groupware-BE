@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.domain;
+package com.yanus.attendance.attendance.domain.attendance;
 
 import java.time.LocalDate;
 import java.util.List;

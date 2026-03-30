@@ -1,7 +1,7 @@
 package com.yanus.attendance.attendance.application;
 
-import com.yanus.attendance.attendance.domain.WorkSchedule;
-import com.yanus.attendance.attendance.domain.WorkScheduleRepository;
+import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
 import com.yanus.attendance.attendance.presentation.dto.MemberWorkScheduleResponse;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleRequest;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleResponse;

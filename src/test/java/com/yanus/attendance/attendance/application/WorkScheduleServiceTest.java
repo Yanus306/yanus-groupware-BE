@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeWorkScheduleRepository;
-import com.yanus.attendance.attendance.domain.WeekPattern;
-import com.yanus.attendance.attendance.domain.WorkScheduleRepository;
+import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
 import com.yanus.attendance.attendance.presentation.dto.MemberWorkScheduleResponse;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleRequest;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleResponse;

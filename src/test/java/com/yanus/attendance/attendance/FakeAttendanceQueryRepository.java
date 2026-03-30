@@ -1,8 +1,8 @@
 package com.yanus.attendance.attendance;
 
-import com.yanus.attendance.attendance.domain.Attendance;
-import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
-import com.yanus.attendance.attendance.domain.AttendanceRepository;
+import com.yanus.attendance.attendance.domain.attendance.Attendance;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceQueryRepository;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import java.time.LocalDate;
 import java.util.List;
 
