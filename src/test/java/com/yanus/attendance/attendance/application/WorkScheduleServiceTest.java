@@ -235,4 +235,33 @@ public class WorkScheduleServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
     }
+
+    @Test
+    @DisplayName("weekPattern FIRST로 등록 후 조회 시 FIRST 반환")
+    void set_work_schedule_with_week_pattern() {
+        // given
+        Member member = create();
+        WorkScheduleRequest request = new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.FIRST);
+
+        // when
+        WorkScheduleResponse response = workScheduleService.setWorkSchedule(member.getId(), request);
+
+        // then
+        assertThat(response.weekPattern()).isEqualTo(WeekPattern.FIRST);
+    }
+
+    @Test
+    @DisplayName("weekPattern null로 등록 시 기본값 EVERY")
+    void set_work_schedule_default_week_pattern() {
+        // given
+        Member member = create();
+        WorkScheduleRequest request = new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), null);
+
+        // when
+        WorkScheduleResponse response = workScheduleService.setWorkSchedule(member.getId(), request);
+
+        // then
+        assertThat(response.weekPattern()).isEqualTo(WeekPattern.EVERY);
+    }
+
 }
