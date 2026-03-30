@@ -1,5 +1,6 @@
 package com.yanus.attendance.attendance.presentation;
 
+import jakarta.servlet.http.HttpServletRequest;
 import com.yanus.attendance.attendance.application.AttendanceService;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.response.ApiResponse;
@@ -26,8 +27,10 @@ public class AttendanceController {
 
     @PostMapping("/check-in")
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkIn(
-            @AuthenticationPrincipal Long memberId) {
-        return ResponseEntity.ok(ApiResponse.success(attendanceService.checkIn(memberId)));
+            @AuthenticationPrincipal Long memberId,
+            HttpServletRequest request) {
+        String ip = extractClientIp(request);
+        return ResponseEntity.ok(ApiResponse.success(attendanceService.checkIn(memberId, ip)));
     }
 
     @PostMapping("/check-out")
@@ -48,5 +51,13 @@ public class AttendanceController {
             @RequestParam(required = false) String teamName
     ) {
         return ResponseEntity.ok(ApiResponse.success(attendanceService.getAttendancesByFilter(date, teamName)));
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
