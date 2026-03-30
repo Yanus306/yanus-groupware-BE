@@ -1,6 +1,7 @@
 package com.yanus.attendance.global.exception;
 
 import com.yanus.attendance.global.response.ApiResponse;
+import java.time.format.DateTimeParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -38,5 +39,16 @@ public class GlobalExceptionHandler {
                         ErrorCode.INTERNAL_ERROR.getCode(),
                         ErrorCode.INTERNAL_ERROR.getMessage(),
                         null));
+    }
+
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDateTimeParseException(DateTimeParseException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(
+                        ErrorCode.BAD_REQUEST.getCode(),
+                        "yearMonth는 yyyy-MM 형식이어야 합니다",
+                        null
+                ));
     }
 }
