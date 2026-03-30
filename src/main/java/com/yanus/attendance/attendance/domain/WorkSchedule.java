@@ -19,6 +19,7 @@ import java.time.LocalTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.checkerframework.checker.units.qual.C;
 
 @Entity
 @Table(name = "work_schedule")
@@ -42,13 +43,19 @@ public class WorkSchedule {
 
     private LocalTime endTime;
 
-    public static WorkSchedule create(Member member, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
+    @Enumerated(EnumType.STRING)
+    @Column(name = "week_pattern", nullable = false)
+    private WeekPattern weekPattern;
+
+    public static WorkSchedule create(Member member, DayOfWeek dayOfWeek,
+                                      LocalTime startTime, LocalTime endTime, WeekPattern weekPattern) {
         validateTime(startTime, endTime);
         WorkSchedule schedule = new WorkSchedule();
         schedule.member = member;
         schedule.dayOfWeek = dayOfWeek;
         schedule.startTime = startTime;
         schedule.endTime = endTime;
+        schedule.weekPattern = weekPattern != null ? weekPattern : WeekPattern.EVERY;
         return schedule;
     }
 
