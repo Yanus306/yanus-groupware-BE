@@ -184,5 +184,5 @@ public class AttendanceServiceTest {
         // when & then
         assertThatThrownBy(() -> attendanceService.checkIn(member.getId(), "220.32.1.1"))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ACCOUNT_LOCKED);
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_ATTENDANCE_IP);
     }}
