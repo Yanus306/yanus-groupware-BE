@@ -3,6 +3,7 @@ package com.yanus.attendance.attendance.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;

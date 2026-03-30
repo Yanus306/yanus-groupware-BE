@@ -1,7 +1,7 @@
 package com.yanus.attendance.attendance;
 
-import com.yanus.attendance.attendance.domain.WorkSchedule;
-import com.yanus.attendance.attendance.domain.WorkScheduleRepository;
+import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
 import java.time.DayOfWeek;
 import java.util.HashMap;
 import java.util.List;

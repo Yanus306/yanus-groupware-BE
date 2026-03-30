@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.domain;
+package com.yanus.attendance.attendance.domain.workschedule;
 
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
@@ -19,7 +19,6 @@ import java.time.LocalTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.checkerframework.checker.units.qual.C;
 
 @Entity
 @Table(name = "work_schedule")
