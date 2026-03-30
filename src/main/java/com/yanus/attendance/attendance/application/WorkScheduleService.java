@@ -1,7 +1,7 @@
 package com.yanus.attendance.attendance.application;
 
-import com.yanus.attendance.attendance.domain.WorkSchedule;
-import com.yanus.attendance.attendance.domain.WorkScheduleRepository;
+import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
 import com.yanus.attendance.attendance.presentation.dto.MemberWorkScheduleResponse;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleRequest;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleResponse;
@@ -37,7 +37,7 @@ public class WorkScheduleService {
             return WorkScheduleResponse.from(existing.get());
         }
 
-        WorkSchedule schedule = WorkSchedule.create(member, request.dayOfWeek(), request.startTime(), request.endTime());
+        WorkSchedule schedule = WorkSchedule.create(member, request.dayOfWeek(), request.startTime(), request.endTime(), request.weekPattern());
         workScheduleRepository.save(schedule);
 
         return WorkScheduleResponse.from(schedule);
@@ -63,6 +63,12 @@ public class WorkScheduleService {
         return groupByMember(workScheduleRepository.findAll());
     }
 
+    public void deleteWorkSchedule(Long memberId, DayOfWeek dayOfWeek) {
+        workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, dayOfWeek)
+                .orElseThrow(() -> new BusinessException(ErrorCode.WORK_SCHEDULE_NOT_FOUND));
+        workScheduleRepository.deleteByMemberIdAndDayOfWeek(memberId, dayOfWeek);
+    }
+
     private List<MemberWorkScheduleResponse> groupByMember(List<WorkSchedule> schedules) {
         return schedules.stream()
                 .collect(Collectors.groupingBy(WorkSchedule::getMember))
@@ -76,12 +82,6 @@ public class WorkScheduleService {
                 .toList();
     }
 
-    public void deleteWorkSchedule(Long memberId, DayOfWeek dayOfWeek) {
-        workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, dayOfWeek)
-                .orElseThrow(() -> new BusinessException(ErrorCode.WORK_SCHEDULE_NOT_FOUND));
-        workScheduleRepository.deleteByMemberIdAndDayOfWeek(memberId, dayOfWeek);
-    }
-
     private void validateAdmin(Long actorId) {
         Member actor = findMember(actorId);
         if (actor.getRole() != MemberRole.ADMIN) {
@@ -93,8 +93,7 @@ public class WorkScheduleService {
         if (actor.getRole() == MemberRole.ADMIN) {
             return;
         }
-        if (actor.getRole() == MemberRole.TEAM_LEAD
-                && actor.getTeam().getId().equals(teamId)) {
+        if (actor.getTeam().getId().equals(teamId)) {
             return;
         }
         throw new BusinessException(ErrorCode.FORBIDDEN);

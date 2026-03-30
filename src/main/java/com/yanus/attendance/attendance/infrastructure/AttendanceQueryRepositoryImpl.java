@@ -2,9 +2,9 @@ package com.yanus.attendance.attendance.infrastructure;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.yanus.attendance.attendance.domain.Attendance;
-import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
-import com.yanus.attendance.attendance.domain.QAttendance;
+import com.yanus.attendance.attendance.domain.attendance.Attendance;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceQueryRepository;
+import com.yanus.attendance.attendance.domain.attendance.QAttendance;
 import com.yanus.attendance.member.domain.QMember;
 import com.yanus.attendance.team.domain.QTeam;
 import java.time.LocalDate;
