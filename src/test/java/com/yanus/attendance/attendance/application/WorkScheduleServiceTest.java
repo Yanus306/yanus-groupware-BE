@@ -76,7 +76,7 @@ public class WorkScheduleServiceTest {
 
         // when
         WorkScheduleResponse response = workScheduleService.setWorkSchedule(member.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(10, 0), LocalTime.of(19, 0), WeekPattern.EVERY));
 
         // then
         assertThat(response.startTime()).isEqualTo(LocalTime.of(10, 0));
@@ -91,7 +91,7 @@ public class WorkScheduleServiceTest {
         workScheduleService.setWorkSchedule(member.getId(),
                 new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
         workScheduleService.setWorkSchedule(member.getId(),
-                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
+                new WorkScheduleRequest(DayOfWeek.THURSDAY, LocalTime.of(9, 0), LocalTime.of(19, 0), WeekPattern.EVERY));
 
         // when
         List<WorkScheduleResponse> responses = workScheduleService.getMyWorkSchedules(member.getId());
@@ -266,4 +266,32 @@ public class WorkScheduleServiceTest {
         assertThat(response.weekPattern()).isEqualTo(WeekPattern.EVERY);
     }
 
+    @Test
+    @DisplayName("같은 팀 MEMBER가 팀 근무 일정 조회 성공")
+    void member_get_own_team_work_schedules_success() {
+        // given
+        Member member = createMember("1팀", MemberRole.MEMBER);
+        workScheduleService.setWorkSchedule(member.getId(),
+                new WorkScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
+
+        // when
+        List<MemberWorkScheduleResponse> responses =
+                workScheduleService.getTeamWorkSchedules(member.getId(), member.getTeam().getId());
+
+        // then
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("다른 팀 MEMBER가 팀 근무 일정 조회 시 FORBIDDEN")
+    void member_get_other_team_work_schedules_forbidden() {
+        // given
+        Member member = createMember("1팀", MemberRole.MEMBER);
+        Member otherMember = createMember("2팀", MemberRole.MEMBER);
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleService.getTeamWorkSchedules(member.getId(), otherMember.getTeam().getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
 }
