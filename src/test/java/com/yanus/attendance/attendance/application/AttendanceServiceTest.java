@@ -185,4 +185,31 @@ public class AttendanceServiceTest {
         assertThatThrownBy(() -> attendanceService.checkIn(member.getId(), "220.32.1.1"))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_ATTENDANCE_IP);
-    }}
+    }
+
+    @Test
+    @DisplayName("오늘 출근 기록 초기화 성공")
+    void reset_attendance_success() {
+        // given
+        Member member = createMember();
+        attendanceService.checkIn(member.getId(), "220.69.1.1");
+
+        // when
+        attendanceService.resetAttendance(member.getId(), LocalDate.now());
+
+        // then
+        assertThat(attendanceService.getMyAttendances(member.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("출근 기록 없을 때 초기화 시 ATTENDANCE_NOT_FOUND 예외")
+    void reset_attendance_not_found_error() {
+        // given
+        Member member = createMember();
+
+        // when & then
+        assertThatThrownBy(() -> attendanceService.resetAttendance(member.getId(), LocalDate.now()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ATTENDANCE_NOT_FOUND);
+    }
+}
