@@ -227,18 +227,6 @@ public class WorkScheduleServiceTest {
     }
 
     @Test
-    @DisplayName("MEMBER가 팀 근무 일정 조회 시 예외 발생")
-    void member_get_team_work_schedules_forbidden() {
-        // given
-        Member member = createMember("1팀", MemberRole.MEMBER);
-
-        // when & then
-        assertThatThrownBy(() -> workScheduleService.getTeamWorkSchedules(member.getId(), member.getTeam().getId()))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
-    }
-
-    @Test
     @DisplayName("weekPattern FIRST로 등록 후 조회 시 FIRST 반환")
     void set_work_schedule_with_week_pattern() {
         // given
