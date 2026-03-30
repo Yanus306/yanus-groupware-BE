@@ -1,9 +1,8 @@
 package com.yanus.attendance.attendance.application;
 
-import static com.yanus.attendance.task.domain.Task.createTeam;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.given;
 
 import com.yanus.attendance.attendance.FakeAttendanceQueryRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
@@ -11,6 +10,7 @@ import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
+import com.yanus.attendance.attendance.presentation.dto.AttendanceRangeResponse;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
@@ -23,6 +23,7 @@ import com.yanus.attendance.team.domain.Team;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,8 +33,10 @@ public class AttendanceServiceTest {
 
     private AttendanceService attendanceService;
     private AttendanceRepository attendanceRepository;
-    private AttendanceQueryRepository attendanceQueryRepository;
     private MemberRepository memberRepository;
+
+    private final AtomicLong memberEmailSeq = new AtomicLong(1);
+    private final AtomicLong teamIdSeq = new AtomicLong(1);
 
     @BeforeEach
     void setUp() {
@@ -41,14 +44,34 @@ public class AttendanceServiceTest {
         memberRepository = new FakeMemberRepository();
         AttendanceQueryRepository attendanceQueryRepository = new FakeAttendanceQueryRepository(attendanceRepository);
         attendanceService = new AttendanceService(attendanceRepository, memberRepository, attendanceQueryRepository);
+        memberEmailSeq.set(1);
+        teamIdSeq.set(1);
     }
 
     private Member createMember() {
+        return createMember(MemberRole.ADMIN);
+    }
+
+    private Member createMember(MemberRole role) {
         Team team = Team.create("1팀");
         ReflectionTestUtils.setField(team, "id", 1L);
-        Member member = Member.create("정용태", "jyt6640@naver.com", "password123", MemberRole.ADMIN, MemberStatus.ACTIVE, team);
+        String email = "user" + memberEmailSeq.getAndIncrement() + "@test.com";
+        Member member = Member.create("정용태", email, "password123", role, MemberStatus.ACTIVE, team);
         return memberRepository.save(member);
     }
+
+    private Member createMemberWithTeam(MemberRole role, Team team) {
+        String email = "user" + memberEmailSeq.getAndIncrement() + "@test.com";
+        Member member = Member.create("멤버", email, "password123", role, MemberStatus.ACTIVE, team);
+        return memberRepository.save(member);
+    }
+
+    private Team createTeam(String name) {
+        Team team = Team.create(name);
+        ReflectionTestUtils.setField(team, "id", teamIdSeq.getAndIncrement());
+        return team;
+    }
+
 
     @Test
     @DisplayName("출근 체크인 시 WORKING 상태로 저장")
@@ -221,10 +244,8 @@ public class AttendanceServiceTest {
     void get_attendances_by_range() {
         // given
         Member member = createMember(MemberRole.MEMBER);
-        Attendance attendance = createAttendance(member, LocalDate.of(2026, 3, 4));
-        given(attendanceRepository.findByMemberIdAndWorkDateBetween(
-                member.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
-                .willReturn(List.of(attendance));
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 3, 4, 9, 0, 0));
+        attendanceRepository.save(attendance);
 
         // when
         List<AttendanceRangeResponse> result = attendanceService.getAttendancesByRange(
@@ -236,15 +257,12 @@ public class AttendanceServiceTest {
     }
 
     @Test
-    @DisplayName("팀장은 같은 팀 멤버 출근 내역 조회")
+    @DisplayName("팀장은 같은 팀 멤버 출근 내역 조회 가능")
     void team_lead_can_get_attendances_by_range() {
         // given
-        Team team = createTeam();
+        Team team = createTeam("1팀");
         Member leader = createMemberWithTeam(MemberRole.TEAM_LEAD, team);
         Member target = createMemberWithTeam(MemberRole.MEMBER, team);
-        given(memberRepository.findById(target.getId())).willReturn(Optional.of(target));
-        given(attendanceRepository.findByMemberIdAndWorkDateBetween(any(), any(), any()))
-                .willReturn(List.of());
 
         // when & then
         assertThatNoException().isThrownBy(() ->
@@ -256,9 +274,10 @@ public class AttendanceServiceTest {
     @DisplayName("팀장은 다른 팀 멤버 출근 내역 조회 불가")
     void team_lead_cannot_get_attendances_by_range() {
         // given
-        Member leader = createMemberWithTeam(MemberRole.TEAM_LEAD, createTeam());
-        Member other = createMemberWithTeam(MemberRole.MEMBER, createTeam());
-        given(memberRepository.findById(other.getId())).willReturn(Optional.of(other));
+        Team myTeam = createTeam("1팀");
+        Team otherTeam = createTeam("2팀");
+        Member leader = createMemberWithTeam(MemberRole.TEAM_LEAD, myTeam);
+        Member other = createMemberWithTeam(MemberRole.MEMBER, otherTeam);
 
         // when & then
         assertThatThrownBy(() ->
@@ -273,7 +292,6 @@ public class AttendanceServiceTest {
         // given
         Member me = createMember(MemberRole.MEMBER);
         Member other = createMember(MemberRole.MEMBER);
-        given(memberRepository.findById(other.getId())).willReturn(Optional.of(other));
 
         // when & then
         assertThatThrownBy(() ->
@@ -281,5 +299,4 @@ public class AttendanceServiceTest {
                         me, other.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
                 .isInstanceOf(BusinessException.class);
     }
-
 }
