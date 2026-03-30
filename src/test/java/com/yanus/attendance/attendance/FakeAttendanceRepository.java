@@ -58,4 +58,14 @@ public class FakeAttendanceRepository implements AttendanceRepository {
     public void delete(Attendance attendance) {
         store.remove(attendance.getId());
     }
+
+    @Override
+    public List<Attendance> findByMemberIdAndWorkDateBetween(
+            Long memberId, LocalDate startDate, LocalDate endDate) {
+        return store.values().stream()
+                .filter(a -> a.getMember().getId().equals(memberId))
+                .filter(a -> !a.getWorkDate().isBefore(startDate))
+                .filter(a -> !a.getWorkDate().isAfter(endDate))
+                .toList();
+    }
 }

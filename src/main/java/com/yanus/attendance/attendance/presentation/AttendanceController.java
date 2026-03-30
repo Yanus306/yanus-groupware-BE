@@ -1,5 +1,6 @@
 package com.yanus.attendance.attendance.presentation;
 
+import com.yanus.attendance.attendance.presentation.dto.AttendanceRangeResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import com.yanus.attendance.attendance.application.AttendanceService;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
@@ -53,6 +54,16 @@ public class AttendanceController {
             @RequestParam(required = false) String teamName
     ) {
         return ResponseEntity.ok(ApiResponse.success(attendanceService.getAttendancesByFilter(date, teamName)));
+    }
+
+    @GetMapping("/range")
+    public ResponseEntity<ApiResponse<List<AttendanceRangeResponse>>> getAttendancesByRange(
+            @AuthenticationPrincipal Long memberId,
+            @RequestParam Long targetMemberId,
+            @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(ApiResponse.success(
+                attendanceService.getAttendancesByRange(memberId, targetMemberId, startDate, endDate)));
     }
 
     @DeleteMapping("/me")

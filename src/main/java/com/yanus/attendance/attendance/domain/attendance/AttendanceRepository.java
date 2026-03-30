@@ -16,5 +16,7 @@ public interface AttendanceRepository {
 
     List<Attendance> findAllByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status);
 
+    List<Attendance> findByMemberIdAndWorkDateBetween(Long memberId, LocalDate start, LocalDate end);
+
     void delete(Attendance attendance);
 }
