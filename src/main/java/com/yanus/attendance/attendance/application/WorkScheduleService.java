@@ -37,7 +37,7 @@ public class WorkScheduleService {
             return WorkScheduleResponse.from(existing.get());
         }
 
-        WorkSchedule schedule = WorkSchedule.create(member, request.dayOfWeek(), request.startTime(), request.endTime());
+        WorkSchedule schedule = WorkSchedule.create(member, request.dayOfWeek(), request.startTime(), request.endTime(), request.weekPattern());
         workScheduleRepository.save(schedule);
 
         return WorkScheduleResponse.from(schedule);
@@ -63,6 +63,12 @@ public class WorkScheduleService {
         return groupByMember(workScheduleRepository.findAll());
     }
 
+    public void deleteWorkSchedule(Long memberId, DayOfWeek dayOfWeek) {
+        workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, dayOfWeek)
+                .orElseThrow(() -> new BusinessException(ErrorCode.WORK_SCHEDULE_NOT_FOUND));
+        workScheduleRepository.deleteByMemberIdAndDayOfWeek(memberId, dayOfWeek);
+    }
+
     private List<MemberWorkScheduleResponse> groupByMember(List<WorkSchedule> schedules) {
         return schedules.stream()
                 .collect(Collectors.groupingBy(WorkSchedule::getMember))
@@ -74,12 +80,6 @@ public class WorkScheduleService {
                         entry.getValue().stream().map(WorkScheduleResponse::from).toList()
                 ))
                 .toList();
-    }
-
-    public void deleteWorkSchedule(Long memberId, DayOfWeek dayOfWeek) {
-        workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, dayOfWeek)
-                .orElseThrow(() -> new BusinessException(ErrorCode.WORK_SCHEDULE_NOT_FOUND));
-        workScheduleRepository.deleteByMemberIdAndDayOfWeek(memberId, dayOfWeek);
     }
 
     private void validateAdmin(Long actorId) {
