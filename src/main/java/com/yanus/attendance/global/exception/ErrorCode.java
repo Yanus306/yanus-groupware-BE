@@ -33,6 +33,7 @@ public enum ErrorCode {
     ATTENDANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "ATTENDANCE_NOT_FOUND", "출근 기록을 찾을 수 없습니다."),
     INVALID_WORK_SCHEDULE_TIME(HttpStatus.BAD_REQUEST, "INVALID_WORK_SCHEDULE_TIME", "종료 시간은 시작 시간 이후여야 합니다."),
     WORK_SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "WORK_SCHEDULE_NOT_FOUND", "근무 일정을 찾을 수 없습니다."),
+    INVALID_ATTENDANCE_IP(HttpStatus.FORBIDDEN, "INVALID_ATTENDANCE_IP", "허용되지 않은 네트워크에서의 출근 요청입니다."),
 
     // Team
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "존재하지 않는 팀입니다."),

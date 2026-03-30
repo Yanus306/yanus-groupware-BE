@@ -68,6 +68,27 @@ public class AttendanceService {
         workingAttendances.forEach(attendance -> attendance.checkOut(checkOutTime));
     }
 
+    public AttendanceResponse checkIn(Long memberId, String clientIp) {
+        validateAttendanceIp(clientIp);
+        Member member = findMember(memberId);
+        validateNotAlreadyCheckedIn(memberId);
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.now());
+        attendanceRepository.save(attendance);
+        return AttendanceResponse.from(attendance);
+    }
+
+    public void resetAttendance(Long memberId, LocalDate today) {
+        Attendance attendance = attendanceRepository.findByMemberIdAndWorkDate(memberId, today)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
+        attendanceRepository.delete(attendance);
+    }
+
+    private void validateAttendanceIp(String clientIp) {
+        if (!clientIp.startsWith("220.69")) {
+            throw new BusinessException(ErrorCode.INVALID_ATTENDANCE_IP);
+        }
+    }
+
     private Member findMember(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
