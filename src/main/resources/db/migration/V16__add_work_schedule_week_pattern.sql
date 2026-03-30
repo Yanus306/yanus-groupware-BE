@@ -1,0 +1,2 @@
+ALTER TABLE work_schedule
+    ADD COLUMN week_pattern VARCHAR(20) NOT NULL DEFAULT 'EVERY';

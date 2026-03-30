@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.domain;
+package com.yanus.attendance.attendance.domain.workschedule;
 
 import java.time.DayOfWeek;
 import java.util.List;

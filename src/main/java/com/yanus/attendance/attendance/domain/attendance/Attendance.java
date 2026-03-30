@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.domain;
+package com.yanus.attendance.attendance.domain.attendance;
 
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
