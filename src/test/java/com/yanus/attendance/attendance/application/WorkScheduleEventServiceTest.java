@@ -3,6 +3,9 @@ package com.yanus.attendance.attendance.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.yanus.attendance.attendance.FakeWorkScheduleEventRepository;
+import com.yanus.attendance.attendance.presentation.dto.WorkScheduleEventRequest;
+import com.yanus.attendance.attendance.presentation.dto.WorkScheduleEventResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;
@@ -13,6 +16,7 @@ import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
