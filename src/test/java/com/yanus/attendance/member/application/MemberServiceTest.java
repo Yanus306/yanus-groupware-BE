@@ -387,4 +387,75 @@ public class MemberServiceTest {
         assertThat(auditLogRepository.findAll()).hasSize(1);
         assertThat(auditLogRepository.findAll().get(0).getAction()).isEqualTo(AuditAction.TEAM_CHANGE);
     }
+
+    @Test
+    @DisplayName("관리자가 임시 비밀번호 발급")
+    void 관리자가_임시_비밀번호_발급() {
+        // given
+        Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+
+        // when
+        TeamPoraryPasswordResponse response = memberService.resetPassword(admin.getId(), target.getId());
+
+        // then
+        assertThat(response.temporaryPassword()).hasSize(8);
+    }
+
+    Test
+    @DisplayName("임시 비밀번호 발급 후 변경된 비밀번호로 인코딩 저장")
+    void 임시_비밀번호_발급_후_인코딩_저장() {
+        // given
+        Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+        String originalPassword = target.getPassword();
+
+        // when
+        memberService.resetPassword(admin.getId(), target.getId());
+
+        // then
+        assertThat(memberRepository.findById(target.getId()).get().getPassword())
+                .isNotEqualTo(originalPassword);
+    }
+
+    @Test
+    @DisplayName("ADMIN이 아니면 임시 비밀번호 발급 시 FORBIDDEN")
+    void ADMIN이_아니면_임시_비밀번호_발급_시_FORBIDDEN() {
+        // given
+        Member actor = createMember("actor@yanus.com", MemberRole.MEMBER);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.resetPassword(actor.getId(), target.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 멤버 임시 비밀번호 발급 시 MEMBER_NOT_FOUND")
+    void 존재하지_않는_멤버_임시_비밀번호_발급_시_MEMBER_NOT_FOUND() {
+        // given
+        Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.resetPassword(admin.getId(), 999L))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("임시 비밀번호 발급 시 감사 로그 저장")
+    void 임시_비밀번호_발급_시_감사_로그_저장() {
+        // given
+        Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
+        Member target = createMember("target@yanus.com", MemberRole.MEMBER);
+
+        // when
+        memberService.resetPassword(admin.getId(), target.getId());
+
+        // then
+        assertThat(auditLogRepository.findAll()).hasSize(1);
+        assertThat(auditLogRepository.findAll().get(0).getAction())
+                .isEqualTo(AuditAction.PASSWORD_RESET);
+    }
 }
