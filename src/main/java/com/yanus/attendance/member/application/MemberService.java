@@ -105,6 +105,7 @@ public class MemberService {
         Member target = memberRepository.findById(targetId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         String temporaryPassword = generateTemporaryPassword();
+        validateAdmin(actorId);
         target.updateProfile(null, temporaryPassword, passwordEncoder);
         auditLogService.log(actorId, actor.getRole(), targetId,
                 AuditAction.PASSWORD_RESET, null, null);

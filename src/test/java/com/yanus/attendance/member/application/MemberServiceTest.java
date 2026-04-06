@@ -16,6 +16,7 @@ import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
 import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
+import com.yanus.attendance.member.presentation.dto.TemporaryPasswordResponse;
 import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.domain.Team;
 import org.junit.jupiter.api.BeforeEach;
@@ -396,13 +397,13 @@ public class MemberServiceTest {
         Member target = createMember("target@yanus.com", MemberRole.MEMBER);
 
         // when
-        TeamPoraryPasswordResponse response = memberService.resetPassword(admin.getId(), target.getId());
+        TemporaryPasswordResponse response = memberService.resetPassword(admin.getId(), target.getId());
 
         // then
         assertThat(response.temporaryPassword()).hasSize(8);
     }
 
-    Test
+    @Test
     @DisplayName("임시 비밀번호 발급 후 변경된 비밀번호로 인코딩 저장")
     void 임시_비밀번호_발급_후_인코딩_저장() {
         // given
