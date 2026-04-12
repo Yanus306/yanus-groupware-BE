@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
 import com.yanus.attendance.auth.FakeEmailVerificationTokenRepository;
-import com.yanus.attendance.auth.domain.EmailVerificationTokenRepository;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;
@@ -28,10 +27,10 @@ public class EmailVerificationServiceTest {
 
     @BeforeEach
     public void setUp() {
-        memberRepository = new FakeMemberRepository();
         tokenRepository = new FakeEmailVerificationTokenRepository();
+        memberRepository = new FakeMemberRepository();
         EmailService emailService = mock(EmailService.class);
-        doNothing().when(emailService).sendVerification(anyString(), anyString());
+        doNothing().when(emailService).sendVerificationEmail(anyString(), anyString());
         emailVerificationService = new EmailVerificationService(tokenRepository, memberRepository, emailService);
     }
 
@@ -55,7 +54,7 @@ public class EmailVerificationServiceTest {
         emailVerificationService.verify(token);
 
         // then
-        assertThat(memberRepository.findById(member.getId().get().getStatus()))
+        assertThat(memberRepository.findById(member.getId()).get().getStatus())
                 .isEqualTo(MemberStatus.ACTIVE);
     }
 
@@ -65,7 +64,7 @@ public class EmailVerificationServiceTest {
         // when & then
         assertThatThrownBy(() -> emailVerificationService.verify("invalid-tokenn"))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCodee", ErrorCode.INVALID_VERIFICATION_TOKEN);
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_VERIFICATION_TOKEN);
     }
 
     @Test

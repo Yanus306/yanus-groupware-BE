@@ -1,11 +1,16 @@
 package com.yanus.attendance.auth;
 
+import com.yanus.attendance.auth.domain.EmailVerificationToken;
+import com.yanus.attendance.auth.domain.EmailVerificationTokenRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-public class FakeEmailVerificationTokenRepository {
+public class FakeEmailVerificationTokenRepository implements EmailVerificationTokenRepository {
 
-    private final Map<Lomg, EmailVerificationToken> store = new HashMap<>();
+    private final Map<Long, EmailVerificationToken> store = new HashMap<>();
     private long sequence = 1;
 
     @Override
