@@ -1,12 +1,19 @@
 package com.yanus.attendance.auth.presentation;
 
 import com.yanus.attendance.auth.application.AuthService;
+import com.yanus.attendance.auth.application.EmailService;
+import com.yanus.attendance.auth.application.EmailVerificationService;
 import com.yanus.attendance.auth.presentation.dto.LoginRequest;
 import com.yanus.attendance.auth.presentation.dto.LoginResponse;
 import com.yanus.attendance.auth.presentation.dto.MeResponse;
 import com.yanus.attendance.auth.presentation.dto.RefreshRequest;
 import com.yanus.attendance.auth.presentation.dto.RegisterRequest;
+import com.yanus.attendance.auth.presentation.dto.ResendVerificationRequest;
+import com.yanus.attendance.auth.presentation.dto.VerifyEmailRequest;
+import com.yanus.attendance.global.exception.BusinessException;
+import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.global.response.ApiResponse;
+import com.yanus.attendance.member.domain.Member;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Void>> register(@RequestBody RegisterRequest request) {
@@ -44,6 +52,18 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal Long memberId) {
         authService.logout(memberId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestBody VerifyEmailRequest request) {
+        emailVerificationService.verify(request.token());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @PostMapping("/verify-email/resend")
+    public ResponseEntity<ApiResponse<Void>> resendVerification(@RequestBody ResendVerificationRequest request) {
+        emailVerificationService.resend(request.email());
         return ResponseEntity.ok(ApiResponse.success());
     }
 

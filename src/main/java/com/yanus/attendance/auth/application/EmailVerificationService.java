@@ -42,4 +42,10 @@ public class EmailVerificationService {
         verificationToken.use();
         member.activate();
     }
+
+    public void resend(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        sendVerification(member.getId(), member.getEmail());
+    }
 }
