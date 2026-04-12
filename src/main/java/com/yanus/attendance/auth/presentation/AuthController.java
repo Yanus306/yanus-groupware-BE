@@ -1,7 +1,6 @@
 package com.yanus.attendance.auth.presentation;
 
 import com.yanus.attendance.auth.application.AuthService;
-import com.yanus.attendance.auth.application.EmailService;
 import com.yanus.attendance.auth.application.EmailVerificationService;
 import com.yanus.attendance.auth.presentation.dto.LoginRequest;
 import com.yanus.attendance.auth.presentation.dto.LoginResponse;
@@ -10,10 +9,7 @@ import com.yanus.attendance.auth.presentation.dto.RefreshRequest;
 import com.yanus.attendance.auth.presentation.dto.RegisterRequest;
 import com.yanus.attendance.auth.presentation.dto.ResendVerificationRequest;
 import com.yanus.attendance.auth.presentation.dto.VerifyEmailRequest;
-import com.yanus.attendance.global.exception.BusinessException;
-import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.global.response.ApiResponse;
-import com.yanus.attendance.member.domain.Member;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
