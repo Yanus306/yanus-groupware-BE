@@ -32,6 +32,7 @@ public class AuthService {
     private final TeamRepository teamRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -50,7 +51,8 @@ public class AuthService {
                 MemberStatus.PENDING,
                 team
         );
-        memberRepository.save(member);
+        Member saved = memberRepository.save(member);
+        emailVerificationService.sendVerification(saved.getId(), saved.getEmail());
     }
 
     @Transactional

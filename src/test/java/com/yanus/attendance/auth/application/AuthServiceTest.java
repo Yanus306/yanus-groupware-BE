@@ -54,12 +54,17 @@ class AuthServiceTest {
                 refreshTokenRepository,
                 teamRepository,
                 jwtTokenProvider,
-                new BCryptPasswordEncoder()
+                new BCryptPasswordEncoder(),
+                emailVerificationService
         );
     }
 
     private Team savedTeam() {
         return teamRepository.save(Team.create("1팀"));
+    }
+
+    private void activate(String email) {
+        memberRepository.findByEmail(email).get().activate();
     }
 
     @Test
@@ -96,11 +101,11 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginRequest request = new LoginRequest("hong@yanus.com", "password123");
 
         // when
         LoginResponse response = authService.login(request);
-        memberRepository.findByEmail("hong@yanus.com").get().activate();
 
         // then
         assertThat(response.accessToken()).isNotBlank();
@@ -140,6 +145,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
         RefreshRequest request = new RefreshRequest(loginResponse.refreshToken());
 
@@ -170,6 +176,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
 
         // when
@@ -186,6 +193,7 @@ class AuthServiceTest {
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
         Member member = memberRepository.findByEmail("hong@yanus.com").get();
+        member.activate();
         member.deactivate();
         LoginRequest request = new LoginRequest("hong@yanus.com", "password123");
 
@@ -201,6 +209,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("김인직", "asdasd@naver.com", "asdasd12", team.getId()));
+        activate("asdasd@naver.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("asdasd@naver.com", "asdasd12"));
         String oldRefreshToken = loginResponse.refreshToken();
 
@@ -218,9 +227,10 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
         String oldRefreshToken = loginResponse.refreshToken();
-        authService.refresh(new RefreshRequest(oldRefreshToken)); // 1회 사용
+        authService.refresh(new RefreshRequest(oldRefreshToken));
 
         // when & then
         assertThatThrownBy(() -> authService.refresh(new RefreshRequest(oldRefreshToken)))
@@ -234,6 +244,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
         String oldRefreshToken = loginResponse.refreshToken();
         LoginResponse rotated = authService.refresh(new RefreshRequest(oldRefreshToken));
@@ -272,6 +283,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         for (int i = 0; i < 4; i++) {
             assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
                     .isInstanceOf(BusinessException.class);
