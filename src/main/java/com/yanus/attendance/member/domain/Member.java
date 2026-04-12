@@ -115,4 +115,8 @@ public class Member {
     public void changeTeam(Team team) {
         this.team = team;
     }
+
+    public boolean isPending() {
+        return this.status == MemberStatus.PENDING;
+    }
 }

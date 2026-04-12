@@ -32,6 +32,7 @@ public class AuthService {
     private final TeamRepository teamRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -47,10 +48,11 @@ public class AuthService {
                 request.email(),
                 passwordEncoder.encode(request.password()),
                 MemberRole.MEMBER,
-                MemberStatus.ACTIVE,
+                MemberStatus.PENDING,
                 team
         );
-        memberRepository.save(member);
+        Member saved = memberRepository.save(member);
+        emailVerificationService.sendVerification(saved.getId(), saved.getEmail());
     }
 
     @Transactional
@@ -73,6 +75,10 @@ public class AuthService {
 
         if (member.isInactive()) {
             throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
+        }
+
+        if (member.isPending()) {
+            throw new BusinessException(ErrorCode.MEMBER_PENDING);
         }
 
         member.recordLoginSuccess();

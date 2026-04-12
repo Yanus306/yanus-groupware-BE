@@ -11,6 +11,7 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
 import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
+import com.yanus.attendance.member.presentation.dto.TemporaryPasswordResponse;
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamRepository;
 import java.util.List;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.security.SecureRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -96,6 +98,20 @@ public class MemberService {
                 AuditAction.TEAM_CHANGE, previousTeam, team.getName());
     }
 
+    @Transactional
+    public TemporaryPasswordResponse resetPassword(Long actorId, Long targetId) {
+        Member actor = memberRepository.findById(actorId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        Member target = memberRepository.findById(targetId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        String temporaryPassword = generateTemporaryPassword();
+        validateAdmin(actorId);
+        target.updateProfile(null, temporaryPassword, passwordEncoder);
+        auditLogService.log(actorId, actor.getRole(), targetId,
+                AuditAction.PASSWORD_RESET, null, null);
+        return new TemporaryPasswordResponse(temporaryPassword);
+    }
+
     private Member validateAdmin(Long actorId) {
         Member actor = memberRepository.findById(actorId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
@@ -115,5 +131,15 @@ public class MemberService {
             return;
         }
         throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+
+    private String generateTemporaryPassword() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(8);
+        for (int i = 0; i < 8; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 }
