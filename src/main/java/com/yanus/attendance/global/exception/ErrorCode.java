@@ -19,11 +19,15 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "REFRESH_TOKEN_NOT_FOUND", "Refresh Token이 존재하지 않습니다."),
     TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "TOKEN_REUSED", "이미 사용된 토큰입니다. 재로그인이 필요합니다."),
     ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "ACCOUNT_LOCKED", "로그인 시도 횟수를 초과하여 계정이 잠겼습니다. 30분 후 재시도해주세요."),
+    INVALID_VERIFICATION_TOKEN(HttpStatus.BAD_REQUEST, "INVALID_VERIFICATION_TOKEN", "유효하지 않은 인증 토큰입니다."),
+    EXPIRED_VERIFICATION_TOKEN(HttpStatus.BAD_REQUEST, "EXPIRED_VERIFICATION_TOKEN", "만료된 인증 토큰입니다."),
+
 
     // Member
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND", "존재하지 않는 회원입니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "EMAIL_ALREADY_EXISTS", "이미 사용 중인 이메일입니다."),
     MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_INACTIVE", "비활성화된 계정입니다."),
+    MEMBER_PENDING(HttpStatus.FORBIDDEN, "MEMBER_PENDING", "이메일 인증되지 않은 계정입니다."),
 
     // Attendance
     ALREADY_CHECKED_IN(HttpStatus.BAD_REQUEST, "ALREADY_CHECKED_IN", "이미 출근 처리되었습니다."),
@@ -33,6 +37,8 @@ public enum ErrorCode {
     ATTENDANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "ATTENDANCE_NOT_FOUND", "출근 기록을 찾을 수 없습니다."),
     INVALID_WORK_SCHEDULE_TIME(HttpStatus.BAD_REQUEST, "INVALID_WORK_SCHEDULE_TIME", "종료 시간은 시작 시간 이후여야 합니다."),
     WORK_SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "WORK_SCHEDULE_NOT_FOUND", "근무 일정을 찾을 수 없습니다."),
+    INVALID_ATTENDANCE_IP(HttpStatus.FORBIDDEN, "INVALID_ATTENDANCE_IP", "허용되지 않은 네트워크에서의 출근 요청입니다."),
+    WORK_SCHEDULE_EVENT_DUPLICATE(HttpStatus.CONFLICT, "WORK_SCHEDULE_EVENT_DUPLICATE", "해당 날짜에 이미 근무 일정이 존재합니다."),
 
     // Team
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "존재하지 않는 팀입니다."),

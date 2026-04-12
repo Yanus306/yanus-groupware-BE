@@ -1,7 +1,7 @@
 package com.yanus.attendance.attendance.presentation.dto;
 
-import com.yanus.attendance.attendance.domain.Attendance;
-import com.yanus.attendance.attendance.domain.AttendanceStatus;
+import com.yanus.attendance.attendance.domain.attendance.Attendance;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 

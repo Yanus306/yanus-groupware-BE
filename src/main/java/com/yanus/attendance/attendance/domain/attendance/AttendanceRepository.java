@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.domain;
+package com.yanus.attendance.attendance.domain.attendance;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,4 +15,8 @@ public interface AttendanceRepository {
     List<Attendance> findAllByWorkDate(LocalDate workDate);
 
     List<Attendance> findAllByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status);
+
+    List<Attendance> findByMemberIdAndWorkDateBetween(Long memberId, LocalDate start, LocalDate end);
+
+    void delete(Attendance attendance);
 }

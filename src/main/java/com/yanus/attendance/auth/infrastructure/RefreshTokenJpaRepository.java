@@ -28,7 +28,3 @@ public class RefreshTokenJpaRepository implements RefreshTokenRepository {
     }
 }
 
-interface RefreshTokenJpaRepositoryPort extends org.springframework.data.jpa.repository.JpaRepository<RefreshToken, Long> {
-    Optional<RefreshToken> findByToken(String token);
-    void deleteByMemberId(Long memberId);
-}

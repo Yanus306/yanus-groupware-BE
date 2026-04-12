@@ -1,14 +1,16 @@
 package com.yanus.attendance.attendance.application;
 
-import com.yanus.attendance.attendance.domain.Attendance;
-import com.yanus.attendance.attendance.domain.AttendanceQueryRepository;
-import com.yanus.attendance.attendance.domain.AttendanceRepository;
-import com.yanus.attendance.attendance.domain.AttendanceStatus;
+import com.yanus.attendance.attendance.domain.attendance.Attendance;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceQueryRepository;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
+import com.yanus.attendance.attendance.presentation.dto.AttendanceRangeResponse;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
+import com.yanus.attendance.member.domain.MemberRole;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -68,9 +70,62 @@ public class AttendanceService {
         workingAttendances.forEach(attendance -> attendance.checkOut(checkOutTime));
     }
 
+    public AttendanceResponse checkIn(Long memberId, String clientIp) {
+        validateAttendanceIp(clientIp);
+        Member member = findMember(memberId);
+        validateNotAlreadyCheckedIn(memberId);
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.now());
+        attendanceRepository.save(attendance);
+        return AttendanceResponse.from(attendance);
+    }
+
+    public void resetAttendance(Long memberId, LocalDate today) {
+        Attendance attendance = attendanceRepository.findByMemberIdAndWorkDate(memberId, today)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
+        attendanceRepository.delete(attendance);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AttendanceRangeResponse> getAttendancesByRange(Long requesterId, Long targetMemberId, LocalDate startDate, LocalDate endDate) {
+        Member target = resolveTarget(requesterId, targetMemberId);
+        return attendanceRepository.findByMemberIdAndWorkDateBetween(target.getId(), startDate, endDate)
+                .stream()
+                .map(AttendanceRangeResponse::from)
+                .toList();
+    }
+
+    private Member resolveTarget(Long requesterId, Long targetMemberId) {
+        Member requester = findMember(requesterId);
+        if (requester.getRole() == MemberRole.ADMIN) {
+            return memberRepository.findById(targetMemberId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        }
+        if (requester.getRole() == MemberRole.TEAM_LEAD) {
+            Member target = memberRepository.findById(targetMemberId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+            validateSameTeam(requester, target);
+            return target;
+        }
+        if (!requesterId.equals(targetMemberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        return requester;
+    }
+
     private Member findMember(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private Attendance findTodayAttendance(Long memberId) {
+        return attendanceRepository.findByMemberIdAndWorkDate(memberId, LocalDate.now())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CHECKED_IN));
+    }
+
+    private void validateAttendanceIp(String clientIp) {
+        if (!clientIp.startsWith("220.69")) {
+            throw new BusinessException(ErrorCode.INVALID_ATTENDANCE_IP);
+        }
     }
 
     private void validateNotAlreadyCheckedIn(Long memberId) {
@@ -80,8 +135,9 @@ public class AttendanceService {
                 });
     }
 
-    private Attendance findTodayAttendance(Long memberId) {
-        return attendanceRepository.findByMemberIdAndWorkDate(memberId, LocalDate.now())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CHECKED_IN));
+    private void validateSameTeam(Member requester, Member target) {
+        if (!requester.getTeam().getName().equals(target.getTeam().getName())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
     }
 }

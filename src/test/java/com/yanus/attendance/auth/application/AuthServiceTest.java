@@ -2,7 +2,11 @@ package com.yanus.attendance.auth.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 
+import com.yanus.attendance.auth.FakeEmailVerificationTokenRepository;
 import com.yanus.attendance.auth.FakeRefreshTokenRepository;
 import com.yanus.attendance.auth.infrastructure.JwtTokenProvider;
 import com.yanus.attendance.auth.presentation.dto.LoginRequest;
@@ -13,6 +17,7 @@ import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
+import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.domain.Team;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,17 +43,28 @@ class AuthServiceTest {
                 3600000L,
                 604800000L
         );
+
+        EmailService emailService = mock(EmailService.class);
+        doNothing().when(emailService).sendVerificationEmail(anyString(), anyString());
+        EmailVerificationService emailVerificationService = new EmailVerificationService(
+                new FakeEmailVerificationTokenRepository(), memberRepository, emailService);
+
         authService = new AuthService(
                 memberRepository,
                 refreshTokenRepository,
                 teamRepository,
                 jwtTokenProvider,
-                new BCryptPasswordEncoder()
+                new BCryptPasswordEncoder(),
+                emailVerificationService
         );
     }
 
     private Team savedTeam() {
         return teamRepository.save(Team.create("1팀"));
+    }
+
+    private void activate(String email) {
+        memberRepository.findByEmail(email).get().activate();
     }
 
     @Test
@@ -85,6 +101,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginRequest request = new LoginRequest("hong@yanus.com", "password123");
 
         // when
@@ -128,6 +145,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
         RefreshRequest request = new RefreshRequest(loginResponse.refreshToken());
 
@@ -158,6 +176,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
 
         // when
@@ -174,6 +193,7 @@ class AuthServiceTest {
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
         Member member = memberRepository.findByEmail("hong@yanus.com").get();
+        member.activate();
         member.deactivate();
         LoginRequest request = new LoginRequest("hong@yanus.com", "password123");
 
@@ -189,6 +209,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("김인직", "asdasd@naver.com", "asdasd12", team.getId()));
+        activate("asdasd@naver.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("asdasd@naver.com", "asdasd12"));
         String oldRefreshToken = loginResponse.refreshToken();
 
@@ -206,9 +227,10 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
         String oldRefreshToken = loginResponse.refreshToken();
-        authService.refresh(new RefreshRequest(oldRefreshToken)); // 1회 사용
+        authService.refresh(new RefreshRequest(oldRefreshToken));
 
         // when & then
         assertThatThrownBy(() -> authService.refresh(new RefreshRequest(oldRefreshToken)))
@@ -222,6 +244,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
         String oldRefreshToken = loginResponse.refreshToken();
         LoginResponse rotated = authService.refresh(new RefreshRequest(oldRefreshToken));
@@ -260,6 +283,7 @@ class AuthServiceTest {
         // given
         Team team = savedTeam();
         authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        activate("hong@yanus.com");
         for (int i = 0; i < 4; i++) {
             assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
                     .isInstanceOf(BusinessException.class);
@@ -276,5 +300,32 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ACCOUNT_LOCKED);
+    }
+
+    @Test
+    @DisplayName("회원가입 후 PENDING 상태로 저장")
+    void register_saves_member_as_pending_status() {
+        // given
+        Team team = savedTeam();
+
+        // when
+        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+
+        // then
+        assertThat(memberRepository.findByEmail("hong@yanus.com").get().getStatus())
+                .isEqualTo(MemberStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("PENDING 상태 멤버 로그인 시 예외 발생")
+    void PENDING_member_login_throw_error() {
+        // given
+        Team team = savedTeam();
+        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+
+        // when & then
+        assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "password123")))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_PENDING);
     }
 }

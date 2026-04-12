@@ -1,8 +1,8 @@
 package com.yanus.attendance.attendance.infrastructure;
 
-import com.yanus.attendance.attendance.domain.Attendance;
-import com.yanus.attendance.attendance.domain.AttendanceRepository;
-import com.yanus.attendance.attendance.domain.AttendanceStatus;
+import com.yanus.attendance.attendance.domain.attendance.Attendance;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -38,5 +38,15 @@ public class AttendanceJpaRepository implements AttendanceRepository {
     @Override
     public List<Attendance> findAllByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status) {
         return repository.findAllByWorkDateAndStatus(workDate, status);
+    }
+
+    @Override
+    public List<Attendance> findByMemberIdAndWorkDateBetween(Long memberId, LocalDate start, LocalDate end) {
+        return repository.findByMemberIdAndWorkDateBetween(memberId, start, end);
+    }
+
+    @Override
+    public void delete(Attendance attendance) {
+        repository.delete(attendance);
     }
 }
