@@ -47,7 +47,7 @@ public class AuthService {
                 request.email(),
                 passwordEncoder.encode(request.password()),
                 MemberRole.MEMBER,
-                MemberStatus.ACTIVE,
+                MemberStatus.PENDING,
                 team
         );
         memberRepository.save(member);
@@ -73,6 +73,10 @@ public class AuthService {
 
         if (member.isInactive()) {
             throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
+        }
+
+        if (member.isPending()) {
+            throw new BusinessException(ErrorCode.MEMBER_PENDING);
         }
 
         member.recordLoginSuccess();
