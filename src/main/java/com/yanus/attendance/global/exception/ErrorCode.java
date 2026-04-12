@@ -19,6 +19,9 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "REFRESH_TOKEN_NOT_FOUND", "Refresh Token이 존재하지 않습니다."),
     TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "TOKEN_REUSED", "이미 사용된 토큰입니다. 재로그인이 필요합니다."),
     ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "ACCOUNT_LOCKED", "로그인 시도 횟수를 초과하여 계정이 잠겼습니다. 30분 후 재시도해주세요."),
+    INVALID_VERIFICATION_TOKEN(HttpStatus.BAD_REQUEST, "INVALID_VERIFICATION_TOKEN", "유효하지 않은 인증 토큰입니다."),
+    EXPIRED_VERIFICATION_TOKEN(HttpStatus.BAD_REQUEST, "EXPIRED_VERIFICATION_TOKEN", "만료된 인증 토큰입니다."),
+
 
     // Member
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND", "존재하지 않는 회원입니다."),
