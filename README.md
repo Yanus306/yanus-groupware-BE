@@ -56,6 +56,9 @@
 
 ## 아키텍처
 
+<img width="3260" height="1312" alt="아키텍처구조" src="https://github.com/user-attachments/assets/9d2a18e6-f132-45e0-810b-c27f9f598435" />
+
+
 ### 인프라 구성
 
 ```
