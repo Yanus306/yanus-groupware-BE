@@ -13,11 +13,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "work_schedule_event")
@@ -39,6 +40,10 @@ public class WorkScheduleEvent {
     private LocalTime startTime;
 
     private LocalTime endTime;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     public static WorkScheduleEvent create(Member member, LocalDate date, LocalTime startTime, LocalTime endTime) {
         validateTime(startTime, endTime);
