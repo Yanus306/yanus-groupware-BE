@@ -42,13 +42,12 @@ public class AttendanceSettingServiceTest {
     }
 
     @Test
-    @DisplayName("관리자가 자동 체크아웃 시간을 조회하면 기본값 23:59:59 반환")
-    void 관리자가_자동_체크아웃_시간_조회_시_기본값_반환() {
-        // given
-        Member admin = createMember(MemberRole.ADMIN);
+    @DisplayName("설정값이 없을 때 조회하면 기본값 23:59:59 반환")
+    void 설정값이_없을_때_조회하면_기본값_반환() {
+        // given (설정값 없음)
 
         // when
-        AutoCheckoutTimeResponse response = attendanceSettingService.getAutoCheckoutTime(admin.getId());
+        AutoCheckoutTimeResponse response = attendanceSettingService.getAutoCheckoutTime();
 
         // then
         assertThat(response.autoCheckoutTime()).isEqualTo(LocalTime.of(23, 59, 59));
@@ -90,7 +89,7 @@ public class AttendanceSettingServiceTest {
                 new AutoCheckoutTimeRequest(LocalTime.of(21, 0, 0)));
 
         // when
-        AutoCheckoutTimeResponse response = attendanceSettingService.getAutoCheckoutTime(admin.getId());
+        AutoCheckoutTimeResponse response = attendanceSettingService.getAutoCheckoutTime();
 
         // then
         assertThat(response.autoCheckoutTime()).isEqualTo(LocalTime.of(21, 0, 0));
