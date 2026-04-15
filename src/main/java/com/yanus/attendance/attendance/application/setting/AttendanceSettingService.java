@@ -23,8 +23,10 @@ public class AttendanceSettingService {
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
-    public AutoCheckoutTimeResponse getAutoCheckoutTime() {
-        return AutoCheckoutTimeResponse.from(getSetting());
+    public AutoCheckoutTimeResponse getAutoCheckoutTime(Long actorId) {
+        validateAdmin(actorId);
+        AttendanceSetting setting = getOrCreateDefault();
+        return AutoCheckoutTimeResponse.from(setting);
     }
 
     public AutoCheckoutTimeResponse updateAutoCheckoutTime(Long actorId, AutoCheckoutTimeRequest request) {

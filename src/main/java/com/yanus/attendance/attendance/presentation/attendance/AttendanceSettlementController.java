@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.presentation;
+package com.yanus.attendance.attendance.presentation.attendance;
 
 import com.yanus.attendance.attendance.application.attendance.AttendanceSettlementService;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceSettlementResponse;

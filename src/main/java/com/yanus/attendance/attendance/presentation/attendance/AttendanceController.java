@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.presentation;
+package com.yanus.attendance.attendance.presentation.attendance;
 
 import com.yanus.attendance.attendance.presentation.dto.AttendanceRangeResponse;
 import jakarta.servlet.http.HttpServletRequest;
