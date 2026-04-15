@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeAttendanceSettingRepository;
-import com.yanus.attendance.attendance.domain.setting.AttendanceSetting;
+import com.yanus.attendance.attendance.application.setting.AttendanceSettingService;
 import com.yanus.attendance.attendance.presentation.dto.AutoCheckoutTimeRequest;
 import com.yanus.attendance.attendance.presentation.dto.AutoCheckoutTimeResponse;
 import com.yanus.attendance.global.exception.BusinessException;
@@ -21,7 +21,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalTime;
 
-class AttendanceSettingServiceTest {
+public class AttendanceSettingServiceTest {
 
     private AttendanceSettingService attendanceSettingService;
     private FakeMemberRepository memberRepository;
@@ -42,15 +42,12 @@ class AttendanceSettingServiceTest {
     }
 
     @Test
-    @DisplayName("관리자가 자동 체크아웃 시간을 조회하면 기본값 23:59:59 반환")
-    void 관리자가_자동_체크아웃_시간_조회_시_기본값_반환() {
-        // given
-        Member admin = createMember(MemberRole.ADMIN);
-
+    @DisplayName("자동 체크아웃 시간 조회 시 기본값 23:59:59 반환")
+    void 자동_체크아웃_시간_조회_시_기본값_반환() {
         // when
-        AutoCheckoutTimeResponse response = attendanceSettingService.getAutoCheckoutTime(admin.getId());
+        AutoCheckoutTimeResponse response = attendanceSettingService.getAutoCheckoutTime();
 
-        // then`
+        // then
         assertThat(response.autoCheckoutTime()).isEqualTo(LocalTime.of(23, 59, 59));
     }
 
@@ -90,7 +87,7 @@ class AttendanceSettingServiceTest {
                 new AutoCheckoutTimeRequest(LocalTime.of(21, 0, 0)));
 
         // when
-        AutoCheckoutTimeResponse response = attendanceSettingService.getAutoCheckoutTime(admin.getId());
+        AutoCheckoutTimeResponse response = attendanceSettingService.getAutoCheckoutTime();
 
         // then
         assertThat(response.autoCheckoutTime()).isEqualTo(LocalTime.of(21, 0, 0));
