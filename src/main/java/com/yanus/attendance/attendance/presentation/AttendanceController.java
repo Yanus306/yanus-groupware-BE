@@ -2,7 +2,7 @@ package com.yanus.attendance.attendance.presentation;
 
 import com.yanus.attendance.attendance.presentation.dto.AttendanceRangeResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import com.yanus.attendance.attendance.application.AttendanceService;
+import com.yanus.attendance.attendance.application.attendance.AttendanceService;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceResponse;
 import com.yanus.attendance.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;

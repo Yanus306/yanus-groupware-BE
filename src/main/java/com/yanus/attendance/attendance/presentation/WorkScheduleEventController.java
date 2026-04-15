@@ -1,6 +1,6 @@
 package com.yanus.attendance.attendance.presentation;
 
-import com.yanus.attendance.attendance.application.WorkScheduleEventService;
+import com.yanus.attendance.attendance.application.workschedule.WorkScheduleEventService;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleEventRequest;
 import com.yanus.attendance.attendance.presentation.dto.WorkScheduleEventResponse;
 import com.yanus.attendance.global.response.ApiResponse;
