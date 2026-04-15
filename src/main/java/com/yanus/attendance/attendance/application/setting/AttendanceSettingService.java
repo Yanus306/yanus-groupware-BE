@@ -23,9 +23,9 @@ public class AttendanceSettingService {
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
-    public AutoCheckoutTimeResponse getAutoCheckoutTime(Long actorId) {
-        validateAdmin(actorId);
-        AttendanceSetting setting = getOrCreateDefault();
+    public AutoCheckoutTimeResponse getAutoCheckoutTime() {
+        AttendanceSetting setting = settingRepository.find()
+                .orElse(AttendanceSetting.createDefault());
         return AutoCheckoutTimeResponse.from(setting);
     }
 
@@ -43,11 +43,6 @@ public class AttendanceSettingService {
     private AttendanceSetting getSetting() {
         return settingRepository.find()
                 .orElse(AttendanceSetting.createDefault());
-    }
-
-    private AttendanceSetting getOrCreateDefault() {
-        return settingRepository.find()
-                .orElseGet(() -> settingRepository.save(AttendanceSetting.createDefault()));
     }
 
     private void validateAdmin(Long actorId) {
