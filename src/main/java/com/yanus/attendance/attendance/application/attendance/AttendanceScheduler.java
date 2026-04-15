@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.application;
+package com.yanus.attendance.attendance.application.attendance;
 
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;

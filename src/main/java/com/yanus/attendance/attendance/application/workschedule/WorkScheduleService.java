@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.application;
+package com.yanus.attendance.attendance.application.workschedule;
 
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;

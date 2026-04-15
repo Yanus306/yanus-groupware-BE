@@ -1,5 +1,6 @@
-package com.yanus.attendance.attendance.application;
+package com.yanus.attendance.attendance.application.attendance;
 
+import com.yanus.attendance.attendance.application.setting.AttendanceSettingService;
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
@@ -13,6 +14,7 @@ import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final MemberRepository memberRepository;
     private final AttendanceQueryRepository attendanceQueryRepository;
+    private final AttendanceSettingService attendanceSettingService;
 
     public AttendanceResponse checkIn(Long memberId) {
         Member member = findMember(memberId);
@@ -66,7 +69,8 @@ public class AttendanceService {
     public void autoCheckOut(LocalDate workDate) {
         List<Attendance> workingAttendances =
                 attendanceRepository.findAllByWorkDateAndStatus(workDate, AttendanceStatus.WORKING);
-        LocalDateTime checkOutTime = workDate.atTime(23, 59, 59);
+        LocalTime checkoutTime = attendanceSettingService.getAutoCheckoutTimeValue();
+        LocalDateTime checkOutTime = workDate.atTime(checkoutTime);
         workingAttendances.forEach(attendance -> attendance.checkOut(checkOutTime));
     }
 

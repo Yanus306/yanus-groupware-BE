@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
 import com.yanus.attendance.attendance.FakeWorkScheduleEventRepository;
 import com.yanus.attendance.attendance.FakeWorkScheduleRepository;
+import com.yanus.attendance.attendance.application.attendance.AttendanceSettlementService;
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceSettlementStatus;

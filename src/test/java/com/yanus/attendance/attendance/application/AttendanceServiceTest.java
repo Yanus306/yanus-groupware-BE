@@ -6,6 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeAttendanceQueryRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
+import com.yanus.attendance.attendance.FakeAttendanceSettingRepository;
+import com.yanus.attendance.attendance.application.attendance.AttendanceService;
+import com.yanus.attendance.attendance.application.setting.AttendanceSettingService;
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
@@ -34,6 +37,8 @@ public class AttendanceServiceTest {
     private AttendanceService attendanceService;
     private AttendanceRepository attendanceRepository;
     private MemberRepository memberRepository;
+    private FakeAttendanceQueryRepository attendanceQueryRepository;
+    private AttendanceSettingService settingService;
 
     private final AtomicLong memberEmailSeq = new AtomicLong(1);
     private final AtomicLong teamIdSeq = new AtomicLong(1);
@@ -42,8 +47,9 @@ public class AttendanceServiceTest {
     void setUp() {
         attendanceRepository = new FakeAttendanceRepository();
         memberRepository = new FakeMemberRepository();
-        AttendanceQueryRepository attendanceQueryRepository = new FakeAttendanceQueryRepository(attendanceRepository);
-        attendanceService = new AttendanceService(attendanceRepository, memberRepository, attendanceQueryRepository);
+        settingService = new AttendanceSettingService(new FakeAttendanceSettingRepository(), memberRepository);
+        attendanceQueryRepository = new FakeAttendanceQueryRepository(attendanceRepository);
+        attendanceService = new AttendanceService(attendanceRepository, memberRepository, attendanceQueryRepository, settingService);
         memberEmailSeq.set(1);
         teamIdSeq.set(1);
     }
