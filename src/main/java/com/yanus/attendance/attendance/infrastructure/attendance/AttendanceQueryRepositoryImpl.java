@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.infrastructure;
+package com.yanus.attendance.attendance.infrastructure.attendance;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
