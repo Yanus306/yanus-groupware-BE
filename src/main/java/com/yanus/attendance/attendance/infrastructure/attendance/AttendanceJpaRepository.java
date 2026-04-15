@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.infrastructure;
+package com.yanus.attendance.attendance.infrastructure.attendance;
 
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
