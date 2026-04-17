@@ -66,11 +66,14 @@ public class AttendanceService {
                 .toList();
     }
 
-    public void autoCheckOut(LocalDate workDate) {
+    public void autoCheckOut(LocalDate workDate, LocalTime currentTime) {
+        LocalTime configuredTime = attendanceSettingService.getAutoCheckoutTimeValue();
+        if (currentTime.isBefore(configuredTime)) {
+            return;
+        }
         List<Attendance> workingAttendances =
                 attendanceRepository.findAllByWorkDateAndStatus(workDate, AttendanceStatus.WORKING);
-        LocalTime checkoutTime = attendanceSettingService.getAutoCheckoutTimeValue();
-        LocalDateTime checkOutTime = workDate.atTime(checkoutTime);
+        LocalDateTime checkOutTime = workDate.atTime(configuredTime);
         workingAttendances.forEach(attendance -> attendance.checkOut(checkOutTime));
     }
 
