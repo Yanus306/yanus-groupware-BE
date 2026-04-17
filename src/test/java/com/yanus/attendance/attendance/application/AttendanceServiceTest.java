@@ -25,6 +25,7 @@ import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
@@ -186,7 +187,7 @@ public class AttendanceServiceTest {
         attendanceService.checkIn(member.getId());
 
         // when
-        attendanceService.autoCheckOut(date);
+        attendanceService.autoCheckOut(date, LocalTime.of(23, 59, 59));
         List<AttendanceResponse> responses = attendanceService.getMyAttendances(member.getId());
 
         // then
