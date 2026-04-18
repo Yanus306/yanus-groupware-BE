@@ -86,6 +86,60 @@ member_id BIGINT NOT NULL REFERENCES member(member_id)
 
 ---
 
+### 5. 운영 서버 V17 Checksum 불일치 — 파일 재포맷만 해도 발생
+
+**증상**
+서버 재기동 시 Flyway 마이그레이션 실패로 서비스 전체가 죽음.
+```
+FlywayValidateException: Validate failed: Migration checksum mismatch for migration version 17
+-> Applied to database : 1234567890
+-> Resolved locally    : 561208955
+```
+
+**원인**
+V17 파일 본문 SQL은 바꾸지 않았지만, 나중 커밋(V18 추가 시)에서 V17 파일이 IDE 저장 시 들여쓰기/개행이
+재포맷되면서 체크섬이 바뀜. Flyway는 파일 바이트 단위로 체크섬을 계산하기 때문에 공백 변경도 실패로 판정.
+
+**해결**
+운영 DB는 `docker compose down -v`로 초기화 불가 → `flyway_schema_history` 테이블의 체크섬 값을 직접 수정.
+```bash
+psql -U yanus -d yanus -c \
+  "UPDATE flyway_schema_history SET checksum = 561208955 WHERE version = '17';"
+```
+이후 서버 재기동하면 정상 부팅.
+
+**예방**
+적용된 마이그레이션 파일은 **포맷팅 포함 일체 수정 금지**. 새 변경은 무조건 새 버전 파일로 추가.
+
+---
+
+### 6. JWT_SECRET systemd 환경변수 로딩 실패
+
+**증상**
+서버 재기동 시 JWT 관련 빈 초기화 단계에서 실패.
+```
+jwt.secret must not be null
+```
+
+**원인**
+`application-prod.properties`가 `jwt.secret=${JWT_SECRET}`로 환경변수를 참조하지만
+systemd 서비스 파일에 `EnvironmentFile` 경로가 누락되거나 파일이 비어 있어 주입 실패.
+
+**해결**
+systemd 서비스 파일(`/etc/systemd/system/yanus.service`)에 `EnvironmentFile` 명시.
+```
+[Service]
+EnvironmentFile=/home/yanus/app/.env
+ExecStart=/usr/bin/java -jar /home/yanus/app/app.jar
+```
+`.env` 파일 예시:
+```
+JWT_SECRET=실제-최소-32자-시크릿-키
+```
+변경 후 `sudo systemctl daemon-reload && sudo systemctl restart yanus`.
+
+---
+
 ## JWT
 
 ### 1. @Value 잘못된 import

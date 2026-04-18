@@ -36,3 +36,27 @@ schedules.stream()
     .map(entry -> new MemberWorkScheduleResponse(...))
     .toList();
 ```
+
+---
+
+### 3. WorkScheduleEvent 등록 시 created_at NOT NULL 위반 (#149)
+
+**증상**
+날짜별 근무 일정 추가 API(`POST /api/v1/work-schedule-events`) 호출 시 DB 제약 위반.
+```
+ERROR: null value in column "created_at" of relation "work_schedule_event"
+violates not-null constraint
+```
+
+**원인**
+V17 마이그레이션에는 `created_at TIMESTAMP NOT NULL`이 있지만 `WorkScheduleEvent` 엔티티에는
+대응되는 `createdAt` 필드 자체가 없어서 INSERT 시 null로 시도됨.
+
+**해결**
+엔티티에 `@CreationTimestamp` 달린 필드 추가.
+```java
+@CreationTimestamp
+@Column(name = "created_at", nullable = false, updatable = false)
+private LocalDateTime createdAt;
+```
+`@CreationTimestamp`는 Hibernate가 INSERT 시점에 자동으로 값을 채워주기 때문에 서비스 로직 변경 불필요.
