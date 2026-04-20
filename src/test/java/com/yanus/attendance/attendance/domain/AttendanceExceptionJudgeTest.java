@@ -124,4 +124,35 @@ public class AttendanceExceptionJudgeTest {
         // then
         assertThat(result).isEmpty();
     }
+
+    @Test
+    @DisplayName("야간 근무에서 시작시간보다 뒤에 체크인하면 LATE")
+    void overnight_late_check_in() {
+        // given: 월 22:00~화 06:00
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(22, 0), LocalTime.of(6, 0), WeekPattern.EVERY, true);
+        // 월 22:05 체크인
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 22, 5));
+
+        // when
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, false);
+
+        // then
+        assertThat(result).contains(AttendanceExceptionType.LATE);
+    }
+
+    @Test
+    @DisplayName("야간 근무에서 시작시간 정확히 같으면 LATE 아님")
+    void overnight_tie_not_late() {
+        // given
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(22, 0), LocalTime.of(6, 0), WeekPattern.EVERY, true);
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 22, 0));
+
+        // when
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, false);
+
+        // then
+        assertThat(result).doesNotContain(AttendanceExceptionType.LATE);
+    }
 }
