@@ -20,6 +20,11 @@ public class AttendanceExceptionJudge {
         if (hasSchedule && !hasAttendance) {
             result.add(AttendanceExceptionType.MISSED_CHECK_IN);
         }
+
+        if (!hasSchedule && hasAttendance) {
+            result.add(AttendanceExceptionType.NO_SCHEDULE);
+        }
+
         return result;
     }
 }
