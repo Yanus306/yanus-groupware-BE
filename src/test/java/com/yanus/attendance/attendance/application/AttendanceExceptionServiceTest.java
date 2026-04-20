@@ -95,4 +95,29 @@ public class AttendanceExceptionServiceTest {
         // then
         assertThat(exceptionRepository.findAllByWorkDate(MONDAY)).hasSize(1);
     }
+
+    @Test
+    @DisplayName("summary는 타입별 카운트를 집계한다")
+    void summary는_타입별_카운트를_집계한다() {
+        // given
+        Member member1 = createMember("홍길동1", "hong1@test.com");
+        Member member2 = createMember("홍길동2", "hong2@test.com");
+        Member member3 = createMember("홍길동3", "hong3@test.com");
+
+        exceptionRepository.save(AttendanceException.open(
+                member1, null, MONDAY, AttendanceExceptionType.MISSED_CHECK_IN));
+        exceptionRepository.save(AttendanceException.open(
+                member2, null, MONDAY, AttendanceExceptionType.MISSED_CHECK_IN));
+        exceptionRepository.save(AttendanceException.open(
+                member3, null, MONDAY, AttendanceExceptionType.LATE));
+
+        // when
+        Summary summary = service.getSummary(MONDAY);
+
+        // then
+        assertThat(summary.totalCount()).isEqualTo(3);
+        assertThat(summary.missedCheckInCount()).isEqualTo(2);
+        assertThat(summary.lateCount()).isEqualTo(1);
+        assertThat(summary.openCount()).isEqualTo(3);
+    }
 }
