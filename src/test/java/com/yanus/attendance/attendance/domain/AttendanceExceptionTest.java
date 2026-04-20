@@ -69,4 +69,19 @@ public class AttendanceExceptionTest {
         assertThat(exception.getResolvedBy()).isEqualTo("admin");
         assertThat(exception.getResolvedAt()).isEqualTo(ACTED_AT);
     }
+
+    @Test
+    @DisplayName("APPROVED 상태에서 resolve 하면 RESOLVED 처리")
+    void APPROVED_status_resolve_to_RESOLVED_status() {
+        // given
+        AttendanceException exception = AttendanceException.open(
+                member, null, WORK_DATE, AttendanceExceptionType.LATE);
+        exception.approve("admin", ACTED_AT, null);
+
+        // when
+        exception.resolve("admin", ACTED_AT.plusHours(1), null);
+
+        // then
+        assertThat(exception.getStatus()).isEqualTo(AttendanceExceptionStatus.RESOLVED);
+    }
 }
