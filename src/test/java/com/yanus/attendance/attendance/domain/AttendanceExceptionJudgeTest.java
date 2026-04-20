@@ -3,6 +3,7 @@ package com.yanus.attendance.attendance.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
+import com.yanus.attendance.attendance.domain.exception.AttendanceException;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionJudge;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
@@ -47,5 +48,35 @@ public class AttendanceExceptionJudgeTest {
 
         // then
         assertThat(result).containsExactly(AttendanceExceptionType.NO_SCHEDULE);
+    }
+
+    @Test
+    @DisplayName("근무 시작 시간 보다 늦게 체크인하면 LATE 예외 반환")
+    void work_schedule_time_late_check_in_throw_LATE() {
+        // given
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 1));
+
+        // when
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, false);
+
+        // then
+        assertThat(result).containsExactly(AttendanceExceptionType.LATE);
+    }
+
+    @Test
+    @DisplayName("근무 시작 시간과 정확히 동일하면 LATE 예외 발생하지 않음")
+    void work_schedule_time_tie_not_exception() {
+        // given
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
+
+        // when
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, false);
+
+        // then
+        assertThat(result).isEmpty();
     }
 }
