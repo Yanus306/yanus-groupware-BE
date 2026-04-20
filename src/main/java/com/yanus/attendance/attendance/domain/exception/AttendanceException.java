@@ -1,6 +1,8 @@
 package com.yanus.attendance.attendance.domain.exception;
 
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
+import com.yanus.attendance.global.exception.BusinessException;
+import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -69,5 +71,26 @@ public class AttendanceException {
         exception.status = AttendanceExceptionStatus.OPEN;
         exception.createdAt = LocalDateTime.now();
         return exception;
+    }
+
+    public void approve(String approvedBy, LocalDateTime approvedAt, String note) {
+        ensureStatus(AttendanceExceptionStatus.OPEN);
+        this.status = AttendanceExceptionStatus.APPROVED;
+        this.approvedBy = approvedBy;
+        this.approvedAt = approvedAt;
+        overwriteNote(note);
+    }
+
+    private void ensureStatus(AttendanceExceptionStatus expected) {
+        if (this.status != expected) {
+            throw new BusinessException(ErrorCode.INVALID_EXCEPTION_STATE_TRANSITION);
+        }
+    }
+
+    private void overwriteNote(String note) {
+        if (note == null) {
+            return;
+        }
+        this.note = note;
     }
 }
