@@ -119,7 +119,7 @@ public class AttendanceExceptionJudgeTest {
         attendance.checkOut(LocalDateTime.of(2026, 4, 20, 18, 0));
 
         // when
-        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, true);
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, false);
 
         // then
         assertThat(result).isEmpty();
