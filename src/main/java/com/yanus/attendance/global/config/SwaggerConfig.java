@@ -26,7 +26,7 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("yANUs groupware API")
                         .description("yANUs Groupware 백엔드 API 문서")
-                        .version("v1.0"))
+                        .version("v3.0"))
                 .components(new Components().addSecuritySchemes("bearerAuth", securityScheme))
                 .addSecurityItem(securityRequirement);
     }
