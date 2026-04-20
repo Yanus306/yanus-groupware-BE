@@ -78,7 +78,7 @@ class AttendanceSettlementServiceTest {
         // given - 2026-03-04 (수요일)
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
         workScheduleRepository.save(schedule);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 3, 4, 8, 55, 0));
         attendanceRepository.save(attendance);
@@ -100,7 +100,7 @@ class AttendanceSettlementServiceTest {
         // given - 2026-03-04 (수요일)
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
         workScheduleRepository.save(schedule);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 3, 4, 9, 7, 59));
         attendanceRepository.save(attendance);
@@ -122,7 +122,7 @@ class AttendanceSettlementServiceTest {
         // given - 반복 일정 09:00, 이벤트로 10:00 오버라이드, 10:05 출근
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
         workScheduleRepository.save(schedule);
         WorkScheduleEvent event = WorkScheduleEvent.create(member,
                 LocalDate.of(2026, 3, 4), LocalTime.of(10, 0), LocalTime.of(19, 0));
@@ -162,7 +162,7 @@ class AttendanceSettlementServiceTest {
         // given - 일정은 있고 출근 기록 없음
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
         workScheduleRepository.save(schedule);
 
         // when
@@ -182,7 +182,7 @@ class AttendanceSettlementServiceTest {
         // given - 3/4 (수) 10분 지각, 3/11 (수) 정시 출근
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
         workScheduleRepository.save(schedule);
         attendanceRepository.save(Attendance.checkIn(member, LocalDateTime.of(2026, 3, 4, 9, 10, 0)));
         attendanceRepository.save(Attendance.checkIn(member, LocalDateTime.of(2026, 3, 11, 9, 0, 0)));

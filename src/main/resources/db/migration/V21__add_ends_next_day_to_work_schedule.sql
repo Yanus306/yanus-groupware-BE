@@ -1,2 +1,0 @@
-ALTER TABLE work_schedule
-    ADD COLUMN ends_next_day BOOLEAN NOT NULL DEFAULT FALSE;
