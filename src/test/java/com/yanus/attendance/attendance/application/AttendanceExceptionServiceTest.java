@@ -9,12 +9,15 @@ import com.yanus.attendance.attendance.FakeAttendanceSettingRepository;
 import com.yanus.attendance.attendance.FakeWorkScheduleRepository;
 import com.yanus.attendance.attendance.application.exception.AttendanceExceptionService;
 import com.yanus.attendance.attendance.application.setting.AttendanceSettingService;
+import com.yanus.attendance.attendance.domain.attendance.Attendance;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
 import com.yanus.attendance.attendance.domain.exception.AttendanceException;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatus;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionSummary;
+import com.yanus.attendance.attendance.presentation.dto.exception.BulkAutoCheckoutResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
@@ -23,6 +26,7 @@ import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -199,5 +203,74 @@ public class AttendanceExceptionServiceTest {
         // when & then
         assertThatThrownBy(() -> service.approve(999L, "admin", null))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("memberIds를 null로 호출하면 해당 날짜 MISSED_CHECK_OUT 전체를 처리한다")
+    void memberIds_null_process_all_missed_check_out() {
+        // given
+        Member member1 = createMember("홍길동1", "h1@test.com");
+        Member member2 = createMember("홍길동2", "h2@test.com");
+        Attendance a1 = attendanceRepository.save(
+                Attendance.checkIn(member1, LocalDateTime.of(2026, 4, 20, 9, 0)));
+        Attendance a2 = attendanceRepository.save(
+                Attendance.checkIn(member2, LocalDateTime.of(2026, 4, 20, 9, 0)));
+        exceptionRepository.save(AttendanceException.open(
+                member1, a1, MONDAY, AttendanceExceptionType.MISSED_CHECK_OUT));
+        exceptionRepository.save(AttendanceException.open(
+                member2, a2, MONDAY, AttendanceExceptionType.MISSED_CHECK_OUT));
+
+        // when
+        BulkAutoCheckoutResponse response = service.bulkAutoCheckout(MONDAY, null, "system");
+
+        // then
+        assertThat(response.processedCount()).isEqualTo(2);
+        assertThat(response.updatedIds()).containsExactlyInAnyOrder(a1.getId(), a2.getId());
+        assertThat(a1.getStatus()).isEqualTo(AttendanceStatus.LEFT);
+        assertThat(a1.getCheckOutTime()).isEqualTo(LocalDateTime.of(2026, 4, 20, 23, 59, 59));
+    }
+
+    @Test
+    @DisplayName("memberIds 지정 시 해당 멤버만 처리한다")
+    void memberIds_specified_process_only_specified_member() {
+        // given
+        Member member1 = createMember("홍길동1", "h1@test.com");
+        Member member2 = createMember("홍길동2", "h2@test.com");
+        Attendance a1 = attendanceRepository.save(
+                Attendance.checkIn(member1, LocalDateTime.of(2026, 4, 20, 9, 0)));
+        Attendance a2 = attendanceRepository.save(
+                Attendance.checkIn(member2, LocalDateTime.of(2026, 4, 20, 9, 0)));
+        exceptionRepository.save(AttendanceException.open(
+                member1, a1, MONDAY, AttendanceExceptionType.MISSED_CHECK_OUT));
+        exceptionRepository.save(AttendanceException.open(
+                member2, a2, MONDAY, AttendanceExceptionType.MISSED_CHECK_OUT));
+
+        // when
+        BulkAutoCheckoutResponse response = service.bulkAutoCheckout(
+                MONDAY, List.of(member1.getId()), "system");
+
+        // then
+        assertThat(response.processedCount()).isEqualTo(1);
+        assertThat(response.updatedIds()).containsExactly(a1.getId());
+        assertThat(a2.getStatus()).isEqualTo(AttendanceStatus.WORKING);
+    }
+
+    @Test
+    @DisplayName("이미 RESOLVED 된 예외는 재처리하지 않는다")
+    void already_resolved_error() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        Attendance attendance = attendanceRepository.save(
+                Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0)));
+        AttendanceException exception = AttendanceException.open(
+                member, attendance, MONDAY, AttendanceExceptionType.MISSED_CHECK_OUT);
+        exception.resolve("system", LocalDateTime.now(), null);
+        exceptionRepository.save(exception);
+
+        // when
+        BulkAutoCheckoutResponse response = service.bulkAutoCheckout(MONDAY, null, "system");
+
+        // then
+        assertThat(response.processedCount()).isZero();
     }
 }

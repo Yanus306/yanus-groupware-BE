@@ -3,12 +3,14 @@ package com.yanus.attendance.attendance.application.exception;
 import com.yanus.attendance.attendance.application.setting.AttendanceSettingService;
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
+import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
 import com.yanus.attendance.attendance.domain.exception.*;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionListResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionSummary;
+import com.yanus.attendance.attendance.presentation.dto.exception.BulkAutoCheckoutResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
@@ -90,6 +92,22 @@ public class AttendanceExceptionService {
         AttendanceException exception = findException(id);
         exception.updateNote(note, reason);
         return toResponse(exception);
+    }
+
+    @Transactional
+    public BulkAutoCheckoutResponse bulkAutoCheckout(LocalDate date, List<Long> memberIds, String actor) {
+        generateMissingExceptions(date);
+        List<AttendanceException> targets = exceptionRepository
+                .findAllByWorkDateAndType(date, AttendanceExceptionType.MISSED_CHECK_OUT)
+                .stream()
+                .filter(e -> includesMember(e, memberIds))
+                .filter(e -> e.getStatus() != AttendanceExceptionStatus.RESOLVED)
+                .filter(e -> e.getAttendance() != null)
+                .toList();
+        List<Long> updatedIds = targets.stream()
+                .map(e -> autoCheckOut(e, date, actor))
+                .toList();
+        return new BulkAutoCheckoutResponse(updatedIds.size(), updatedIds);
     }
 
     private AttendanceException findException(Long id) {
@@ -223,5 +241,26 @@ public class AttendanceExceptionService {
         return (int) exceptions.stream()
                 .filter(e -> e.getStatus() == status)
                 .count();
+    }
+
+    private boolean includesMember(AttendanceException exception, List<Long> memberIds) {
+        if (memberIds == null) {
+            return true;
+        }
+        return memberIds.contains(exception.getMember().getId());
+    }
+
+    private Long autoCheckOut(AttendanceException exception, LocalDate date, String actor) {
+        Attendance attendance = exception.getAttendance();
+        closeAttendance(attendance, date);
+        exception.resolve(actor, LocalDateTime.now(), "자동 퇴근 처리");
+        return attendance.getId();
+    }
+
+    private void closeAttendance(Attendance attendance, LocalDate date) {
+        if (attendance.getStatus() != AttendanceStatus.WORKING) {
+            return;
+        }
+        attendance.checkOut(date.atTime(23, 59, 59));
     }
 }

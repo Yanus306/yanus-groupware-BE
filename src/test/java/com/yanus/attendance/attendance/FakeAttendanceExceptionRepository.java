@@ -45,4 +45,12 @@ public class FakeAttendanceExceptionRepository implements AttendanceExceptionRep
                 .filter(e -> e.getWorkDate().equals(workDate))
                 .toList();
     }
+
+    @Override
+    public List<AttendanceException> findAllByWorkDateAndType(LocalDate workDate, AttendanceExceptionType type) {
+        return store.values().stream()
+                .filter(e -> e.getWorkDate().equals(workDate))
+                .filter(e -> e.getType() == type)
+                .toList();
+    }
 }

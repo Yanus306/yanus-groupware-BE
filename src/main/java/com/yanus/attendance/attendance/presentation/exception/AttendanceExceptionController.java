@@ -7,6 +7,8 @@ import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExce
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionNoteRequest;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionUpdateRequest;
+import com.yanus.attendance.attendance.presentation.dto.exception.BulkAutoCheckoutRequest;
+import com.yanus.attendance.attendance.presentation.dto.exception.BulkAutoCheckoutResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +68,15 @@ public class AttendanceExceptionController {
             @AuthenticationPrincipal Long memberId,
             @RequestBody(required = false) AttendanceExceptionNoteRequest request) {
         return attendanceExceptionService.resolve(id, resolveActor(memberId), noteOf(request));
+    }
+
+    @PostMapping("/bulk-auto-checkout")
+    public BulkAutoCheckoutResponse bulkAutoCheckout(
+            @AuthenticationPrincipal Long memberId,
+            @RequestBody BulkAutoCheckoutRequest request) {
+        return attendanceExceptionService.bulkAutoCheckout(
+                request.date(), request.memberIds(), resolveActor(memberId)
+        );
     }
 
     private String resolveActor(Long memberId) {

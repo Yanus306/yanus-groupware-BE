@@ -11,4 +11,5 @@ public interface AttendanceExceptionRepository {
             Long memberId, LocalDate workDate, AttendanceExceptionType type
     );
     List<AttendanceException> findAllByWorkDate(LocalDate workDate);
+    List<AttendanceException> findAllByWorkDateAndType(LocalDate workDate, AttendanceExceptionType type);
 }
