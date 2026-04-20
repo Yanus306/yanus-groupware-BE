@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.presentation.dto;
+package com.yanus.attendance.attendance.presentation.dto.workschedule;
 
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEvent;
 import java.time.LocalDate;

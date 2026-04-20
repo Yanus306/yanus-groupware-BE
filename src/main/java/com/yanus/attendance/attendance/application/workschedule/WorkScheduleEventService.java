@@ -2,8 +2,8 @@ package com.yanus.attendance.attendance.application.workschedule;
 
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEvent;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEventRepository;
-import com.yanus.attendance.attendance.presentation.dto.WorkScheduleEventRequest;
-import com.yanus.attendance.attendance.presentation.dto.WorkScheduleEventResponse;
+import com.yanus.attendance.attendance.presentation.dto.workschedule.WorkScheduleEventRequest;
+import com.yanus.attendance.attendance.presentation.dto.workschedule.WorkScheduleEventResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;

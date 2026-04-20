@@ -39,6 +39,8 @@ public enum ErrorCode {
     WORK_SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "WORK_SCHEDULE_NOT_FOUND", "근무 일정을 찾을 수 없습니다."),
     INVALID_ATTENDANCE_IP(HttpStatus.FORBIDDEN, "INVALID_ATTENDANCE_IP", "허용되지 않은 네트워크에서의 출근 요청입니다."),
     WORK_SCHEDULE_EVENT_DUPLICATE(HttpStatus.CONFLICT, "WORK_SCHEDULE_EVENT_DUPLICATE", "해당 날짜에 이미 근무 일정이 존재합니다."),
+    ATTENDANCE_EXCEPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "ATTENDANCE_EXCEPTION_NOT_FOUND", "존재하지 않는 출퇴근 예외입니다."),
+    INVALID_EXCEPTION_STATE_TRANSITION(HttpStatus.BAD_REQUEST, "INVALID_EXCEPTION_STATE_TRANSITION", "예외 상태를 변경할 수 없습니다."),
 
     // Team
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "존재하지 않는 팀입니다."),

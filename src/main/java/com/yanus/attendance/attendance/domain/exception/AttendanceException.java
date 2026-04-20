@@ -1,6 +1,8 @@
 package com.yanus.attendance.attendance.domain.exception;
 
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
+import com.yanus.attendance.global.exception.BusinessException;
+import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -69,5 +71,58 @@ public class AttendanceException {
         exception.status = AttendanceExceptionStatus.OPEN;
         exception.createdAt = LocalDateTime.now();
         return exception;
+    }
+
+    public void approve(String approvedBy, LocalDateTime approvedAt, String note) {
+        ensureStatus(AttendanceExceptionStatus.OPEN);
+        this.status = AttendanceExceptionStatus.APPROVED;
+        this.approvedBy = approvedBy;
+        this.approvedAt = approvedAt;
+        overwriteNote(note);
+    }
+
+    public void reject(String note) {
+        ensureStatus(AttendanceExceptionStatus.OPEN);
+        this.status = AttendanceExceptionStatus.REJECTED;
+        overwriteNote(note);
+    }
+
+    public void updateNote(String note, String reason) {
+        overwriteNote(note);
+        overwriteReason(reason);
+    }
+
+    public void resolve(String resolvedBy, LocalDateTime resolvedAt, String note) {
+        ensureNotResolved();
+        this.status = AttendanceExceptionStatus.RESOLVED;
+        this.resolvedBy = resolvedBy;
+        this.resolvedAt = resolvedAt;
+        overwriteNote(note);
+    }
+
+    private void ensureStatus(AttendanceExceptionStatus expected) {
+        if (this.status != expected) {
+            throw new BusinessException(ErrorCode.INVALID_EXCEPTION_STATE_TRANSITION);
+        }
+    }
+
+    private void ensureNotResolved() {
+        if (this.status == AttendanceExceptionStatus.RESOLVED) {
+            throw new BusinessException(ErrorCode.INVALID_EXCEPTION_STATE_TRANSITION);
+        }
+    }
+
+    private void overwriteNote(String note) {
+        if (note == null) {
+            return;
+        }
+        this.note = note;
+    }
+
+    private void overwriteReason(String reason) {
+        if (reason == null) {
+            return;
+        }
+        this.reason = reason;
     }
 }

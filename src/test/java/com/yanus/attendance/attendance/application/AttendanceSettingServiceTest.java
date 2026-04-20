@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeAttendanceSettingRepository;
 import com.yanus.attendance.attendance.application.setting.AttendanceSettingService;
-import com.yanus.attendance.attendance.presentation.dto.AutoCheckoutTimeRequest;
-import com.yanus.attendance.attendance.presentation.dto.AutoCheckoutTimeResponse;
+import com.yanus.attendance.attendance.presentation.dto.setting.AutoCheckoutTimeRequest;
+import com.yanus.attendance.attendance.presentation.dto.setting.AutoCheckoutTimeResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;

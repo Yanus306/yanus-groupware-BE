@@ -1,6 +1,7 @@
 package com.yanus.attendance.attendance.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeAttendanceExceptionRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
@@ -9,10 +10,12 @@ import com.yanus.attendance.attendance.FakeWorkScheduleRepository;
 import com.yanus.attendance.attendance.application.exception.AttendanceExceptionService;
 import com.yanus.attendance.attendance.application.setting.AttendanceSettingService;
 import com.yanus.attendance.attendance.domain.exception.AttendanceException;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatus;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
-import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionSummary;
+import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionSummary;
+import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
@@ -120,5 +123,81 @@ public class AttendanceExceptionServiceTest {
         assertThat(summary.missedCheckInCount()).isEqualTo(2);
         assertThat(summary.lateCount()).isEqualTo(1);
         assertThat(summary.openCount()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("approve 호출 시 예외가 APPROVED 상태로 변경된다")
+    void approve_change_status_to_APPROVED() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        AttendanceException saved = exceptionRepository.save(
+                AttendanceException.open(member, null, MONDAY, AttendanceExceptionType.LATE));
+
+        // when
+        service.approve(saved.getId(), "admin", "승인");
+
+        // then
+        AttendanceException updated = exceptionRepository.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(AttendanceExceptionStatus.APPROVED);
+        assertThat(updated.getApprovedBy()).isEqualTo("admin");
+        assertThat(updated.getNote()).isEqualTo("승인");
+    }
+
+    @Test
+    @DisplayName("reject 호출 시 예외가 REJECTED 상태로 변경된다")
+    void reject_change_status_to_REJECTED() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        AttendanceException saved = exceptionRepository.save(
+                AttendanceException.open(member, null, MONDAY, AttendanceExceptionType.LATE));
+
+        // when
+        service.reject(saved.getId(), "반려");
+
+        // then
+        AttendanceException updated = exceptionRepository.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(AttendanceExceptionStatus.REJECTED);
+    }
+
+    @Test
+    @DisplayName("resolve 호출 시 예외가 RESOLVED 상태로 변경된다")
+    void resolve_change_status_to_RESOLVED() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        AttendanceException saved = exceptionRepository.save(
+                AttendanceException.open(member, null, MONDAY, AttendanceExceptionType.MISSED_CHECK_OUT));
+
+        // when
+        service.resolve(saved.getId(), "admin", "처리 완료");
+
+        // then
+        AttendanceException updated = exceptionRepository.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(AttendanceExceptionStatus.RESOLVED);
+        assertThat(updated.getResolvedBy()).isEqualTo("admin");
+    }
+
+    @Test
+    @DisplayName("updateNote 호출 시 메모와 지각사유가 수정된다")
+    void updateNote_update_note_and_reason() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        AttendanceException saved = exceptionRepository.save(
+                AttendanceException.open(member, null, MONDAY, AttendanceExceptionType.LATE));
+
+        // when
+        service.updateNote(saved.getId(), "새 메모", "지각 사유");
+
+        // then
+        AttendanceException updated = exceptionRepository.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getNote()).isEqualTo("새 메모");
+        assertThat(updated.getReason()).isEqualTo("지각 사유");
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 id 로 처리 시 예외 발생")
+    void not_exist_id_error() {
+        // when & then
+        assertThatThrownBy(() -> service.approve(999L, "admin", null))
+                .isInstanceOf(BusinessException.class);
     }
 }
