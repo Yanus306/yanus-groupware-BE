@@ -79,4 +79,34 @@ public class AttendanceExceptionJudgeTest {
         // then
         assertThat(result).isEmpty();
     }
+
+    @Test
+    @DisplayName("퇴근이 없고 기준 시각이 지났으면 MISSED_CHECK_OUT 예외 반환")
+    void no_check_out_but_time_passed_throw_MISSED_CHECK_OUT() {
+        // given
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
+
+        // when
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, true);
+
+        // then
+        assertThat(result).containsExactly(AttendanceExceptionType.MISSED_CHECK_OUT);
+    }
+
+    @Test
+    @DisplayName("기준 시각이 지나지 않았으면 MISSED_CHECK_OUT 예외 미반환")
+    void judge_not_throw_MISSED_CHECK_OUT() {
+        // given
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
+
+        // when
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, false);
+
+        // then
+        assertThat(result).doesNotContain(AttendanceExceptionType.MISSED_CHECK_OUT);
+    }
 }
