@@ -31,7 +31,7 @@ public class WorkScheduleTest {
         LocalTime end = LocalTime.of(18, 0);
 
         // when
-        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY, start, end, null);
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY, start, end, null, false);
 
         // then
         assertThat(schedule.getDayOfWeek()).isEqualTo(DayOfWeek.MONDAY);
@@ -47,7 +47,7 @@ public class WorkScheduleTest {
 
         // when & then
         assertThatThrownBy(() ->
-                WorkSchedule.create(member, DayOfWeek.MONDAY, LocalTime.of(18, 0), LocalTime.of(9, 0), null))
+                WorkSchedule.create(member, DayOfWeek.MONDAY, LocalTime.of(18, 0), LocalTime.of(9, 0), null, false))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("종료 시간");
     }
@@ -57,7 +57,7 @@ public class WorkScheduleTest {
     void update_work_schedule() {
         // given
         WorkSchedule schedule = WorkSchedule.create(createMember(), DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), null);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), null, false);
 
         // when
         schedule.update(LocalTime.of(10, 0), LocalTime.of(19, 0));
@@ -113,5 +113,21 @@ public class WorkScheduleTest {
                 LocalTime.of(22, 0), LocalTime.of(6, 0),
                 WeekPattern.EVERY, false))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("야간 근무 수정 시 endsNextDay를 유지할 수 있다")
+    void update_overnight_schedule() {
+        // given
+        WorkSchedule schedule = WorkSchedule.create(createMember(), DayOfWeek.MONDAY,
+                LocalTime.of(22, 0), LocalTime.of(6, 0), WeekPattern.EVERY, true);
+
+        // when
+        schedule.update(LocalTime.of(23, 0), LocalTime.of(7, 0), true);
+
+        // then
+        assertThat(schedule.getStartTime()).isEqualTo(LocalTime.of(23, 0));
+        assertThat(schedule.getEndTime()).isEqualTo(LocalTime.of(7, 0));
+        assertThat(schedule.isEndsNextDay()).isTrue();
     }
 }
