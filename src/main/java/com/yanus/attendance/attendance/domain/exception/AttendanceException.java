@@ -87,8 +87,22 @@ public class AttendanceException {
         overwriteNote(note);
     }
 
+    public void resolve(String resolvedBy, LocalDateTime resolvedAt, String note) {
+        ensureNotResolved();
+        this.status = AttendanceExceptionStatus.RESOLVED;
+        this.resolvedBy = resolvedBy;
+        this.resolvedAt = resolvedAt;
+        overwriteNote(note);
+    }
+
     private void ensureStatus(AttendanceExceptionStatus expected) {
         if (this.status != expected) {
+            throw new BusinessException(ErrorCode.INVALID_EXCEPTION_STATE_TRANSITION);
+        }
+    }
+
+    private void ensureNotResolved() {
+        if (this.status == AttendanceExceptionStatus.RESOLVED) {
             throw new BusinessException(ErrorCode.INVALID_EXCEPTION_STATE_TRANSITION);
         }
     }
