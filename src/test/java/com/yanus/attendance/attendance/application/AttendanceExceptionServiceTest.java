@@ -77,7 +77,7 @@ public class AttendanceExceptionServiceTest {
         // given
         Member member = createMember("홍길동", "hong@test.com");
         workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false));
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         service.getExceptions(MONDAY, null, null, null);
@@ -94,7 +94,7 @@ public class AttendanceExceptionServiceTest {
         // given
         Member member = createMember("홍길동", "hong@test.com");
         workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false));
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         service.getExceptions(MONDAY, null, null, null);
@@ -272,26 +272,5 @@ public class AttendanceExceptionServiceTest {
 
         // then
         assertThat(response.processedCount()).isZero();
-    }
-
-    @Test
-    void 야간_스케줄_자동_퇴근은_다음날_종료시각으로_기록된다() {
-        // given
-        Member member = createMember("김야근", "night@test.com");
-        workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(22, 0), LocalTime.of(6, 0), WeekPattern.EVERY, true));
-        Attendance attendance = attendanceRepository.save(
-                Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 22, 0)));
-        exceptionRepository.save(AttendanceException.open(
-                member, attendance, LocalDate.of(2026, 4, 20),
-                AttendanceExceptionType.MISSED_CHECK_OUT));
-
-        // when
-        service.bulkAutoCheckout(LocalDate.of(2026, 4, 20), null, "admin");
-
-        // then
-        Attendance saved = attendanceRepository
-                .findByMemberIdAndWorkDate(member.getId(), LocalDate.of(2026, 4, 20)).orElseThrow();
-        assertThat(saved.getCheckOutTime()).isEqualTo(LocalDateTime.of(2026, 4, 21, 6, 0));
     }
 }
