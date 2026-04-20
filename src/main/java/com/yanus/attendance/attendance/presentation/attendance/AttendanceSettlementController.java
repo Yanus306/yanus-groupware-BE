@@ -1,7 +1,7 @@
 package com.yanus.attendance.attendance.presentation.attendance;
 
 import com.yanus.attendance.attendance.application.attendance.AttendanceSettlementService;
-import com.yanus.attendance.attendance.presentation.dto.AttendanceSettlementResponse;
+import com.yanus.attendance.attendance.presentation.dto.setting.AttendanceSettlementResponse;
 import com.yanus.attendance.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.YearMonth;

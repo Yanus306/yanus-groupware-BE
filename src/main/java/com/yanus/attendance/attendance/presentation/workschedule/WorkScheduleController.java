@@ -1,9 +1,9 @@
 package com.yanus.attendance.attendance.presentation.workschedule;
 
 import com.yanus.attendance.attendance.application.workschedule.WorkScheduleService;
-import com.yanus.attendance.attendance.presentation.dto.MemberWorkScheduleResponse;
-import com.yanus.attendance.attendance.presentation.dto.WorkScheduleRequest;
-import com.yanus.attendance.attendance.presentation.dto.WorkScheduleResponse;
+import com.yanus.attendance.attendance.presentation.dto.workschedule.MemberWorkScheduleResponse;
+import com.yanus.attendance.attendance.presentation.dto.workschedule.WorkScheduleRequest;
+import com.yanus.attendance.attendance.presentation.dto.workschedule.WorkScheduleResponse;
 import com.yanus.attendance.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.DayOfWeek;

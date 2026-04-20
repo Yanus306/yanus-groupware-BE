@@ -14,7 +14,7 @@ import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatu
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
-import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionSummary;
+import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionSummary;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;

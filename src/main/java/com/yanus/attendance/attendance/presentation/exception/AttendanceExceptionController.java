@@ -3,7 +3,7 @@ package com.yanus.attendance.attendance.presentation.exception;
 import com.yanus.attendance.attendance.application.exception.AttendanceExceptionService;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatus;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
-import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionListResponse;
+import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionListResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;

@@ -1,8 +1,8 @@
 package com.yanus.attendance.attendance.presentation.workschedule;
 
 import com.yanus.attendance.attendance.application.workschedule.WorkScheduleEventService;
-import com.yanus.attendance.attendance.presentation.dto.WorkScheduleEventRequest;
-import com.yanus.attendance.attendance.presentation.dto.WorkScheduleEventResponse;
+import com.yanus.attendance.attendance.presentation.dto.workschedule.WorkScheduleEventRequest;
+import com.yanus.attendance.attendance.presentation.dto.workschedule.WorkScheduleEventResponse;
 import com.yanus.attendance.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;

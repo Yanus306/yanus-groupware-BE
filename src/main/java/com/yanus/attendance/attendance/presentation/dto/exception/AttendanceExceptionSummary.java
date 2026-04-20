@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.presentation.dto;
+package com.yanus.attendance.attendance.presentation.dto.exception;
 
 public record AttendanceExceptionSummary(
         int totalCount,

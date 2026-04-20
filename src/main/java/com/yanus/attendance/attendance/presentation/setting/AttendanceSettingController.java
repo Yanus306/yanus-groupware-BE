@@ -1,8 +1,8 @@
 package com.yanus.attendance.attendance.presentation.setting;
 
 import com.yanus.attendance.attendance.application.setting.AttendanceSettingService;
-import com.yanus.attendance.attendance.presentation.dto.AutoCheckoutTimeRequest;
-import com.yanus.attendance.attendance.presentation.dto.AutoCheckoutTimeResponse;
+import com.yanus.attendance.attendance.presentation.dto.setting.AutoCheckoutTimeRequest;
+import com.yanus.attendance.attendance.presentation.dto.setting.AutoCheckoutTimeResponse;
 import com.yanus.attendance.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
