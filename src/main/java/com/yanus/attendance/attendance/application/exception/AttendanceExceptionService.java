@@ -9,9 +9,12 @@ import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepositor
 import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionListResponse;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionResponse;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionSummary;
+import com.yanus.attendance.global.exception.BusinessException;
+import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +62,39 @@ public class AttendanceExceptionService {
                 .map(this::toResponse)
                 .toList();
         return new AttendanceExceptionListResponse(date, summary, items);
+    }
+
+    @Transactional
+    public AttendanceExceptionResponse approve(Long id, String approvedBy, String note) {
+        AttendanceException exception = findException(id);
+        exception.approve(approvedBy, LocalDateTime.now(), note);
+        return toResponse(exception);
+    }
+
+    @Transactional
+    public AttendanceExceptionResponse reject(Long id, String note) {
+        AttendanceException exception = findException(id);
+        exception.reject(note);
+        return toResponse(exception);
+    }
+
+    @Transactional
+    public AttendanceExceptionResponse resolve(Long id, String resolvedBy, String note) {
+        AttendanceException exception = findException(id);
+        exception.resolve(resolvedBy, LocalDateTime.now(), note);
+        return toResponse(exception);
+    }
+
+    @Transactional
+    public AttendanceExceptionResponse updateNote(Long id, String note, String reason) {
+        AttendanceException exception = findException(id);
+        exception.updateNote(note, reason);
+        return toResponse(exception);
+    }
+
+    private AttendanceException findException(Long id) {
+        return exceptionRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_EXCEPTION_NOT_FOUND));
     }
 
     private AttendanceExceptionResponse toResponse(AttendanceException exception) {
