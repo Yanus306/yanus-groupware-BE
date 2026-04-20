@@ -29,6 +29,10 @@ public class AttendanceExceptionJudge {
             result.add(AttendanceExceptionType.LATE);
         }
 
+        if (isMissedCheckout(hasSchedule, hasAttendance, missedCheckoutThresholdPassed)) {
+            result.add(AttendanceExceptionType.MISSED_CHECK_OUT);
+        }
+
         return result;
     }
 
@@ -43,5 +47,9 @@ public class AttendanceExceptionJudge {
     private boolean isLate(boolean hasSchedule, boolean hasAttendance, Attendance attendance, WorkSchedule schedule) {
         return hasSchedule && hasAttendance
                 && attendance.getCheckInTime().toLocalTime().isAfter(schedule.getStartTime());
+    }
+
+    private boolean isMissedCheckout(boolean hasSchedule, boolean hasAttendance, boolean missedCheckoutThresholdPassed) {
+        return hasSchedule && hasAttendance && missedCheckoutThresholdPassed;
     }
 }
