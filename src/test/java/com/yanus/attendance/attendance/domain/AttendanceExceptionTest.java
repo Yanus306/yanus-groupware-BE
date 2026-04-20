@@ -53,4 +53,20 @@ public class AttendanceExceptionTest {
         assertThat(exception.getStatus()).isEqualTo(AttendanceExceptionStatus.REJECTED);
         assertThat(exception.getNote()).isEqualTo("반려 사유");
     }
+
+    @Test
+    @DisplayName("OPEN 상태에서 resolve 하면 RESOLVED 처리")
+    void OPEN_status_resolve_to_RESOLVED_status() {
+        // given
+        AttendanceException exception = AttendanceException.open(
+                member, null, WORK_DATE, AttendanceExceptionType.MISSED_CHECK_OUT);
+
+        // when
+        exception.resolve("admin", ACTED_AT, "처리 완료");
+
+        // then
+        assertThat(exception.getStatus()).isEqualTo(AttendanceExceptionStatus.RESOLVED);
+        assertThat(exception.getResolvedBy()).isEqualTo("admin");
+        assertThat(exception.getResolvedAt()).isEqualTo(ACTED_AT);
+    }
 }
