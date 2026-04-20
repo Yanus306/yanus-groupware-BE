@@ -6,6 +6,8 @@ import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.exception.*;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
+import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionListResponse;
+import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionResponse;
 import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionSummary;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
@@ -41,6 +43,41 @@ public class AttendanceExceptionService {
     public AttendanceExceptionSummary getSummary(LocalDate date) {
         List<AttendanceException> all = exceptionRepository.findAllByWorkDate(date);
         return buildSummary(all, all);
+    }
+
+    @Transactional
+    public AttendanceExceptionListResponse getList(
+            LocalDate date,
+            AttendanceExceptionType type,
+            AttendanceExceptionStatus status,
+            String teamName) {
+        generateMissingExceptions(date);
+        List<AttendanceException> all = exceptionRepository.findAllByWorkDate(date);
+        List<AttendanceException> filtered = filterExceptions(all, type, status, teamName);
+        AttendanceExceptionSummary summary = buildSummary(all, filtered);
+        List<AttendanceExceptionResponse> items = filtered.stream()
+                .map(this::toResponse)
+                .toList();
+        return new AttendanceExceptionListResponse(date, summary, items);
+    }
+
+    private AttendanceExceptionResponse toResponse(AttendanceException exception) {
+        WorkSchedule schedule = findSchedule(exception.getMember(), exception.getWorkDate());
+        return AttendanceExceptionResponse.from(exception, startOf(schedule), endOf(schedule));
+    }
+
+    private LocalTime startOf(WorkSchedule schedule) {
+        if (schedule == null) {
+            return null;
+        }
+        return schedule.getStartTime();
+    }
+
+    private LocalTime endOf(WorkSchedule schedule) {
+        if (schedule == null) {
+            return null;
+        }
+        return schedule.getEndTime();
     }
 
     private AttendanceExceptionSummary buildSummary(

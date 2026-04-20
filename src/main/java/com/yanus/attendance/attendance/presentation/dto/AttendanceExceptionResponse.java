@@ -1,5 +1,6 @@
 package com.yanus.attendance.attendance.presentation.dto;
 
+import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.exception.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,6 +29,7 @@ public record AttendanceExceptionResponse(
     public static AttendanceExceptionResponse from(
             AttendanceException e,
             LocalTime scheduledStart, LocalTime scheduledEnd) {
+        Attendance attendance = e.getAttendance();
         return new AttendanceExceptionResponse(
                 e.getId(),
                 e.getMember().getId(),
@@ -42,11 +44,32 @@ public record AttendanceExceptionResponse(
                 e.getApprovedAt(),
                 e.getResolvedBy(),
                 e.getResolvedAt(),
-                e.getAttendance() != null ? e.getAttendance().getId() : null,
+                attendanceId(attendance),
                 scheduledStart,
                 scheduledEnd,
-                e.getAttendance() != null ? e.getAttendance().getCheckInTime() : null,
-                e.getAttendance() != null ? e.getAttendance().getCheckOutTime() : null
+                checkIn(attendance),
+                checkOut(attendance)
         );
+    }
+
+    private static Long attendanceId(Attendance attendance) {
+        if (attendance == null) {
+            return null;
+        }
+        return attendance.getId();
+    }
+
+    private static LocalDateTime checkIn(Attendance attendance) {
+        if (attendance == null) {
+            return null;
+        }
+        return attendance.getCheckInTime();
+    }
+
+    private static LocalDateTime checkOut(Attendance attendance) {
+        if (attendance == null) {
+            return null;
+        }
+        return attendance.getCheckOutTime();
     }
 }
