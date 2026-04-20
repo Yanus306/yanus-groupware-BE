@@ -1,7 +1,7 @@
 package com.yanus.attendance.attendance.application.attendance;
 
+import com.yanus.attendance.attendance.application.exception.AttendanceExceptionService;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AttendanceScheduler {
 
-    private final AttendanceService attendanceService;
+    private final AttendanceExceptionService attendanceExceptionService;
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 59 23 * * *", zone = "Asia/Seoul")
     public void autoCheckOut() {
-        attendanceService.autoCheckOut(LocalDate.now(), LocalTime.now());
+        attendanceExceptionService.bulkAutoCheckout(LocalDate.now(), null, "system");
     }
 }
