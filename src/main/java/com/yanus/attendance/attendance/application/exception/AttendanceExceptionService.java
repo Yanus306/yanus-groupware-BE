@@ -19,7 +19,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -152,14 +151,14 @@ public class AttendanceExceptionService {
     }
 
     private void generateMissingExceptions(LocalDate date) {
-        boolean thresholdPassed = isThresholdPassed(date);
         memberRepository.findAll()
-                .forEach(member -> generateFor(member, date, thresholdPassed));
+                .forEach(member -> generateFor(member, date));
     }
 
-    private void generateFor(Member member, LocalDate date, boolean thresholdPassed) {
+    private void generateFor(Member member, LocalDate date) {
         WorkSchedule schedule = findSchedule(member, date);
         Attendance attendance = findAttendance(member, date);
+        boolean thresholdPassed = isThresholdPassed(date, schedule);
         List<AttendanceExceptionType> detected = judge.judge(schedule, attendance, thresholdPassed);
         detected.forEach(type -> saveIfAbsent(member, attendance, date, type));
     }
@@ -190,16 +189,20 @@ public class AttendanceExceptionService {
                 .isPresent();
     }
 
-    private boolean isThresholdPassed(LocalDate date) {
-        LocalDate today = LocalDate.now(KST);
-        if (date.isBefore(today)) {
-            return true;
+    private boolean isThresholdPassed(LocalDate date, WorkSchedule schedule) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        LocalDateTime deadline = deadlineOf(date, schedule);
+        return !now.isBefore(deadline);
+    }
+
+    private LocalDateTime deadlineOf(LocalDate date, WorkSchedule schedule) {
+        if (schedule == null) {
+            return date.atTime(settingService.getAutoCheckoutTimeValue());
         }
-        if (date.isAfter(today)) {
-            return false;
+        if (schedule.isEndsNextDay()) {
+            return date.plusDays(1).atTime(schedule.getEndTime());
         }
-        LocalTime threshold = settingService.getAutoCheckoutTimeValue();
-        return !LocalTime.now(KST).isBefore(threshold);
+        return date.atTime(schedule.getEndTime());
     }
 
     private List<AttendanceException> filterExceptions(
@@ -256,19 +259,34 @@ public class AttendanceExceptionService {
 
     private Long autoCheckOut(AttendanceException exception, String actor) {
         Attendance attendance = exception.getAttendance();
-        closeAttendance(attendance, exception.getWorkDate());
+        WorkSchedule schedule = findSchedule(exception.getMember(), exception.getWorkDate());
+        closeAttendance(attendance, exception.getWorkDate(), schedule);
         exception.resolve(actor, LocalDateTime.now(KST), "자동 퇴근 처리");
         return attendance.getId();
     }
 
-    private void closeAttendance(Attendance attendance, LocalDate workDate) {
+    private void closeAttendance(Attendance attendance, LocalDate workDate, WorkSchedule schedule) {
         if (attendance.getStatus() != AttendanceStatus.WORKING) {
             return;
         }
-        attendance.checkOut(resolveCheckOutTime(attendance, workDate));
+        attendance.checkOut(resolveCheckOutTime(attendance, workDate, schedule));
     }
 
-    private LocalDateTime resolveCheckOutTime(Attendance attendance, LocalDate workDate) {
+    private LocalDateTime resolveCheckOutTime(Attendance attendance, LocalDate workDate, WorkSchedule schedule) {
+        if (isOvernight(schedule)) {
+            return workDate.plusDays(1).atTime(schedule.getEndTime());
+        }
+        return resolveDaytimeCheckOut(attendance, workDate);
+    }
+
+    private boolean isOvernight(WorkSchedule schedule) {
+        if (schedule == null) {
+            return false;
+        }
+        return schedule.isEndsNextDay();
+    }
+
+    private LocalDateTime resolveDaytimeCheckOut(Attendance attendance, LocalDate workDate) {
         LocalTime configured = settingService.getAutoCheckoutTimeValue();
         LocalDateTime candidate = workDate.atTime(configured);
         if (candidate.isAfter(attendance.getCheckInTime())) {
