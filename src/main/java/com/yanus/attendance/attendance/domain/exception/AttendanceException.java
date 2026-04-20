@@ -87,6 +87,11 @@ public class AttendanceException {
         overwriteNote(note);
     }
 
+    public void updateNote(String note, String reason) {
+        overwriteNote(note);
+        overwriteReason(reason);
+    }
+
     public void resolve(String resolvedBy, LocalDateTime resolvedAt, String note) {
         ensureNotResolved();
         this.status = AttendanceExceptionStatus.RESOLVED;
@@ -112,5 +117,12 @@ public class AttendanceException {
             return;
         }
         this.note = note;
+    }
+
+    private void overwriteReason(String reason) {
+        if (reason == null) {
+            return;
+        }
+        this.reason = reason;
     }
 }
