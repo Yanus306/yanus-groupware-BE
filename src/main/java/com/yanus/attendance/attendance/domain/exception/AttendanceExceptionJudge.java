@@ -17,14 +17,31 @@ public class AttendanceExceptionJudge {
         boolean hasSchedule = schedule != null;
         boolean hasAttendance = attendance != null;
 
-        if (hasSchedule && !hasAttendance) {
+        if (isMissedCheckIn(hasSchedule, hasAttendance)) {
             result.add(AttendanceExceptionType.MISSED_CHECK_IN);
         }
 
-        if (!hasSchedule && hasAttendance) {
+        if (isNoSchedule(hasSchedule, hasAttendance)) {
             result.add(AttendanceExceptionType.NO_SCHEDULE);
         }
 
+        if (isLate(hasSchedule, hasAttendance, attendance, schedule)) {
+            result.add(AttendanceExceptionType.LATE);
+        }
+
         return result;
+    }
+
+    private boolean isMissedCheckIn(boolean hasSchedule, boolean hasAttendance) {
+        return hasSchedule && !hasAttendance;
+    }
+
+    private boolean isNoSchedule(boolean hasSchedule, boolean hasAttendance) {
+        return !hasSchedule && hasAttendance;
+    }
+
+    private boolean isLate(boolean hasSchedule, boolean hasAttendance, Attendance attendance, WorkSchedule schedule) {
+        return hasSchedule && hasAttendance
+                && attendance.getCheckInTime().toLocalTime().isAfter(schedule.getStartTime());
     }
 }
