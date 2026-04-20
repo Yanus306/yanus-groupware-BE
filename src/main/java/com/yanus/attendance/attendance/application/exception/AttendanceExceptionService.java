@@ -18,6 +18,8 @@ import com.yanus.attendance.member.domain.MemberRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AttendanceExceptionService {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final AttendanceExceptionRepository exceptionRepository;
     private final AttendanceRepository attendanceRepository;
@@ -105,7 +109,7 @@ public class AttendanceExceptionService {
                 .filter(e -> e.getAttendance() != null)
                 .toList();
         List<Long> updatedIds = targets.stream()
-                .map(e -> autoCheckOut(e, date, actor))
+                .map(e -> autoCheckOut(e, actor))
                 .toList();
         return new BulkAutoCheckoutResponse(updatedIds.size(), updatedIds);
     }
@@ -187,7 +191,7 @@ public class AttendanceExceptionService {
     }
 
     private boolean isThresholdPassed(LocalDate date) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(KST);
         if (date.isBefore(today)) {
             return true;
         }
@@ -195,7 +199,7 @@ public class AttendanceExceptionService {
             return false;
         }
         LocalTime threshold = settingService.getAutoCheckoutTimeValue();
-        return !LocalTime.now().isBefore(threshold);
+        return !LocalTime.now(KST).isBefore(threshold);
     }
 
     private List<AttendanceException> filterExceptions(
@@ -250,17 +254,26 @@ public class AttendanceExceptionService {
         return memberIds.contains(exception.getMember().getId());
     }
 
-    private Long autoCheckOut(AttendanceException exception, LocalDate date, String actor) {
+    private Long autoCheckOut(AttendanceException exception, String actor) {
         Attendance attendance = exception.getAttendance();
-        closeAttendance(attendance, date);
-        exception.resolve(actor, LocalDateTime.now(), "자동 퇴근 처리");
+        closeAttendance(attendance, exception.getWorkDate());
+        exception.resolve(actor, LocalDateTime.now(KST), "자동 퇴근 처리");
         return attendance.getId();
     }
 
-    private void closeAttendance(Attendance attendance, LocalDate date) {
+    private void closeAttendance(Attendance attendance, LocalDate workDate) {
         if (attendance.getStatus() != AttendanceStatus.WORKING) {
             return;
         }
-        attendance.checkOut(date.atTime(23, 59, 59));
+        attendance.checkOut(resolveCheckOutTime(attendance, workDate));
+    }
+
+    private LocalDateTime resolveCheckOutTime(Attendance attendance, LocalDate workDate) {
+        LocalTime configured = settingService.getAutoCheckoutTimeValue();
+        LocalDateTime candidate = workDate.atTime(configured);
+        if (candidate.isAfter(attendance.getCheckInTime())) {
+            return candidate;
+        }
+        return workDate.atTime(23, 59, 59);
     }
 }
