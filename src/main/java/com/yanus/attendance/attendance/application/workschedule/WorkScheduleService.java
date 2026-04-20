@@ -30,16 +30,19 @@ public class WorkScheduleService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        Optional<WorkSchedule> existing = workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, request.dayOfWeek());
+        Optional<WorkSchedule> existing = workScheduleRepository
+                .findByMemberIdAndDayOfWeek(memberId, request.dayOfWeek());
 
         if (existing.isPresent()) {
-            existing.get().update(request.startTime(), request.endTime());
+            existing.get().update(request.startTime(), request.endTime(), request.endsNextDay());
             return WorkScheduleResponse.from(existing.get());
         }
 
-        WorkSchedule schedule = WorkSchedule.create(member, request.dayOfWeek(), request.startTime(), request.endTime(), request.weekPattern());
+        WorkSchedule schedule = WorkSchedule.create(
+                member, request.dayOfWeek(),
+                request.startTime(), request.endTime(),
+                request.weekPattern(), request.endsNextDay());
         workScheduleRepository.save(schedule);
-
         return WorkScheduleResponse.from(schedule);
     }
 

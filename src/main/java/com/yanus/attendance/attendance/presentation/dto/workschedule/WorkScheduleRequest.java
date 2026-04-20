@@ -8,6 +8,7 @@ public record WorkScheduleRequest(
         DayOfWeek dayOfWeek,
         LocalTime startTime,
         LocalTime endTime,
-        WeekPattern weekPattern
+        WeekPattern weekPattern,
+        boolean endsNextDay
 ) {
 }
