@@ -1,10 +1,12 @@
 package com.yanus.attendance.attendance.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.domain.exception.AttendanceException;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatus;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
+import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
@@ -83,5 +85,18 @@ public class AttendanceExceptionTest {
 
         // then
         assertThat(exception.getStatus()).isEqualTo(AttendanceExceptionStatus.RESOLVED);
+    }
+
+    @Test
+    @DisplayName("RESOLVED 상태에서 resolve 시 BusinessException 발생")
+    void RESOLVED_status_reopen_throw_error() {
+        // given
+        AttendanceException exception = AttendanceException.open(
+                member, null, WORK_DATE, AttendanceExceptionType.LATE);
+        exception.resolve("admin", ACTED_AT, null);
+
+        // when & then
+        assertThatThrownBy(() -> exception.approve("admin", ACTED_AT, null))
+                .isInstanceOf(BusinessException.class);
     }
 }
