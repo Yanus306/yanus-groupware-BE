@@ -229,4 +229,30 @@ public class AttendanceExceptionServiceTest {
         assertThat(a1.getStatus()).isEqualTo(AttendanceStatus.LEFT);
         assertThat(a1.getCheckOutTime()).isEqualTo(LocalDateTime.of(2026, 4, 20, 23, 59, 59));
     }
+
+    @Test
+    @DisplayName("memberIds 지정 시 해당 멤버만 처리한다")
+    void memberIds_specified_process_only_specified_member() {
+        // given
+        Member member1 = createMember("홍길동1", "h1@test.com");
+        Member member2 = createMember("홍길동2", "h2@test.com");
+        Attendance a1 = attendanceRepository.save(
+                Attendance.checkIn(member1, LocalDateTime.of(2026, 4, 20, 9, 0)));
+        Attendance a2 = attendanceRepository.save(
+                Attendance.checkIn(member2, LocalDateTime.of(2026, 4, 20, 9, 0)));
+        exceptionRepository.save(AttendanceException.open(
+                member1, a1, MONDAY, AttendanceExceptionType.MISSED_CHECK_OUT));
+        exceptionRepository.save(AttendanceException.open(
+                member2, a2, MONDAY, AttendanceExceptionType.MISSED_CHECK_OUT));
+
+        // when
+        BulkAutoCheckoutResponse response = service.bulkAutoCheckout(
+                MONDAY, List.of(member1.getId()), "system");
+
+        // then
+        assertThat(response.processedCount()).isEqualTo(1);
+        assertThat(response.updatedIds()).containsExactly(a1.getId());
+        assertThat(a2.getStatus()).isEqualTo(AttendanceStatus.WORKING);
+    }
+
 }
