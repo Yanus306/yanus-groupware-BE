@@ -27,7 +27,7 @@ public class AttendanceExceptionJudgeTest {
     void attend_schedule_but_no_check_in_record() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
 
         // when
         List<AttendanceExceptionType> result = judge.judge(schedule, null, false);
@@ -54,7 +54,7 @@ public class AttendanceExceptionJudgeTest {
     void work_schedule_time_late_check_in_throw_LATE() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 1));
 
         // when
@@ -69,7 +69,7 @@ public class AttendanceExceptionJudgeTest {
     void work_schedule_time_tie_not_exception() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
 
         // when
@@ -84,7 +84,7 @@ public class AttendanceExceptionJudgeTest {
     void no_check_out_but_time_passed_throw_MISSED_CHECK_OUT() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
 
         // when
@@ -99,7 +99,7 @@ public class AttendanceExceptionJudgeTest {
     void judge_not_throw_MISSED_CHECK_OUT() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
 
         // when
@@ -114,7 +114,7 @@ public class AttendanceExceptionJudgeTest {
     void normal_attendance_not_throw_exception() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
         attendance.checkOut(LocalDateTime.of(2026, 4, 20, 18, 0));
 

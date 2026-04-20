@@ -37,7 +37,7 @@ public class WorkScheduleService {
             return WorkScheduleResponse.from(existing.get());
         }
 
-        WorkSchedule schedule = WorkSchedule.create(member, request.dayOfWeek(), request.startTime(), request.endTime(), request.weekPattern());
+        WorkSchedule schedule = WorkSchedule.create(member, request.dayOfWeek(), request.startTime(), request.endTime(), request.weekPattern(), request.endsNextDay());
         workScheduleRepository.save(schedule);
 
         return WorkScheduleResponse.from(schedule);
