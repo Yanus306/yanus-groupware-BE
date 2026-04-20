@@ -3,7 +3,6 @@ package com.yanus.attendance.attendance.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
-import com.yanus.attendance.attendance.domain.exception.AttendanceException;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionJudge;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
@@ -108,5 +107,21 @@ public class AttendanceExceptionJudgeTest {
 
         // then
         assertThat(result).doesNotContain(AttendanceExceptionType.MISSED_CHECK_OUT);
+    }
+
+    @Test
+    @DisplayName("정상 출퇴근은 예외를 반환하지 않음")
+    void normal_attendance_not_throw_exception() {
+        // given
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
+        attendance.checkOut(LocalDateTime.of(2026, 4, 20, 18, 0));
+
+        // when
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, true);
+
+        // then
+        assertThat(result).isEmpty();
     }
 }
