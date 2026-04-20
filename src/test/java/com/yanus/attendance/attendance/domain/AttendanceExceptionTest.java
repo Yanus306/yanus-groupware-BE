@@ -38,4 +38,19 @@ public class AttendanceExceptionTest {
         assertThat(exception.getApprovedAt()).isEqualTo(ACTED_AT);
         assertThat(exception.getNote()).isEqualTo("승인 처리");
     }
+
+    @Test
+    @DisplayName("OPEN 상태에서 reject 하면 REJECTED 처리")
+    void OPEN_status_reject_to_REJECTED_status() {
+        // given
+        AttendanceException exception = AttendanceException.open(
+                member, null, WORK_DATE, AttendanceExceptionType.LATE);
+
+        // when
+        exception.reject("반려 사유");
+
+        // then
+        assertThat(exception.getStatus()).isEqualTo(AttendanceExceptionStatus.REJECTED);
+        assertThat(exception.getNote()).isEqualTo("반려 사유");
+    }
 }
