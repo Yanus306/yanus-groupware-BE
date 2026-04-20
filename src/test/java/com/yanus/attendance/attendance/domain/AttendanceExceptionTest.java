@@ -99,4 +99,19 @@ public class AttendanceExceptionTest {
         assertThatThrownBy(() -> exception.approve("admin", ACTED_AT, null))
                 .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    @DisplayName("updateNote 로 note와 reason 을 수정한다")
+    void updateNote_update_note_and_reason() {
+        // given
+        AttendanceException exception = AttendanceException.open(
+                member, null, WORK_DATE, AttendanceExceptionType.LATE);
+
+        // when
+        exception.updateNote("새 메모", "지각 사유");
+
+        // then
+        assertThat(exception.getNote()).isEqualTo("새 메모");
+        assertThat(exception.getReason()).isEqualTo("지각 사유");
+    }
 }
