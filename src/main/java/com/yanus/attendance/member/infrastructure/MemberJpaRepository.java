@@ -38,13 +38,21 @@ public class MemberJpaRepository implements MemberRepository {
         return port.findAllByIdIn(ids);
     }
 
+    @Override
+    public List<Member> findAll() {
+        return port.findAll();
+    }
+
+    @Override
+    public List<Member> findAllByTeamName(String teamName) {
+        return port.findAllByTeamName(teamName);
+    }
+
 }
 
 interface MemberJpaRepositoryPort extends org.springframework.data.jpa.repository.JpaRepository<Member, Long> {
-
     Optional<Member> findByEmail(String email);
-
     boolean existsByEmail(String email);
-
     List<Member> findAllByIdIn(List<Long> ids);
+    List<Member> findAllByTeamName(String teamName);
 }

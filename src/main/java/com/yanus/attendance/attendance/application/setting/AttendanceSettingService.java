@@ -2,8 +2,8 @@ package com.yanus.attendance.attendance.application.setting;
 
 import com.yanus.attendance.attendance.domain.setting.AttendanceSetting;
 import com.yanus.attendance.attendance.domain.setting.AttendanceSettingRepository;
-import com.yanus.attendance.attendance.presentation.dto.AutoCheckoutTimeRequest;
-import com.yanus.attendance.attendance.presentation.dto.AutoCheckoutTimeResponse;
+import com.yanus.attendance.attendance.presentation.dto.setting.AutoCheckoutTimeRequest;
+import com.yanus.attendance.attendance.presentation.dto.setting.AutoCheckoutTimeResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;

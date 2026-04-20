@@ -44,4 +44,17 @@ public class FakeMemberRepository implements MemberRepository {
                 .filter(m -> ids.contains(m.getId()))
                 .toList();
     }
+
+    @Override
+    public List<Member> findAll() {
+        return store.values().stream().toList();
+    }
+
+    @Override
+    public List<Member> findAllByTeamName(String teamName) {
+        return store.values().stream()
+                .filter(m -> m.getTeam() != null)
+                .filter(m -> teamName.equals(m.getTeam().getName()))
+                .toList();
+    }
 }
