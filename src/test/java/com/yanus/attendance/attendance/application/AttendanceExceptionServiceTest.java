@@ -255,4 +255,22 @@ public class AttendanceExceptionServiceTest {
         assertThat(a2.getStatus()).isEqualTo(AttendanceStatus.WORKING);
     }
 
+    @Test
+    @DisplayName("이미 RESOLVED 된 예외는 재처리하지 않는다")
+    void already_resolved_error() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        Attendance attendance = attendanceRepository.save(
+                Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0)));
+        AttendanceException exception = AttendanceException.open(
+                member, attendance, MONDAY, AttendanceExceptionType.MISSED_CHECK_OUT);
+        exception.resolve("system", LocalDateTime.now(), null);
+        exceptionRepository.save(exception);
+
+        // when
+        BulkAutoCheckoutResponse response = service.bulkAutoCheckout(MONDAY, null, "system");
+
+        // then
+        assertThat(response.processedCount()).isZero();
+    }
 }
