@@ -81,6 +81,12 @@ public class AttendanceException {
         overwriteNote(note);
     }
 
+    public void reject(String note) {
+        ensureStatus(AttendanceExceptionStatus.OPEN);
+        this.status = AttendanceExceptionStatus.REJECTED;
+        overwriteNote(note);
+    }
+
     private void ensureStatus(AttendanceExceptionStatus expected) {
         if (this.status != expected) {
             throw new BusinessException(ErrorCode.INVALID_EXCEPTION_STATE_TRANSITION);
