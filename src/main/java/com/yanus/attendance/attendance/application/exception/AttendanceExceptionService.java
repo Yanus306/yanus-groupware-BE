@@ -6,6 +6,7 @@ import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.exception.*;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
+import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionSummary;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import java.time.LocalDate;
@@ -34,6 +35,25 @@ public class AttendanceExceptionService {
             String teamName) {
         generateMissingExceptions(date);
         return filterExceptions(exceptionRepository.findAllByWorkDate(date), type, status, teamName);
+    }
+
+    @Transactional(readOnly = true)
+    public AttendanceExceptionSummary getSummary(LocalDate date) {
+        List<AttendanceException> all = exceptionRepository.findAllByWorkDate(date);
+        return buildSummary(all, all);
+    }
+
+    private AttendanceExceptionSummary buildSummary(
+            List<AttendanceException> all, List<AttendanceException> filtered) {
+        return new AttendanceExceptionSummary(
+                all.size(),
+                filtered.size(),
+                countByStatus(all, AttendanceExceptionStatus.OPEN),
+                countByType(all, AttendanceExceptionType.MISSED_CHECK_IN),
+                countByType(all, AttendanceExceptionType.MISSED_CHECK_OUT),
+                countByType(all, AttendanceExceptionType.LATE),
+                countByType(all, AttendanceExceptionType.NO_SCHEDULE)
+        );
     }
 
     private void generateMissingExceptions(LocalDate date) {
@@ -118,5 +138,17 @@ public class AttendanceExceptionService {
             return true;
         }
         return teamName.equals(e.getMember().getTeam().getName());
+    }
+
+    private int countByType(List<AttendanceException> exceptions, AttendanceExceptionType type) {
+        return (int) exceptions.stream()
+                .filter(e -> e.getType() == type)
+                .count();
+    }
+
+    private int countByStatus(List<AttendanceException> exceptions, AttendanceExceptionStatus status) {
+        return (int) exceptions.stream()
+                .filter(e -> e.getStatus() == status)
+                .count();
     }
 }

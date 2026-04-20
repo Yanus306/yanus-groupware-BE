@@ -12,6 +12,7 @@ import com.yanus.attendance.attendance.domain.exception.AttendanceException;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
+import com.yanus.attendance.attendance.presentation.dto.AttendanceExceptionSummary;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
@@ -112,7 +113,7 @@ public class AttendanceExceptionServiceTest {
                 member3, null, MONDAY, AttendanceExceptionType.LATE));
 
         // when
-        Summary summary = service.getSummary(MONDAY);
+        AttendanceExceptionSummary summary = service.getSummary(MONDAY);
 
         // then
         assertThat(summary.totalCount()).isEqualTo(3);
