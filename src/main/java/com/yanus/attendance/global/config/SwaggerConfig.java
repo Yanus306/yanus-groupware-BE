@@ -24,9 +24,9 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("Yanus Groupware API")
-                        .description("Yanus Groupware 백엔드 API 문서")
-                        .version("v1.0"))
+                        .title("yANUs groupware API")
+                        .description("yANUs Groupware 백엔드 API 문서")
+                        .version("v3.0"))
                 .components(new Components().addSecuritySchemes("bearerAuth", securityScheme))
                 .addSecurityItem(securityRequirement);
     }
