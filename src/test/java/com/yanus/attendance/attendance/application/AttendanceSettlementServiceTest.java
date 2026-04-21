@@ -229,6 +229,29 @@ class AttendanceSettlementServiceTest {
         AttendanceSettlementItemResponse firstDay = result.items().get(0);
 
         // then
-        assertThat(firstDay.status()).isEqualTo(AttendanceSettlementStatus.NO_SCHDULE);
+        assertThat(firstDay.status()).isEqualTo(AttendanceSettlementStatus.NO_SCHEDULE);
+    }
+
+    @Test
+    @DisplayName("야간근무 일정은 응답에 endsNextDay와 datetime을 필드로 가짐")
+    void night_work_schedule_response_has_endsNextDay_and_datetime() {
+        // given
+        Member member = createMember(MemberRole.MEMBER);
+        workScheduleRepository.save(WorkSchedule.create(
+                member, DayOfWeek.WEDNESDAY,
+                LocalTime.of(22, 0), LocalTime.of(6, 0),
+                WeekPattern.EVERY, true));
+
+        // when
+        AttendanceSettlementResponse response =
+                settlementService.getMonthlySettlement(member.getId(), member.getId(), YearMonth.of(2026, 4));
+
+        // then
+        AttendanceSettlementItemResponse wednesday = response.items().stream()
+                .filter(i -> i.date().equals(LocalDate.of(2026, 4, 1)))
+                .findFirst().orElseThrow();
+        assertThat(wednesday.endsNextDay()).isTrue();
+        assertThat(wednesday.scheduledStartAt()).isEqualTo(LocalDateTime.of(2026, 4, 1, 22, 0));
+        assertThat(wednesday.scheduledEndAt()).isEqualTo(LocalDateTime.of(2026, 4, 2, 6, 0));
     }
 }
