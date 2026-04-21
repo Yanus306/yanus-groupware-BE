@@ -66,14 +66,6 @@ public class AttendanceSettlementService {
         return aggregate(target, yearMonth, items);
     }
 
-    private boolean isScheduledDay(LocalDate date,
-                                   List<WorkSchedule> schedules, Map<LocalDate, WorkScheduleEvent> eventMap) {
-        if (eventMap.containsKey(date)) {
-            return true;
-        }
-        return schedules.stream().anyMatch(s -> s.getDayOfWeek() == date.getDayOfWeek());
-    }
-
     private AttendanceSettlementItemResponse buildItem(
             LocalDate date,
             List<WorkSchedule> schedules,
@@ -104,7 +96,7 @@ public class AttendanceSettlementService {
                                           Map<LocalDate, WorkScheduleEvent> eventMap) {
         if (eventMap.containsKey(date)) {
             WorkScheduleEvent event = eventMap.get(date);
-            return new ScheduledWindow(event.getStartTime(), event.getEndTime(), false); // event 는 당일 가정
+            return new ScheduledWindow(event.getStartTime(), event.getEndTime(), false);
         }
         return schedules.stream()
                 .filter(s -> s.getDayOfWeek() == date.getDayOfWeek())
@@ -127,7 +119,8 @@ public class AttendanceSettlementService {
                 .filter(i -> i.status() != AttendanceSettlementStatus.NO_SCHEDULE)
                 .count();
         int attendedDays = (int) items.stream()
-                .filter(i -> i.status() != AttendanceSettlementStatus.ABSENT)
+                .filter(i -> i.status() == AttendanceSettlementStatus.ON_TIME
+                        || i.status() == AttendanceSettlementStatus.LATE)
                 .count();
         int lateDays = (int) items.stream()
                 .filter(i -> i.status() == AttendanceSettlementStatus.LATE)
