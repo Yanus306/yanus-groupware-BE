@@ -79,7 +79,7 @@ public class AttendanceExceptionServiceTest {
         // given
         Member member = createMember("홍길동", "hong@test.com");
         workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false));
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         service.getExceptions(MONDAY, null, null, null);
@@ -96,7 +96,7 @@ public class AttendanceExceptionServiceTest {
         // given
         Member member = createMember("홍길동", "hong@test.com");
         workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false));
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY));
 
         // when
         service.getExceptions(MONDAY, null, null, null);
