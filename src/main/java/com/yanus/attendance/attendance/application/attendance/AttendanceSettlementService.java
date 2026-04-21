@@ -84,11 +84,16 @@ public class AttendanceSettlementService {
 
         int lateMinutes = calculateLateMinutes(window.start(), attendance);
         int fee = lateMinutes * FEE_PER_MINUTE;
-        AttendanceSettlementStatus status = lateMinutes > 0
-                ? AttendanceSettlementStatus.LATE
-                : AttendanceSettlementStatus.ON_TIME;
+        AttendanceSettlementStatus status = resolveStatus(lateMinutes);
 
         return AttendanceSettlementItemResponse.of(date, window, attendance, lateMinutes, fee, status);
+    }
+
+    private AttendanceSettlementStatus resolveStatus(int lateMinutes) {
+        if (lateMinutes > 0) {
+            return AttendanceSettlementStatus.LATE;
+        }
+        return AttendanceSettlementStatus.ON_TIME;
     }
 
     private ScheduledWindow resolveWindow(LocalDate date,

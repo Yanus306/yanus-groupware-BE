@@ -74,7 +74,7 @@ class AttendanceSettlementServiceTest {
 
     @Test
     @DisplayName("정시 출근은 ON_TIME이고 지각비 0원")
-    void 정시_출근은_ON_TIME이고_지각비_0원() {
+    void check_in_is_on_time_and_no_late_fee() {
         // given - 2026-03-04 (수요일)
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
@@ -96,7 +96,7 @@ class AttendanceSettlementServiceTest {
 
     @Test
     @DisplayName("지각 7분 59초는 7분으로 계산하고 700원")
-    void 지각_7분_59초는_7분으로_계산하고_700원() {
+    void late_7_59_seconds_is_7_minutes_and_700_fee() {
         // given - 2026-03-04 (수요일)
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
@@ -118,7 +118,7 @@ class AttendanceSettlementServiceTest {
 
     @Test
     @DisplayName("WorkScheduleEvent가 있으면 반복 일정보다 우선 적용")
-    void WorkScheduleEvent가_있으면_반복_일정보다_우선_적용() {
+    void work_schedule_event_is_prioritized_over_work_schedule() {
         // given - 반복 일정 09:00, 이벤트로 10:00 오버라이드, 10:05 출근
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
@@ -143,7 +143,7 @@ class AttendanceSettlementServiceTest {
 
     @Test
     @DisplayName("근무 일정이 없으면 모든 날짜가 NO_SCHEDULE")
-    void 근무_일정이_없으면_모든_날짜가_NO_SCHEDULE() {
+    void work_schedule_is_not_exist_then_all_days_are_no_schedule() {
         // given - 근무 일정 없음
         Member member = createMember(MemberRole.MEMBER);
 
@@ -161,7 +161,7 @@ class AttendanceSettlementServiceTest {
 
     @Test
     @DisplayName("출근 기록 없는 날은 ABSENT이고 지각비 없음")
-    void 출근_기록_없는_날은_ABSENT이고_지각비_없음() {
+    void work_schedule_absent_day_is_absent_and_no_late_fee() {
         // given - 일정은 있고 출근 기록 없음
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
@@ -181,7 +181,7 @@ class AttendanceSettlementServiceTest {
 
     @Test
     @DisplayName("월별 집계 정상 계산")
-    void 월별_집계_정상_계산() {
+    void monthly_settlement_calculation() {
         // given - 3/4 (수) 10분 지각, 3/11 (수) 정시 출근
         Member member = createMember(MemberRole.MEMBER);
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.WEDNESDAY,
@@ -203,7 +203,7 @@ class AttendanceSettlementServiceTest {
 
     @Test
     @DisplayName("MEMBER가 타인 정산 조회 시 예외")
-    void MEMBER가_타인_정산_조회_시_예외() {
+    void MEMBER_another_member_attendance_settlement_error() {
         // given
         Member me = createMember(MemberRole.MEMBER);
         Member other = createMember(MemberRole.MEMBER);
@@ -217,7 +217,7 @@ class AttendanceSettlementServiceTest {
 
     @Test
     @DisplayName("스케줄이 없는 날은 NO_SCHEDULE 상태로 포함")
-    void 스케줄이_없는_날은_NO_SCHEDULE_상태로_포함() {
+    void no_schedule_day_is_included_in_response() {
         // given - 수요일만 스케줄
         Member member = createMember(MemberRole.MEMBER);
         workScheduleRepository.save(WorkSchedule.create(
