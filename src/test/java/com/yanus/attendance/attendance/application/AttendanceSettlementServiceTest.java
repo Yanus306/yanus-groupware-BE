@@ -142,8 +142,8 @@ class AttendanceSettlementServiceTest {
     }
 
     @Test
-    @DisplayName("근무 일정 없는 날은 items에 포함되지 않는다")
-    void 근무_일정_없는_날은_items에_포함되지_않는다() {
+    @DisplayName("근무 일정이 없으면 모든 날짜가 NO_SCHEDULE")
+    void 근무_일정이_없으면_모든_날짜가_NO_SCHEDULE() {
         // given - 근무 일정 없음
         Member member = createMember(MemberRole.MEMBER);
 
@@ -152,7 +152,10 @@ class AttendanceSettlementServiceTest {
                 member.getId(), member.getId(), YearMonth.of(2026, 3));
 
         // then
-        assertThat(result.items()).isEmpty();
+        assertThat(result.items()).hasSize(31);
+        assertThat(result.items())
+                .allSatisfy(item -> assertThat(item.status())
+                        .isEqualTo(AttendanceSettlementStatus.NO_SCHEDULE));
         assertThat(result.scheduledDays()).isZero();
     }
 
@@ -213,9 +216,9 @@ class AttendanceSettlementServiceTest {
     }
 
     @Test
-    @DisplayName("스케줄이_없는_날은_NO_SCHEDULE_상태로_포함")
-    void no_schedule_day_is_NO_SCHEDULE_status() {
-        // given
+    @DisplayName("스케줄이 없는 날은 NO_SCHEDULE 상태로 포함")
+    void 스케줄이_없는_날은_NO_SCHEDULE_상태로_포함() {
+        // given - 수요일만 스케줄
         Member member = createMember(MemberRole.MEMBER);
         workScheduleRepository.save(WorkSchedule.create(
                 member, DayOfWeek.WEDNESDAY,
@@ -226,10 +229,13 @@ class AttendanceSettlementServiceTest {
         AttendanceSettlementResponse result = settlementService.getMonthlySettlement(
                 member.getId(), member.getId(), YearMonth.of(2026, 4)
         );
-        AttendanceSettlementItemResponse firstDay = result.items().get(0);
 
-        // then
-        assertThat(firstDay.status()).isEqualTo(AttendanceSettlementStatus.NO_SCHEDULE);
+        // then - 2026-04-02 (목) 은 스케줄 없음
+        AttendanceSettlementItemResponse thursday = findItem(result, LocalDate.of(2026, 4, 2));
+        assertThat(thursday.status()).isEqualTo(AttendanceSettlementStatus.NO_SCHEDULE);
+        assertThat(thursday.scheduledStartAt()).isNull();
+        assertThat(thursday.scheduledEndAt()).isNull();
+        assertThat(thursday.endsNextDay()).isFalse();
     }
 
     @Test
