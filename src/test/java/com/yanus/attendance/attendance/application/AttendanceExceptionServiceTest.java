@@ -16,6 +16,8 @@ import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatu
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
+import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionListResponse;
+import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionSummary;
 import com.yanus.attendance.attendance.presentation.dto.exception.BulkAutoCheckoutResponse;
 import com.yanus.attendance.global.exception.BusinessException;
@@ -275,7 +277,8 @@ public class AttendanceExceptionServiceTest {
     }
 
     @Test
-    void 야간_스케줄_자동_퇴근은_다음날_종료시각으로_기록된다() {
+    @DisplayName("야간 일정 자동 퇴근은 다음날 종료시간으로 기록")
+    void night_schedule_auto_checkout_to_next_day_end_time() {
         // given
         Member member = createMember("김야근", "night@test.com");
         workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
@@ -293,5 +296,25 @@ public class AttendanceExceptionServiceTest {
         Attendance saved = attendanceRepository
                 .findByMemberIdAndWorkDate(member.getId(), LocalDate.of(2026, 4, 20)).orElseThrow();
         assertThat(saved.getCheckOutTime()).isEqualTo(LocalDateTime.of(2026, 4, 21, 6, 0));
+    }
+
+    @Test
+    @DisplayName("야간근무 스케줄의 예외 응답은 endsNextDay와 datetime을 포함한다")
+    void night_work_schedule_response_has_endsNextDay_and_datetime() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(22, 0), LocalTime.of(6, 0), WeekPattern.EVERY, true));
+
+        // when
+        AttendanceExceptionListResponse response = service.getList(MONDAY, null, null, null);
+
+        // then
+        AttendanceExceptionResponse item = response.items().get(0);
+        assertThat(item.endsNextDay()).isTrue();
+        assertThat(item.scheduledStartAt()).isEqualTo(LocalDateTime.of(2026, 4, 20, 22, 0));
+        assertThat(item.scheduledEndAt()).isEqualTo(LocalDateTime.of(2026, 4, 21, 6, 0));
+        assertThat(item.scheduledStartTime()).isEqualTo(LocalTime.of(22, 0));
+        assertThat(item.scheduledEndTime()).isEqualTo(LocalTime.of(6, 0));
     }
 }
