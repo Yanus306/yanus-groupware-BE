@@ -305,4 +305,21 @@ public class AttendanceServiceTest {
                         me.getId(), other.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
                 .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    @DisplayName("야간 근무 다음날 새벽 퇴근 시 전날 attendance로 퇴근")
+    void night_shift_check_out() {
+        // given
+        Member member = memberRepository.save(createMember());
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        Attendance attendance = Attendance.checkIn(member, yesterday.atTime(22, 0));
+        attendanceRepository.save(attendance);
+
+        // when
+        AttendanceResponse response = attendanceService.checkOut(member.getId());
+
+        // then
+        assertThat(response.workDate()).isEqualTo(yesterday);
+        assertThat(response.status()).isEqualTo(AttendanceStatus.LEFT);
+    }
 }

@@ -46,15 +46,20 @@ public class WorkSchedule {
     @Column(name = "week_pattern", nullable = false)
     private WeekPattern weekPattern;
 
+    @Column(name = "ends_next_day", nullable = false)
+    private boolean endsNextDay;
+
     public static WorkSchedule create(Member member, DayOfWeek dayOfWeek,
-                                      LocalTime startTime, LocalTime endTime, WeekPattern weekPattern) {
-        validateTime(startTime, endTime);
+                                      LocalTime startTime, LocalTime endTime,
+                                      WeekPattern weekPattern, boolean endsNextDay) {
+        validateTime(startTime, endTime, endsNextDay);
         WorkSchedule schedule = new WorkSchedule();
         schedule.member = member;
         schedule.dayOfWeek = dayOfWeek;
         schedule.startTime = startTime;
         schedule.endTime = endTime;
         schedule.weekPattern = weekPattern != null ? weekPattern : WeekPattern.EVERY;
+        schedule.endsNextDay = endsNextDay;
         return schedule;
     }
 
@@ -62,6 +67,22 @@ public class WorkSchedule {
         validateTime(startTime, endTime);
         this.startTime = startTime;
         this.endTime = endTime;
+    }
+
+    public void update(LocalTime startTime, LocalTime endTime, boolean endsNextDay) {
+        validateTime(startTime, endTime, endsNextDay);
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.endsNextDay = endsNextDay;
+    }
+
+    private static void validateTime(LocalTime startTime, LocalTime endTime, boolean endsNextDay) {
+        if (endsNextDay) {
+            return;
+        }
+        if (!endTime.isAfter(startTime)) {
+            throw new BusinessException(ErrorCode.INVALID_WORK_SCHEDULE_TIME);
+        }
     }
 
     private static void validateTime(LocalTime stateTime, LocalTime endTime) {
