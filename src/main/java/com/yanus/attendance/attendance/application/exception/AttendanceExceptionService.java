@@ -120,7 +120,12 @@ public class AttendanceExceptionService {
 
     private AttendanceExceptionResponse toResponse(AttendanceException exception) {
         WorkSchedule schedule = findSchedule(exception.getMember(), exception.getWorkDate());
-        return AttendanceExceptionResponse.from(exception, startOf(schedule), endOf(schedule));
+        return AttendanceExceptionResponse.from(
+                exception,
+                startOf(schedule),
+                endOf(schedule),
+                endsNextDayOf(schedule)
+        );
     }
 
     private LocalTime startOf(WorkSchedule schedule) {
@@ -135,6 +140,13 @@ public class AttendanceExceptionService {
             return null;
         }
         return schedule.getEndTime();
+    }
+
+    private boolean endsNextDayOf(WorkSchedule schedule) {
+        if (schedule == null) {
+            return false;
+        }
+        return schedule.isEndsNextDay();
     }
 
     private AttendanceExceptionSummary buildSummary(
