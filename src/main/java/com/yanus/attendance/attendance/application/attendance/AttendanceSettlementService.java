@@ -9,6 +9,7 @@ import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEventRepo
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
 import com.yanus.attendance.attendance.presentation.dto.setting.AttendanceSettlementItemResponse;
 import com.yanus.attendance.attendance.presentation.dto.setting.AttendanceSettlementResponse;
+import com.yanus.attendance.attendance.presentation.dto.setting.ScheduledWindow;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
@@ -59,7 +60,6 @@ public class AttendanceSettlementService {
                 .collect(Collectors.toMap(Attendance::getWorkDate, a -> a));
 
         List<AttendanceSettlementItemResponse> items = start.datesUntil(end.plusDays(1))
-                .filter(date -> isScheduledDay(date, schedules, eventMap))
                 .map(date -> buildItem(date, schedules, eventMap, attendanceMap))
                 .toList();
 
@@ -80,38 +80,37 @@ public class AttendanceSettlementService {
             Map<LocalDate, WorkScheduleEvent> eventMap,
             Map<LocalDate, Attendance> attendanceMap) {
 
-        LocalTime scheduledStart;
-        LocalTime scheduledEnd;
-
-        if (eventMap.containsKey(date)) {
-            WorkScheduleEvent event = eventMap.get(date);
-            scheduledStart = event.getStartTime();
-            scheduledEnd = event.getEndTime();
-        } else {
-            WorkSchedule schedule = schedules.stream()
-                    .filter(s -> s.getDayOfWeek() == date.getDayOfWeek())
-                    .findFirst()
-                    .orElseThrow();
-            scheduledStart = schedule.getStartTime();
-            scheduledEnd = schedule.getEndTime();
+        ScheduledWindow window = resolveWindow(date, schedules, eventMap);
+        if (window == null) {
+            return AttendanceSettlementItemResponse.noSchedule(date);
         }
 
         Attendance attendance = attendanceMap.get(date);
         if (attendance == null) {
-            return new AttendanceSettlementItemResponse(
-                    date, scheduledStart, scheduledEnd, null, null, 0, 0, AttendanceSettlementStatus.ABSENT);
+            return AttendanceSettlementItemResponse.absent(date, window);
         }
 
-        int lateMinutes = calculateLateMinutes(scheduledStart, attendance);
+        int lateMinutes = calculateLateMinutes(window.start(), attendance);
         int fee = lateMinutes * FEE_PER_MINUTE;
         AttendanceSettlementStatus status = lateMinutes > 0
                 ? AttendanceSettlementStatus.LATE
                 : AttendanceSettlementStatus.ON_TIME;
 
-        return new AttendanceSettlementItemResponse(
-                date, scheduledStart, scheduledEnd,
-                attendance.getCheckInTime(), attendance.getCheckOutTime(),
-                lateMinutes, fee, status);
+        return AttendanceSettlementItemResponse.of(date, window, attendance, lateMinutes, fee, status);
+    }
+
+    private ScheduledWindow resolveWindow(LocalDate date,
+                                          List<WorkSchedule> schedules,
+                                          Map<LocalDate, WorkScheduleEvent> eventMap) {
+        if (eventMap.containsKey(date)) {
+            WorkScheduleEvent event = eventMap.get(date);
+            return new ScheduledWindow(event.getStartTime(), event.getEndTime(), false); // event 는 당일 가정
+        }
+        return schedules.stream()
+                .filter(s -> s.getDayOfWeek() == date.getDayOfWeek())
+                .findFirst()
+                .map(s -> new ScheduledWindow(s.getStartTime(), s.getEndTime(), s.isEndsNextDay()))
+                .orElse(null);
     }
 
     private int calculateLateMinutes(LocalTime scheduledStart, Attendance attendance) {
@@ -124,7 +123,9 @@ public class AttendanceSettlementService {
     private AttendanceSettlementResponse aggregate(
             Member target, YearMonth yearMonth, List<AttendanceSettlementItemResponse> items) {
 
-        int scheduledDays = items.size();
+        int scheduledDays = (int) items.stream()
+                .filter(i -> i.status() != AttendanceSettlementStatus.NO_SCHEDULE)
+                .count();
         int attendedDays = (int) items.stream()
                 .filter(i -> i.status() != AttendanceSettlementStatus.ABSENT)
                 .count();
