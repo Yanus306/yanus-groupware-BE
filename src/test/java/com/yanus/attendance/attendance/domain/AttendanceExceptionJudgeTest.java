@@ -27,7 +27,7 @@ public class AttendanceExceptionJudgeTest {
     void attend_schedule_but_no_check_in_record() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
 
         // when
         List<AttendanceExceptionType> result = judge.judge(schedule, null, false);
@@ -54,7 +54,7 @@ public class AttendanceExceptionJudgeTest {
     void work_schedule_time_late_check_in_throw_LATE() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 1));
 
         // when
@@ -69,7 +69,7 @@ public class AttendanceExceptionJudgeTest {
     void work_schedule_time_tie_not_exception() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
 
         // when
@@ -84,7 +84,7 @@ public class AttendanceExceptionJudgeTest {
     void no_check_out_but_time_passed_throw_MISSED_CHECK_OUT() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
 
         // when
@@ -99,7 +99,7 @@ public class AttendanceExceptionJudgeTest {
     void judge_not_throw_MISSED_CHECK_OUT() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
 
         // when
@@ -114,7 +114,7 @@ public class AttendanceExceptionJudgeTest {
     void normal_attendance_not_throw_exception() {
         // given
         WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY);
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
         attendance.checkOut(LocalDateTime.of(2026, 4, 20, 18, 0));
 
@@ -123,5 +123,36 @@ public class AttendanceExceptionJudgeTest {
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("야간 근무에서 시작시간보다 뒤에 체크인하면 LATE")
+    void overnight_late_check_in() {
+        // given: 월 22:00~화 06:00
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(22, 0), LocalTime.of(6, 0), WeekPattern.EVERY, true);
+        // 월 22:05 체크인
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 22, 5));
+
+        // when
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, false);
+
+        // then
+        assertThat(result).contains(AttendanceExceptionType.LATE);
+    }
+
+    @Test
+    @DisplayName("야간 근무에서 시작시간 정확히 같으면 LATE 아님")
+    void overnight_tie_not_late() {
+        // given
+        WorkSchedule schedule = WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(22, 0), LocalTime.of(6, 0), WeekPattern.EVERY, true);
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 22, 0));
+
+        // when
+        List<AttendanceExceptionType> result = judge.judge(schedule, attendance, false);
+
+        // then
+        assertThat(result).doesNotContain(AttendanceExceptionType.LATE);
     }
 }
