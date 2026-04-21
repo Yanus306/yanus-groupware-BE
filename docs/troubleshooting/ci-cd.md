@@ -33,33 +33,6 @@ jwt.secret=test-secret-key-for-ci-must-be-at-least-32-characters-long
 
 ---
 
-### 3. CI에서 JavaMailSender 빈 없음 — ApplicationContext 로드 실패
-
-**증상**
-```
-NoSuchBeanDefinitionException: No qualifying bean of type
-'org.springframework.mail.javamail.JavaMailSender' available
-```
-이메일 인증 기능 머지 후 CI 테스트가 전부 실패.
-
-**원인**
-`spring-boot-starter-mail`을 추가했지만 `src/test/resources/application.properties`에 mail 설정이 없어서
-`JavaMailSender` 빈이 자동 구성되지 않음. 실제 SMTP 서버가 필요하지 않아도 설정 값 자체는 있어야 빈이 등록됨.
-
-**해결**
-`src/test/resources/application.properties`에 더미 mail 설정 추가.
-```properties
-spring.mail.host=localhost
-spring.mail.port=25
-spring.mail.username=test
-spring.mail.password=test
-spring.mail.properties.mail.smtp.auth=false
-spring.mail.properties.mail.smtp.starttls.enable=false
-```
-테스트에서는 `EmailService`를 Mockito로 mock 처리하므로 실제 SMTP 연결은 일어나지 않음.
-
----
-
 ## CD
 
 ### 1. SERVER_HOST에 도메인을 넣어 SSH 접속 실패

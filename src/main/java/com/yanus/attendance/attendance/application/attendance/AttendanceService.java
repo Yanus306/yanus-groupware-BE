@@ -15,6 +15,7 @@ import com.yanus.attendance.member.domain.MemberRole;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AttendanceService {
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     private final AttendanceRepository attendanceRepository;
     private final MemberRepository memberRepository;
     private final AttendanceQueryRepository attendanceQueryRepository;
@@ -33,14 +36,14 @@ public class AttendanceService {
     public AttendanceResponse checkIn(Long memberId) {
         Member member = findMember(memberId);
         validateNotAlreadyCheckedIn(memberId);
-        Attendance attendance = Attendance.checkIn(member, LocalDateTime.now());
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.now(KST));
         attendanceRepository.save(attendance);
         return AttendanceResponse.from(attendance);
     }
 
     public AttendanceResponse checkOut(Long memberId) {
-        Attendance attendance = findTodayAttendance(memberId);
-        attendance.checkOut(LocalDateTime.now());
+        Attendance attendance = findWorkingAttendance(memberId);
+        attendance.checkOut(LocalDateTime.now(KST));
         return AttendanceResponse.from(attendance);
     }
 
@@ -81,7 +84,7 @@ public class AttendanceService {
         validateAttendanceIp(clientIp);
         Member member = findMember(memberId);
         validateNotAlreadyCheckedIn(memberId);
-        Attendance attendance = Attendance.checkIn(member, LocalDateTime.now());
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.now(KST));
         attendanceRepository.save(attendance);
         return AttendanceResponse.from(attendance);
     }
@@ -124,9 +127,23 @@ public class AttendanceService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
-    private Attendance findTodayAttendance(Long memberId) {
-        return attendanceRepository.findByMemberIdAndWorkDate(memberId, LocalDate.now())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CHECKED_IN));
+    private Attendance findWorkingAttendance(Long memberId) {
+        LocalDate today = LocalDate.now(KST);
+        Attendance todays = findWorkingOn(memberId, today);
+        if (todays != null) {
+            return todays;
+        }
+        Attendance yesterdays = findWorkingOn(memberId, today.minusDays(1));
+        if (yesterdays != null) {
+            return yesterdays;
+        }
+        throw new BusinessException(ErrorCode.NOT_CHECKED_IN);
+    }
+
+    private Attendance findWorkingOn(Long memberId, LocalDate date) {
+        return attendanceRepository.findByMemberIdAndWorkDate(memberId, date)
+                .filter(attendance -> attendance.getStatus() == AttendanceStatus.WORKING)
+                .orElse(null);
     }
 
     private void validateAttendanceIp(String clientIp) {
@@ -136,7 +153,7 @@ public class AttendanceService {
     }
 
     private void validateNotAlreadyCheckedIn(Long memberId) {
-        attendanceRepository.findByMemberIdAndWorkDate(memberId, LocalDate.now())
+        attendanceRepository.findByMemberIdAndWorkDate(memberId, LocalDate.now(KST))
                 .ifPresent(attendance -> {
                     throw new BusinessException(ErrorCode.ALREADY_CHECKED_IN);
                 });

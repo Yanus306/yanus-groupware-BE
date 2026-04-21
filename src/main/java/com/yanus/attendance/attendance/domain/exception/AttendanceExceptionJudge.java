@@ -2,6 +2,7 @@ package com.yanus.attendance.attendance.domain.exception;
 
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,9 +45,13 @@ public class AttendanceExceptionJudge {
         return !hasSchedule && hasAttendance;
     }
 
-    private boolean isLate(boolean hasSchedule, boolean hasAttendance, Attendance attendance, WorkSchedule schedule) {
-        return hasSchedule && hasAttendance
-                && attendance.getCheckInTime().toLocalTime().isAfter(schedule.getStartTime());
+    private boolean isLate(boolean hasSchedule, boolean hasAttendance,
+                           Attendance attendance, WorkSchedule schedule) {
+        if (!hasSchedule || !hasAttendance) {
+            return false;
+        }
+        LocalDateTime scheduledStart = attendance.getWorkDate().atTime(schedule.getStartTime());
+        return attendance.getCheckInTime().isAfter(scheduledStart);
     }
 
     private boolean isMissedCheckout(boolean hasSchedule, boolean hasAttendance, boolean missedCheckoutThresholdPassed) {

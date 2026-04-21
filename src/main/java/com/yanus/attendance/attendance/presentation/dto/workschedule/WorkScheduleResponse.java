@@ -10,7 +10,8 @@ public record WorkScheduleResponse(
         DayOfWeek dayOfWeek,
         LocalTime startTime,
         LocalTime endTime,
-        WeekPattern weekPattern
+        WeekPattern weekPattern,
+        boolean endsNextDay
 ) {
     public static WorkScheduleResponse from(WorkSchedule schedule) {
         return new WorkScheduleResponse(
@@ -18,7 +19,8 @@ public record WorkScheduleResponse(
                 schedule.getDayOfWeek(),
                 schedule.getStartTime(),
                 schedule.getEndTime(),
-                schedule.getWeekPattern()
+                schedule.getWeekPattern(),
+                schedule.isEndsNextDay()
         );
     }
 }
