@@ -211,4 +211,24 @@ class AttendanceSettlementServiceTest {
                         me.getId(), other.getId(), YearMonth.of(2026, 3)))
                 .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    @DisplayName("스케줄이_없는_날은_NO_SCHEDULE_상태로_포함")
+    void no_schedule_day_is_NO_SCHEDULE_status() {
+        // given
+        Member member = createMember(MemberRole.MEMBER);
+        workScheduleRepository.save(WorkSchedule.create(
+                member, DayOfWeek.WEDNESDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false
+        ));
+
+        // when
+        AttendanceSettlementResponse result = settlementService.getMonthlySettlement(
+                member.getId(), member.getId(), YearMonth.of(2026, 4)
+        );
+        AttendanceSettlementItemResponse firstDay = result.items().get(0);
+
+        // then
+        assertThat(firstDay.status()).isEqualTo(AttendanceSettlementStatus.NO_SCHDULE);
+    }
 }
