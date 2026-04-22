@@ -260,4 +260,26 @@ class AttendanceSettlementServiceTest {
         assertThat(wednesday.scheduledStartAt()).isEqualTo(LocalDateTime.of(2026, 4, 1, 22, 0));
         assertThat(wednesday.scheduledEndAt()).isEqualTo(LocalDateTime.of(2026, 4, 2, 6, 0));
     }
+
+    @Test
+    @DisplayName("날짜별 일정이 야간 근무이면 정산 응답의 endsNextDay와 scheduledEndAt이 다음날로 반영")
+    void settlement_reflects_event_endsNextDay() {
+        // given
+        Member member = createMember(MemberRole.MEMBER);
+        WorkScheduleEvent event = WorkScheduleEvent.create(
+                member, LocalDate.of(2026, 4, 21),
+                LocalTime.of(23, 0), LocalTime.of(1, 0), true);
+        workScheduleEventRepository.save(event);
+
+        // when
+        AttendanceSettlementResponse response = settlementService.getMonthlySettlement(
+                member.getId(), member.getId(), YearMonth.of(2026, 4));
+
+        // then
+        AttendanceSettlementItemResponse item = response.items().stream()
+                .filter(i -> i.date().equals(LocalDate.of(2026, 4, 21)))
+                .findFirst().orElseThrow();
+        assertThat(item.endsNextDay()).isTrue();
+        assertThat(item.scheduledEndAt()).isEqualTo(LocalDate.of(2026, 4, 22).atTime(1, 0));
+    }
 }
