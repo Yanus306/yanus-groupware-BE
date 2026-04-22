@@ -162,4 +162,22 @@ public class WorkScheduleEventServiceTest {
         assertThat(response.endTime()).isEqualTo(LocalTime.of(1, 0));
         assertThat(response.endsNextDay()).isTrue();
     }
+
+    @Test
+    @DisplayName("endsNextDay=true 이지만 시작 시간이 종료 시간보다 이르면 생성 실패")
+    void create_overnight_event_with_invalid_start_time() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventRequest request = new WorkScheduleEventRequest(
+                LocalDate.of(2026, 4, 21),
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                true
+        );
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleEventService.createEvent(member.getId(), request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_OVERNIGHT_WORK_SCHEDULE_TIME);
+    }
 }
