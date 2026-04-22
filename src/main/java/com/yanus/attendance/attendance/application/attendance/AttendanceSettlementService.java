@@ -101,7 +101,7 @@ public class AttendanceSettlementService {
                                           Map<LocalDate, WorkScheduleEvent> eventMap) {
         if (eventMap.containsKey(date)) {
             WorkScheduleEvent event = eventMap.get(date);
-            return new ScheduledWindow(event.getStartTime(), event.getEndTime(), false);
+            return new ScheduledWindow(event.getStartTime(), event.getEndTime(), event.isEndsNextDay());
         }
         return schedules.stream()
                 .filter(s -> s.getDayOfWeek() == date.getDayOfWeek())
