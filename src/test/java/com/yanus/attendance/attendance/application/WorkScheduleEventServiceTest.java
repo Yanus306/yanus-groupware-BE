@@ -47,7 +47,7 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         WorkScheduleEventRequest request = new WorkScheduleEventRequest(
-                LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0));
+                LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0), false);
 
         // when
         WorkScheduleEventResponse response = workScheduleEventService.createEvent(member.getId(), request);
@@ -63,7 +63,7 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         WorkScheduleEventRequest request = new WorkScheduleEventRequest(
-                LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0));
+                LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0), false);
         workScheduleEventService.createEvent(member.getId(), request);
 
         // when & then
@@ -78,9 +78,9 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         workScheduleEventService.createEvent(member.getId(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 10), LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 10), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
         workScheduleEventService.createEvent(member.getId(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 20), LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 20), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
 
         // when
         List<WorkScheduleEventResponse> responses = workScheduleEventService.getEvents(
@@ -96,12 +96,12 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         WorkScheduleEventResponse created = workScheduleEventService.createEvent(member.getId(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
 
         // when
         WorkScheduleEventResponse updated = workScheduleEventService.updateEvent(
                 member.getId(), created.id(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(10, 0), LocalTime.of(19, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(10, 0), LocalTime.of(19, 0), false));
 
         // then
         assertThat(updated.startTime()).isEqualTo(LocalTime.of(10, 0));
@@ -113,7 +113,7 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         WorkScheduleEventResponse created = workScheduleEventService.createEvent(member.getId(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
 
         // when
         workScheduleEventService.deleteEvent(member.getId(), created.id());
@@ -122,5 +122,101 @@ public class WorkScheduleEventServiceTest {
         List<WorkScheduleEventResponse> responses = workScheduleEventService.getEvents(
                 member.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31));
         assertThat(responses).isEmpty();
+    }
+
+    @Test
+    @DisplayName("endsNextDay=false이고 종료 시각이 시작 시간보다 빠르면 생성 실패")
+    void create_event_ends_next_day_false_and_end_time_is_earlier_than_start_time() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventRequest request = new WorkScheduleEventRequest(
+                LocalDate.of(2026, 4, 21),
+                LocalTime.of(23, 0),
+                LocalTime.of(1, 0),
+                false
+        );
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleEventService.createEvent(member.getId(), request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_WORK_SCHEDULE_TIME);
+    }
+
+    @Test
+    @DisplayName("endsNextDay=true 이면 23시 시작 01시 종료 야간 일정을 생성할 수 있다")
+    void create_success_overnight_event() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventRequest request = new WorkScheduleEventRequest(
+                LocalDate.of(2026, 4, 21),
+                LocalTime.of(23, 0),
+                LocalTime.of(1, 0),
+                true
+        );
+
+        // when
+        WorkScheduleEventResponse response = workScheduleEventService.createEvent(member.getId(), request);
+
+        // then
+        assertThat(response.startTime()).isEqualTo(LocalTime.of(23, 0));
+        assertThat(response.endTime()).isEqualTo(LocalTime.of(1, 0));
+        assertThat(response.endsNextDay()).isTrue();
+    }
+
+    @Test
+    @DisplayName("endsNextDay=true 이지만 시작 시간이 종료 시간보다 이르면 생성 실패")
+    void create_overnight_event_with_invalid_start_time() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventRequest request = new WorkScheduleEventRequest(
+                LocalDate.of(2026, 4, 21),
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                true
+        );
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleEventService.createEvent(member.getId(), request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_OVERNIGHT_WORK_SCHEDULE_TIME);
+    }
+
+    @Test
+    @DisplayName("수정 시에도 endsNextDay=true 로 야간 시간대 변경을 허용한다")
+    void update_to_overnight_schedule_success() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventResponse created = workScheduleEventService.createEvent(member.getId(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 4, 21), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
+
+        // when
+        WorkScheduleEventResponse updated = workScheduleEventService.updateEvent(
+                member.getId(), created.id(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 4, 21), LocalTime.of(22, 0), LocalTime.of(2, 0), true));
+
+        // then
+        assertThat(updated.startTime()).isEqualTo(LocalTime.of(22, 0));
+        assertThat(updated.endTime()).isEqualTo(LocalTime.of(2, 0));
+        assertThat(updated.endsNextDay()).isTrue();
+    }
+
+    @Test
+    @DisplayName("수정 시 endsNextDay=false 인데 야간 시간대로 바꾸면 실패한다")
+    void update_fail_when_endsNextDay_false_and_overnight_range() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventResponse created = workScheduleEventService.createEvent(member.getId(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 4, 21), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleEventService.updateEvent(
+                member.getId(), created.id(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 4, 21), LocalTime.of(23, 0), LocalTime.of(1, 0), false)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_WORK_SCHEDULE_TIME);
     }
 }

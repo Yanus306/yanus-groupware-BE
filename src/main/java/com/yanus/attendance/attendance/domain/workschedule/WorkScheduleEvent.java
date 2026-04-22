@@ -41,29 +41,48 @@ public class WorkScheduleEvent {
 
     private LocalTime endTime;
 
+    @Column(name = "ends_next_day", nullable = false)
+    private boolean endsNextDay;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public static WorkScheduleEvent create(Member member, LocalDate date, LocalTime startTime, LocalTime endTime) {
-        validateTime(startTime, endTime);
+    public static WorkScheduleEvent create(Member member, LocalDate date, LocalTime startTime, LocalTime endTime, boolean endsNextDay) {
+        validateTime(startTime, endTime, endsNextDay);
         WorkScheduleEvent event = new WorkScheduleEvent();
         event.member = member;
         event.date = date;
         event.startTime = startTime;
         event.endTime = endTime;
+        event.endsNextDay = endsNextDay;
         return event;
     }
 
-    public void update(LocalTime startTime, LocalTime endTime) {
-        validateTime(startTime, endTime);
+    public void update(LocalTime startTime, LocalTime endTime, boolean endsNextDay) {
+        validateTime(startTime, endTime, endsNextDay);
         this.startTime = startTime;
         this.endTime = endTime;
+        this.endsNextDay = endsNextDay;
     }
 
-    private static void validateTime(LocalTime startTime, LocalTime endTime) {
+    private static void validateTime(LocalTime startTime, LocalTime endTime, boolean endsNextDay) {
+        if (endsNextDay) {
+            validateOvernight(startTime, endTime);
+            return;
+        }
+        validateDaytime(startTime, endTime);
+    }
+
+    private static void validateDaytime(LocalTime startTime, LocalTime endTime) {
         if (!endTime.isAfter(startTime)) {
             throw new BusinessException(ErrorCode.INVALID_WORK_SCHEDULE_TIME);
+        }
+    }
+
+    private static void validateOvernight(LocalTime startTime, LocalTime endTime) {
+        if (!startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.INVALID_OVERNIGHT_WORK_SCHEDULE_TIME);
         }
     }
 }

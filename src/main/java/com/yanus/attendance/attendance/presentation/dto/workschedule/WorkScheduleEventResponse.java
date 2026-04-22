@@ -9,6 +9,7 @@ public record WorkScheduleEventResponse(
         LocalDate date,
         LocalTime startTime,
         LocalTime endTime,
+        boolean endsNextDay,
         Long memberId,
         String memberName,
         String teamName
@@ -19,6 +20,7 @@ public record WorkScheduleEventResponse(
                 event.getDate(),
                 event.getStartTime(),
                 event.getEndTime(),
+                event.isEndsNextDay(),
                 event.getMember().getId(),
                 event.getMember().getName(),
                 event.getMember().getTeam().getName()
