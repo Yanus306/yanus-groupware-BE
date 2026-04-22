@@ -125,7 +125,7 @@ class AttendanceSettlementServiceTest {
                 LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false);
         workScheduleRepository.save(schedule);
         WorkScheduleEvent event = WorkScheduleEvent.create(member,
-                LocalDate.of(2026, 3, 4), LocalTime.of(10, 0), LocalTime.of(19, 0));
+                LocalDate.of(2026, 3, 4), LocalTime.of(10, 0), LocalTime.of(19, 0), false);
         workScheduleEventRepository.save(event);
         Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 3, 4, 10, 5, 0));
         attendanceRepository.save(attendance);
