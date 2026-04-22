@@ -25,6 +25,7 @@ import com.yanus.attendance.team.domain.Team;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 public class AttendanceServiceTest {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private AttendanceService attendanceService;
     private AttendanceRepository attendanceRepository;
@@ -137,7 +140,7 @@ public class AttendanceServiceTest {
     void get_attendances_by_date() {
         // given
         Member member = createMember();
-        LocalDate date = LocalDateTime.now().toLocalDate();
+        LocalDate date = LocalDate.now(KST);
         attendanceService.checkIn(member.getId());
 
         // when
@@ -152,7 +155,7 @@ public class AttendanceServiceTest {
     void get_attendances_by_filter_with_team() {
         // given
         Member member = createMember();
-        LocalDate date = LocalDate.now();
+        LocalDate date = LocalDate.now(KST);
         attendanceService.checkIn(member.getId());
 
         // when
@@ -167,7 +170,7 @@ public class AttendanceServiceTest {
     void get_attendances_by_filter_without_team() {
         // given
         Member member = createMember();
-        LocalDate date = LocalDate.now();
+        LocalDate date = LocalDate.now(KST);
         attendanceService.checkIn(member.getId());
 
         // when
@@ -182,7 +185,7 @@ public class AttendanceServiceTest {
     void auto_check_out() {
         // given
         Member member = createMember();
-        LocalDate date = LocalDate.now();
+        LocalDate date = LocalDate.now(KST);
         attendanceService.checkIn(member.getId());
 
         // when
@@ -227,7 +230,7 @@ public class AttendanceServiceTest {
         attendanceService.checkIn(member.getId(), "220.69.1.1");
 
         // when
-        attendanceService.resetAttendance(member.getId(), LocalDate.now());
+        attendanceService.resetAttendance(member.getId(), LocalDate.now(KST));
 
         // then
         assertThat(attendanceService.getMyAttendances(member.getId())).isEmpty();
@@ -240,7 +243,7 @@ public class AttendanceServiceTest {
         Member member = createMember();
 
         // when & then
-        assertThatThrownBy(() -> attendanceService.resetAttendance(member.getId(), LocalDate.now()))
+        assertThatThrownBy(() -> attendanceService.resetAttendance(member.getId(), LocalDate.now(KST)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ATTENDANCE_NOT_FOUND);
     }
@@ -311,7 +314,7 @@ public class AttendanceServiceTest {
     void night_shift_check_out() {
         // given
         Member member = memberRepository.save(createMember());
-        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDate yesterday = LocalDate.now(KST).minusDays(1);
         Attendance attendance = Attendance.checkIn(member, yesterday.atTime(22, 0));
         attendanceRepository.save(attendance);
 
