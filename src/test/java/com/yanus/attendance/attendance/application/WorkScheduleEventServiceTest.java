@@ -123,4 +123,22 @@ public class WorkScheduleEventServiceTest {
                 member.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31));
         assertThat(responses).isEmpty();
     }
+
+    @Test
+    @DisplayName("endsNextDay=false이고 종료 시각이 시작 시간보다 빠르면 생성 실패")
+    void create_event_ends_next_day_false_and_end_time_is_earlier_than_start_time() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventRequest request = new WorkScheduleEventRequest(
+                LocalDate.of(2026, 4, 21),
+                LocalTime.of(23, 0),
+                LocalTime.of(1, 0),
+                false
+        );
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleEventService.createEvent(member.getId(), request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_WORK_SCHEDULE_TIME);
+    }
 }
