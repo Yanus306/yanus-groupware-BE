@@ -141,4 +141,25 @@ public class WorkScheduleEventServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_WORK_SCHEDULE_TIME);
     }
+
+    @Test
+    @DisplayName("endsNextDay=true 이면 23시 시작 01시 종료 야간 일정을 생성할 수 있다")
+    void create_success_overnight_event() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventRequest request = new WorkScheduleEventRequest(
+                LocalDate.of(2026, 4, 21),
+                LocalTime.of(23, 0),
+                LocalTime.of(1, 0),
+                true
+        );
+
+        // when
+        WorkScheduleEventResponse response = workScheduleEventService.createEvent(member.getId(), request);
+
+        // then
+        assertThat(response.startTime()).isEqualTo(LocalTime.of(23, 0));
+        assertThat(response.endTime()).isEqualTo(LocalTime.of(1, 0));
+        assertThat(response.endsNextDay()).isTrue();
+    }
 }
