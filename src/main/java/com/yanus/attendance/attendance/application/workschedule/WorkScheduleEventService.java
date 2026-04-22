@@ -25,7 +25,8 @@ public class WorkScheduleEventService {
     public WorkScheduleEventResponse createEvent(Long memberId, WorkScheduleEventRequest request) {
         Member member = findMember(memberId);
         validateNoDuplicate(memberId, request.date());
-        WorkScheduleEvent event = WorkScheduleEvent.create(member, request.date(), request.startTime(), request.endTime());
+        WorkScheduleEvent event = WorkScheduleEvent.create(
+                member, request.date(), request.startTime(), request.endTime(), request.endsNextDay());
         workScheduleEventRepository.save(event);
         return WorkScheduleEventResponse.from(event);
     }
@@ -38,7 +39,7 @@ public class WorkScheduleEventService {
 
     public WorkScheduleEventResponse updateEvent(Long memberId, Long eventId, WorkScheduleEventRequest request) {
         WorkScheduleEvent event = findEventAndValidateOwner(memberId, eventId);
-        event.update(request.startTime(), request.endTime());
+        event.update(request.startTime(), request.endTime(), request.endsNextDay());
         return WorkScheduleEventResponse.from(event);
     }
 
