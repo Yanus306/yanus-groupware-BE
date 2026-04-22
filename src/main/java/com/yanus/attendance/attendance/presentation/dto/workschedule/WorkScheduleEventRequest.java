@@ -6,6 +6,7 @@ import java.time.LocalTime;
 public record WorkScheduleEventRequest(
         LocalDate date,
         LocalTime startTime,
-        LocalTime endTime
+        LocalTime endTime,
+        boolean endsNextDay
 ) {
 }

@@ -47,7 +47,7 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         WorkScheduleEventRequest request = new WorkScheduleEventRequest(
-                LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0));
+                LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0), false);
 
         // when
         WorkScheduleEventResponse response = workScheduleEventService.createEvent(member.getId(), request);
@@ -63,7 +63,7 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         WorkScheduleEventRequest request = new WorkScheduleEventRequest(
-                LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0));
+                LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0), false);
         workScheduleEventService.createEvent(member.getId(), request);
 
         // when & then
@@ -78,9 +78,9 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         workScheduleEventService.createEvent(member.getId(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 10), LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 10), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
         workScheduleEventService.createEvent(member.getId(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 20), LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 20), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
 
         // when
         List<WorkScheduleEventResponse> responses = workScheduleEventService.getEvents(
@@ -96,12 +96,12 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         WorkScheduleEventResponse created = workScheduleEventService.createEvent(member.getId(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
 
         // when
         WorkScheduleEventResponse updated = workScheduleEventService.updateEvent(
                 member.getId(), created.id(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(10, 0), LocalTime.of(19, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(10, 0), LocalTime.of(19, 0), false));
 
         // then
         assertThat(updated.startTime()).isEqualTo(LocalTime.of(10, 0));
@@ -113,7 +113,7 @@ public class WorkScheduleEventServiceTest {
         // given
         Member member = createMember();
         WorkScheduleEventResponse created = workScheduleEventService.createEvent(member.getId(),
-                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 30), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
 
         // when
         workScheduleEventService.deleteEvent(member.getId(), created.id());
