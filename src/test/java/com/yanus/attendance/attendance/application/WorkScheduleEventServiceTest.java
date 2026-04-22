@@ -180,4 +180,43 @@ public class WorkScheduleEventServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_OVERNIGHT_WORK_SCHEDULE_TIME);
     }
+
+    @Test
+    @DisplayName("수정 시에도 endsNextDay=true 로 야간 시간대 변경을 허용한다")
+    void update_to_overnight_schedule_success() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventResponse created = workScheduleEventService.createEvent(member.getId(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 4, 21), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
+
+        // when
+        WorkScheduleEventResponse updated = workScheduleEventService.updateEvent(
+                member.getId(), created.id(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 4, 21), LocalTime.of(22, 0), LocalTime.of(2, 0), true));
+
+        // then
+        assertThat(updated.startTime()).isEqualTo(LocalTime.of(22, 0));
+        assertThat(updated.endTime()).isEqualTo(LocalTime.of(2, 0));
+        assertThat(updated.endsNextDay()).isTrue();
+    }
+
+    @Test
+    @DisplayName("수정 시 endsNextDay=false 인데 야간 시간대로 바꾸면 실패한다")
+    void update_fail_when_endsNextDay_false_and_overnight_range() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventResponse created = workScheduleEventService.createEvent(member.getId(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 4, 21), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleEventService.updateEvent(
+                member.getId(), created.id(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 4, 21), LocalTime.of(23, 0), LocalTime.of(1, 0), false)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_WORK_SCHEDULE_TIME);
+    }
 }
