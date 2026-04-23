@@ -53,4 +53,11 @@ public class FakeAttendanceExceptionRepository implements AttendanceExceptionRep
                 .filter(e -> e.getType() == type)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByAttendanceId(Long attendanceId) {
+        store.values().removeIf(e ->
+                e.getAttendance() != null
+                        && attendanceId.equals(e.getAttendance().getId()));
+    }
 }

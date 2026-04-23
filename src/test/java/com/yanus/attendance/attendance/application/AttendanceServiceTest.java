@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.yanus.attendance.attendance.FakeAttendanceExceptionRepository;
 import com.yanus.attendance.attendance.FakeAttendanceQueryRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
 import com.yanus.attendance.attendance.FakeAttendanceSettingRepository;
@@ -12,6 +13,9 @@ import com.yanus.attendance.attendance.application.setting.AttendanceSettingServ
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
+import com.yanus.attendance.attendance.domain.exception.AttendanceException;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionRepository;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.presentation.dto.attendance.AttendanceRangeResponse;
 import com.yanus.attendance.attendance.presentation.dto.attendance.AttendanceResponse;
 import com.yanus.attendance.global.exception.BusinessException;
@@ -42,6 +46,7 @@ public class AttendanceServiceTest {
     private MemberRepository memberRepository;
     private FakeAttendanceQueryRepository attendanceQueryRepository;
     private AttendanceSettingService settingService;
+    private AttendanceExceptionRepository exceptionRepository;
 
     private final AtomicLong memberEmailSeq = new AtomicLong(1);
     private final AtomicLong teamIdSeq = new AtomicLong(1);
@@ -52,7 +57,14 @@ public class AttendanceServiceTest {
         memberRepository = new FakeMemberRepository();
         settingService = new AttendanceSettingService(new FakeAttendanceSettingRepository(), memberRepository);
         attendanceQueryRepository = new FakeAttendanceQueryRepository(attendanceRepository);
-        attendanceService = new AttendanceService(attendanceRepository, memberRepository, attendanceQueryRepository, settingService);
+        exceptionRepository = new FakeAttendanceExceptionRepository();
+        attendanceService = new AttendanceService(
+                attendanceRepository,
+                memberRepository,
+                attendanceQueryRepository,
+                settingService,
+                exceptionRepository
+        );
         memberEmailSeq.set(1);
         teamIdSeq.set(1);
     }
@@ -324,5 +336,25 @@ public class AttendanceServiceTest {
         // then
         assertThat(response.workDate()).isEqualTo(yesterday);
         assertThat(response.status()).isEqualTo(AttendanceStatus.LEFT);
+    }
+
+    @Test
+    @DisplayName("연결된 attendance_exception 이 있어도 출근 기록 초기화에 성공한다")
+    void reset_attendance_with_linked_exception_success() {
+        // given
+        Member member = createMember();
+        LocalDate today = LocalDate.now(KST);
+        attendanceService.checkIn(member.getId(), "220.69.1.1");
+        Attendance attendance = attendanceRepository.findByMemberIdAndWorkDate(member.getId(), today)
+                .orElseThrow();
+        exceptionRepository.save(AttendanceException.open(
+                member, attendance, today, AttendanceExceptionType.MISSED_CHECK_OUT));
+
+        // when
+        attendanceService.resetAttendance(member.getId(), today);
+
+        // then
+        assertThat(attendanceService.getMyAttendances(member.getId())).isEmpty();
+        assertThat(exceptionRepository.findAllByWorkDate(today)).isEmpty();
     }
 }
