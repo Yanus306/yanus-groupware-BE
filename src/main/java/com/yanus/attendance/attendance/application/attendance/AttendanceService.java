@@ -5,6 +5,7 @@ import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceQueryRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionRepository;
 import com.yanus.attendance.attendance.presentation.dto.attendance.AttendanceRangeResponse;
 import com.yanus.attendance.attendance.presentation.dto.attendance.AttendanceResponse;
 import com.yanus.attendance.global.exception.BusinessException;
@@ -32,6 +33,7 @@ public class AttendanceService {
     private final MemberRepository memberRepository;
     private final AttendanceQueryRepository attendanceQueryRepository;
     private final AttendanceSettingService attendanceSettingService;
+    private final AttendanceExceptionRepository attendanceExceptionRepository;
 
     public AttendanceResponse checkIn(Long memberId) {
         Member member = findMember(memberId);
@@ -92,6 +94,7 @@ public class AttendanceService {
     public void resetAttendance(Long memberId, LocalDate today) {
         Attendance attendance = attendanceRepository.findByMemberIdAndWorkDate(memberId, today)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
+        attendanceExceptionRepository.deleteAllByAttendanceId(attendance.getId());
         attendanceRepository.delete(attendance);
     }
 
