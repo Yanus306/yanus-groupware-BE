@@ -7,6 +7,7 @@ import com.yanus.attendance.attendance.presentation.dto.attendance.AttendanceRes
 import com.yanus.attendance.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/attendances")
 @RequiredArgsConstructor
 public class AttendanceController {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final AttendanceService attendanceService;
 
@@ -70,12 +73,9 @@ public class AttendanceController {
     public ResponseEntity<Void> resetAttendance(
             @AuthenticationPrincipal Long memberId,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate date) {
-        LocalDate targetDate = null;
-        if (date != null) {
-            targetDate = date;
-        }
-        if (date == null) {
-            targetDate = LocalDate.now();
+        LocalDate targetDate = date;
+        if (targetDate == null) {
+            targetDate = LocalDate.now(KST);
         }
         attendanceService.resetAttendance(memberId, targetDate);
         return ResponseEntity.noContent().build();
