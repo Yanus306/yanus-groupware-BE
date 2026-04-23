@@ -16,4 +16,7 @@ public interface AttendanceExceptionJpaRepository extends JpaRepository<Attendan
 
     @Override
     List<AttendanceException> findAllByWorkDateAndType(LocalDate workDate, AttendanceExceptionType type);
+
+    @Override
+    void deleteAllByAttendanceId(Long attendanceId);
 }
