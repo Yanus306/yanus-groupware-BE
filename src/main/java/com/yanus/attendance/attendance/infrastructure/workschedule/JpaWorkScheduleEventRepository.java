@@ -31,6 +31,16 @@ public class JpaWorkScheduleEventRepository implements WorkScheduleEventReposito
     }
 
     @Override
+    public List<WorkScheduleEvent> findAllByTeamIdAndDateBetween(Long teamId, LocalDate start, LocalDate end) {
+        return repository.findAllByMember_Team_IdAndDateBetween(teamId, start, end);
+    }
+
+    @Override
+    public List<WorkScheduleEvent> findAllByDateBetween(LocalDate start, LocalDate end) {
+        return repository.findAllByDateBetween(start, end);
+    }
+
+    @Override
     public void delete(WorkScheduleEvent event) {
         repository.delete(event);
     }

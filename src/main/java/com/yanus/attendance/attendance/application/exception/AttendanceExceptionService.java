@@ -6,6 +6,8 @@ import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
 import com.yanus.attendance.attendance.domain.exception.*;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEvent;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEventRepository;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionListResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionResponse;
@@ -33,6 +35,7 @@ public class AttendanceExceptionService {
     private final AttendanceExceptionRepository exceptionRepository;
     private final AttendanceRepository attendanceRepository;
     private final WorkScheduleRepository workScheduleRepository;
+    private final WorkScheduleEventRepository workScheduleEventRepository;
     private final MemberRepository memberRepository;
     private final AttendanceSettingService settingService;
     private final AttendanceExceptionJudge judge = new AttendanceExceptionJudge();
@@ -119,7 +122,7 @@ public class AttendanceExceptionService {
     }
 
     private AttendanceExceptionResponse toResponse(AttendanceException exception) {
-        WorkSchedule schedule = findSchedule(exception.getMember(), exception.getWorkDate());
+        WorkScheduleWindow schedule = findSchedule(exception.getMember(), exception.getWorkDate());
         return AttendanceExceptionResponse.from(
                 exception,
                 startOf(schedule),
@@ -128,25 +131,25 @@ public class AttendanceExceptionService {
         );
     }
 
-    private LocalTime startOf(WorkSchedule schedule) {
+    private LocalTime startOf(WorkScheduleWindow schedule) {
         if (schedule == null) {
             return null;
         }
-        return schedule.getStartTime();
+        return schedule.startTime();
     }
 
-    private LocalTime endOf(WorkSchedule schedule) {
+    private LocalTime endOf(WorkScheduleWindow schedule) {
         if (schedule == null) {
             return null;
         }
-        return schedule.getEndTime();
+        return schedule.endTime();
     }
 
-    private boolean endsNextDayOf(WorkSchedule schedule) {
+    private boolean endsNextDayOf(WorkScheduleWindow schedule) {
         if (schedule == null) {
             return false;
         }
-        return schedule.isEndsNextDay();
+        return schedule.endsNextDay();
     }
 
     private AttendanceExceptionSummary buildSummary(
@@ -168,16 +171,24 @@ public class AttendanceExceptionService {
     }
 
     private void generateFor(Member member, LocalDate date) {
-        WorkSchedule schedule = findSchedule(member, date);
+        WorkScheduleWindow schedule = findSchedule(member, date);
         Attendance attendance = findAttendance(member, date);
         boolean thresholdPassed = isThresholdPassed(date, schedule);
-        List<AttendanceExceptionType> detected = judge.judge(schedule, attendance, thresholdPassed);
+        List<AttendanceExceptionType> detected = judge.judgeByScheduledStart(
+                startOf(schedule), attendance, thresholdPassed);
         detected.forEach(type -> saveIfAbsent(member, attendance, date, type));
     }
 
-    private WorkSchedule findSchedule(Member member, LocalDate date) {
+    private WorkScheduleWindow findSchedule(Member member, LocalDate date) {
+        WorkScheduleEvent event = workScheduleEventRepository
+                .findByMemberIdAndDate(member.getId(), date)
+                .orElse(null);
+        if (event != null) {
+            return WorkScheduleWindow.from(event);
+        }
         return workScheduleRepository
                 .findByMemberIdAndDayOfWeek(member.getId(), date.getDayOfWeek())
+                .map(WorkScheduleWindow::from)
                 .orElse(null);
     }
 
@@ -201,20 +212,20 @@ public class AttendanceExceptionService {
                 .isPresent();
     }
 
-    private boolean isThresholdPassed(LocalDate date, WorkSchedule schedule) {
+    private boolean isThresholdPassed(LocalDate date, WorkScheduleWindow schedule) {
         LocalDateTime now = LocalDateTime.now(KST);
         LocalDateTime deadline = deadlineOf(date, schedule);
         return !now.isBefore(deadline);
     }
 
-    private LocalDateTime deadlineOf(LocalDate date, WorkSchedule schedule) {
+    private LocalDateTime deadlineOf(LocalDate date, WorkScheduleWindow schedule) {
         if (schedule == null) {
             return date.atTime(settingService.getAutoCheckoutTimeValue());
         }
-        if (schedule.isEndsNextDay()) {
-            return date.plusDays(1).atTime(schedule.getEndTime());
+        if (schedule.endsNextDay()) {
+            return date.plusDays(1).atTime(schedule.endTime());
         }
-        return date.atTime(schedule.getEndTime());
+        return date.atTime(schedule.endTime());
     }
 
     private List<AttendanceException> filterExceptions(
@@ -271,31 +282,31 @@ public class AttendanceExceptionService {
 
     private Long autoCheckOut(AttendanceException exception, String actor) {
         Attendance attendance = exception.getAttendance();
-        WorkSchedule schedule = findSchedule(exception.getMember(), exception.getWorkDate());
+        WorkScheduleWindow schedule = findSchedule(exception.getMember(), exception.getWorkDate());
         closeAttendance(attendance, exception.getWorkDate(), schedule);
         exception.resolve(actor, LocalDateTime.now(KST), "자동 퇴근 처리");
         return attendance.getId();
     }
 
-    private void closeAttendance(Attendance attendance, LocalDate workDate, WorkSchedule schedule) {
+    private void closeAttendance(Attendance attendance, LocalDate workDate, WorkScheduleWindow schedule) {
         if (attendance.getStatus() != AttendanceStatus.WORKING) {
             return;
         }
         attendance.checkOut(resolveCheckOutTime(attendance, workDate, schedule));
     }
 
-    private LocalDateTime resolveCheckOutTime(Attendance attendance, LocalDate workDate, WorkSchedule schedule) {
+    private LocalDateTime resolveCheckOutTime(Attendance attendance, LocalDate workDate, WorkScheduleWindow schedule) {
         if (isOvernight(schedule)) {
-            return workDate.plusDays(1).atTime(schedule.getEndTime());
+            return workDate.plusDays(1).atTime(schedule.endTime());
         }
         return resolveDaytimeCheckOut(attendance, workDate);
     }
 
-    private boolean isOvernight(WorkSchedule schedule) {
+    private boolean isOvernight(WorkScheduleWindow schedule) {
         if (schedule == null) {
             return false;
         }
-        return schedule.isEndsNextDay();
+        return schedule.endsNextDay();
     }
 
     private LocalDateTime resolveDaytimeCheckOut(Attendance attendance, LocalDate workDate) {
@@ -305,5 +316,21 @@ public class AttendanceExceptionService {
             return candidate;
         }
         return workDate.atTime(23, 59, 59);
+    }
+
+    private record WorkScheduleWindow(
+            LocalTime startTime,
+            LocalTime endTime,
+            boolean endsNextDay
+    ) {
+        private static WorkScheduleWindow from(WorkSchedule schedule) {
+            return new WorkScheduleWindow(
+                    schedule.getStartTime(), schedule.getEndTime(), schedule.isEndsNextDay());
+        }
+
+        private static WorkScheduleWindow from(WorkScheduleEvent event) {
+            return new WorkScheduleWindow(
+                    event.getStartTime(), event.getEndTime(), event.isEndsNextDay());
+        }
     }
 }

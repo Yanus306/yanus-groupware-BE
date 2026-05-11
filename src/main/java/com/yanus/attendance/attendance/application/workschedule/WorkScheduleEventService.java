@@ -8,6 +8,7 @@ import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
+import com.yanus.attendance.member.domain.MemberRole;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,22 @@ public class WorkScheduleEventService {
     @Transactional(readOnly = true)
     public List<WorkScheduleEventResponse> getEvents(Long memberId, LocalDate startDate, LocalDate endDate) {
         return workScheduleEventRepository.findAllByMemberIdAndDateBetween(memberId, startDate, endDate)
+                .stream().map(WorkScheduleEventResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkScheduleEventResponse> getTeamEvents(
+            Long actorId, Long teamId, LocalDate startDate, LocalDate endDate) {
+        Member actor = findMember(actorId);
+        validateTeamScheduleAccess(actor, teamId);
+        return workScheduleEventRepository.findAllByTeamIdAndDateBetween(teamId, startDate, endDate)
+                .stream().map(WorkScheduleEventResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkScheduleEventResponse> getAllEvents(Long actorId, LocalDate startDate, LocalDate endDate) {
+        validateAdmin(actorId);
+        return workScheduleEventRepository.findAllByDateBetween(startDate, endDate)
                 .stream().map(WorkScheduleEventResponse::from).toList();
     }
 
@@ -65,5 +82,22 @@ public class WorkScheduleEventService {
     private Member findMember(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private void validateAdmin(Long actorId) {
+        Member actor = findMember(actorId);
+        if (actor.getRole() != MemberRole.ADMIN) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    private void validateTeamScheduleAccess(Member actor, Long teamId) {
+        if (actor.getRole() == MemberRole.ADMIN) {
+            return;
+        }
+        if (actor.getTeam().getId().equals(teamId)) {
+            return;
+        }
+        throw new BusinessException(ErrorCode.FORBIDDEN);
     }
 }
