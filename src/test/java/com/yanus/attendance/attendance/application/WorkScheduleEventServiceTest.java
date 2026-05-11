@@ -27,17 +27,26 @@ public class WorkScheduleEventServiceTest {
 
     private WorkScheduleEventService workScheduleEventService;
     private MemberRepository memberRepository;
+    private FakeWorkScheduleEventRepository workScheduleEventRepository;
 
     @BeforeEach
     void setUp() {
         memberRepository = new FakeMemberRepository();
-        workScheduleEventService = new WorkScheduleEventService(new FakeWorkScheduleEventRepository(), memberRepository);
+        workScheduleEventRepository = new FakeWorkScheduleEventRepository();
+        workScheduleEventService = new WorkScheduleEventService(workScheduleEventRepository, memberRepository);
     }
 
     private Member createMember() {
         Team team = Team.create("1팀");
         ReflectionTestUtils.setField(team, "id", 1L);
         Member member = Member.create("테스터", "test@test.com", "password", MemberRole.MEMBER, MemberStatus.ACTIVE, team);
+        return memberRepository.save(member);
+    }
+
+    private Member createMember(String name, String email, MemberRole role, Long teamId, String teamName) {
+        Team team = Team.create(teamName);
+        ReflectionTestUtils.setField(team, "id", teamId);
+        Member member = Member.create(name, email, "password", role, MemberStatus.ACTIVE, team);
         return memberRepository.save(member);
     }
 
@@ -122,6 +131,57 @@ public class WorkScheduleEventServiceTest {
         List<WorkScheduleEventResponse> responses = workScheduleEventService.getEvents(
                 member.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31));
         assertThat(responses).isEmpty();
+    }
+
+    @Test
+    @DisplayName("팀장은 같은 팀원의 날짜별 근무 일정을 조회할 수 있다")
+    void team_lead_can_get_team_events() {
+        // given
+        Member teamLead = createMember("팀장", "lead@test.com", MemberRole.TEAM_LEAD, 1L, "1팀");
+        Member member = createMember("팀원", "member@test.com", MemberRole.MEMBER, 1L, "1팀");
+        workScheduleEventService.createEvent(member.getId(),
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 10), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
+
+        // when
+        List<WorkScheduleEventResponse> responses = workScheduleEventService.getTeamEvents(
+                teamLead.getId(), 1L, LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31));
+
+        // then
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).memberId()).isEqualTo(member.getId());
+    }
+
+    @Test
+    @DisplayName("관리자는 전체 날짜별 근무 일정을 조회할 수 있다")
+    void admin_can_get_all_events() {
+        // given
+        Member admin = createMember("관리자", "admin@test.com", MemberRole.ADMIN, 1L, "1팀");
+        Member member1 = createMember("팀원1", "member1@test.com", MemberRole.MEMBER, 1L, "1팀");
+        Member member2 = createMember("팀원2", "member2@test.com", MemberRole.MEMBER, 2L, "2팀");
+        workScheduleEventService.createEvent(member1.getId(),
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 10), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
+        workScheduleEventService.createEvent(member2.getId(),
+                new WorkScheduleEventRequest(LocalDate.of(2026, 3, 20), LocalTime.of(10, 0), LocalTime.of(19, 0), false));
+
+        // when
+        List<WorkScheduleEventResponse> responses = workScheduleEventService.getAllEvents(
+                admin.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31));
+
+        // then
+        assertThat(responses).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("일반 회원은 다른 팀 날짜별 근무 일정을 조회할 수 없다")
+    void member_cannot_get_other_team_events() {
+        // given
+        Member member = createMember("팀원", "member@test.com", MemberRole.MEMBER, 1L, "1팀");
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleEventService.getTeamEvents(
+                member.getId(), 2L, LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
     }
 
     @Test

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.yanus.attendance.attendance.FakeAttendanceExceptionRepository;
 import com.yanus.attendance.attendance.FakeAttendanceRepository;
 import com.yanus.attendance.attendance.FakeAttendanceSettingRepository;
+import com.yanus.attendance.attendance.FakeWorkScheduleEventRepository;
 import com.yanus.attendance.attendance.FakeWorkScheduleRepository;
 import com.yanus.attendance.attendance.application.exception.AttendanceExceptionService;
 import com.yanus.attendance.attendance.application.setting.AttendanceSettingService;
@@ -16,6 +17,7 @@ import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatu
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEvent;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionListResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionSummary;
@@ -44,6 +46,7 @@ public class AttendanceExceptionServiceTest {
     private FakeAttendanceExceptionRepository exceptionRepository;
     private FakeAttendanceRepository attendanceRepository;
     private FakeWorkScheduleRepository workScheduleRepository;
+    private FakeWorkScheduleEventRepository workScheduleEventRepository;
     private FakeMemberRepository memberRepository;
     private FakeAttendanceSettingRepository settingRepository;
     private AttendanceSettingService settingService;
@@ -53,6 +56,7 @@ public class AttendanceExceptionServiceTest {
         exceptionRepository = new FakeAttendanceExceptionRepository();
         attendanceRepository = new FakeAttendanceRepository();
         workScheduleRepository = new FakeWorkScheduleRepository();
+        workScheduleEventRepository = new FakeWorkScheduleEventRepository();
         memberRepository = new FakeMemberRepository();
         settingRepository = new FakeAttendanceSettingRepository();
         settingService = new AttendanceSettingService(settingRepository, memberRepository);
@@ -61,6 +65,7 @@ public class AttendanceExceptionServiceTest {
                 exceptionRepository,
                 attendanceRepository,
                 workScheduleRepository,
+                workScheduleEventRepository,
                 memberRepository,
                 settingService
         );
@@ -205,6 +210,41 @@ public class AttendanceExceptionServiceTest {
         // when & then
         assertThatThrownBy(() -> service.approve(999L, "admin", null))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("날짜별 일정이 있으면 반복 일정이 없어도 NO_SCHEDULE로 판단하지 않는다")
+    void 날짜별_일정이_있으면_반복_일정이_없어도_NO_SCHEDULE로_판단하지_않는다() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        workScheduleEventRepository.save(WorkScheduleEvent.create(
+                member, MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), false));
+        attendanceRepository.save(Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0)));
+
+        // when
+        service.getExceptions(MONDAY, null, null, null);
+
+        // then
+        assertThat(exceptionRepository.findAllByWorkDate(MONDAY)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("날짜별 일정의 예외 응답은 날짜별 시작/종료 시간을 포함한다")
+    void 날짜별_일정의_예외_응답은_날짜별_시작_종료_시간을_포함한다() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        workScheduleEventRepository.save(WorkScheduleEvent.create(
+                member, MONDAY, LocalTime.of(10, 0), LocalTime.of(19, 0), false));
+
+        // when
+        AttendanceExceptionListResponse response = service.getList(MONDAY, null, null, null);
+
+        // then
+        AttendanceExceptionResponse item = response.items().get(0);
+        assertThat(item.scheduledStartTime()).isEqualTo(LocalTime.of(10, 0));
+        assertThat(item.scheduledEndTime()).isEqualTo(LocalTime.of(19, 0));
+        assertThat(item.scheduledStartAt()).isEqualTo(LocalDateTime.of(2026, 4, 20, 10, 0));
+        assertThat(item.scheduledEndAt()).isEqualTo(LocalDateTime.of(2026, 4, 20, 19, 0));
     }
 
     @Test
