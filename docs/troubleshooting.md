@@ -1292,6 +1292,22 @@ schedules.stream()
 
 ---
 
+## 3. 날짜별 근무 일정이 예외 판정과 팀 조회에 반영되지 않음 (#191)
+
+**증상**
+날짜별 근무 일정만 추가한 날짜가 출퇴근 예외 조회에서 근무일로 반영되지 않고 `NO_SCHEDULE`로 처리될 수 있음.
+또한 본인 날짜별 일정 조회 API만 있어 팀원/관리자 화면에서 다른 사람의 날짜별 일정이 보이지 않음.
+
+**원인**
+`AttendanceExceptionService`가 반복 일정(`WorkSchedule`)만 조회하고 날짜별 일정(`WorkScheduleEvent`)을 보지 않았음.
+`WorkScheduleEventService`에도 팀/전체 조회 유스케이스가 없었음.
+
+**해결**
+예외 판정 시 날짜별 일정을 반복 일정보다 우선 적용하도록 `WorkScheduleEventRepository`를 주입하고,
+팀/전체 날짜별 일정 조회 API를 추가함.
+
+---
+
 # AUTH 도메인
 
 ## 1. 비활성화(INACTIVE) 멤버 로그인 차단 누락 (#88)
