@@ -3,6 +3,7 @@ package com.yanus.attendance.attendance.domain.exception;
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,9 +14,18 @@ public class AttendanceExceptionJudge {
             Attendance attendance,
             boolean missedCheckoutThresholdPassed
     ) {
+        LocalTime scheduledStart = schedule == null ? null : schedule.getStartTime();
+        return judgeByScheduledStart(scheduledStart, attendance, missedCheckoutThresholdPassed);
+    }
+
+    public List<AttendanceExceptionType> judgeByScheduledStart(
+            LocalTime scheduledStart,
+            Attendance attendance,
+            boolean missedCheckoutThresholdPassed
+    ) {
         List<AttendanceExceptionType> result = new ArrayList<>();
 
-        boolean hasSchedule = schedule != null;
+        boolean hasSchedule = scheduledStart != null;
         boolean hasAttendance = attendance != null;
 
         if (isMissedCheckIn(hasSchedule, hasAttendance)) {
@@ -26,7 +36,7 @@ public class AttendanceExceptionJudge {
             result.add(AttendanceExceptionType.NO_SCHEDULE);
         }
 
-        if (isLate(hasSchedule, hasAttendance, attendance, schedule)) {
+        if (isLate(hasSchedule, hasAttendance, attendance, scheduledStart)) {
             result.add(AttendanceExceptionType.LATE);
         }
 
@@ -46,11 +56,11 @@ public class AttendanceExceptionJudge {
     }
 
     private boolean isLate(boolean hasSchedule, boolean hasAttendance,
-                           Attendance attendance, WorkSchedule schedule) {
+                           Attendance attendance, LocalTime scheduledStartTime) {
         if (!hasSchedule || !hasAttendance) {
             return false;
         }
-        LocalDateTime scheduledStart = attendance.getWorkDate().atTime(schedule.getStartTime());
+        LocalDateTime scheduledStart = attendance.getWorkDate().atTime(scheduledStartTime);
         return attendance.getCheckInTime().isAfter(scheduledStart);
     }
 

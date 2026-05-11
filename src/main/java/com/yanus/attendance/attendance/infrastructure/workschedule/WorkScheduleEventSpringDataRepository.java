@@ -11,5 +11,8 @@ public interface WorkScheduleEventSpringDataRepository extends JpaRepository<Wor
     Optional<WorkScheduleEvent> findByMemberIdAndDate(Long memberId, LocalDate date);
 
     List<WorkScheduleEvent> findAllByMemberIdAndDateBetween(Long memberId, LocalDate start, LocalDate end);
-}
 
+    List<WorkScheduleEvent> findAllByMember_Team_IdAndDateBetween(Long teamId, LocalDate start, LocalDate end);
+
+    List<WorkScheduleEvent> findAllByDateBetween(LocalDate start, LocalDate end);
+}

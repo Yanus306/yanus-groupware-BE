@@ -45,6 +45,25 @@ public class WorkScheduleEventController {
         return ResponseEntity.ok(ApiResponse.success(workScheduleEventService.getEvents(memberId, startDate, endDate)));
     }
 
+    @GetMapping("/team/{teamId}")
+    public ResponseEntity<ApiResponse<List<WorkScheduleEventResponse>>> getTeamEvents(
+            @AuthenticationPrincipal Long actorId,
+            @PathVariable Long teamId,
+            @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(ApiResponse.success(
+                workScheduleEventService.getTeamEvents(actorId, teamId, startDate, endDate)));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<WorkScheduleEventResponse>>> getAllEvents(
+            @AuthenticationPrincipal Long actorId,
+            @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(ApiResponse.success(
+                workScheduleEventService.getAllEvents(actorId, startDate, endDate)));
+    }
+
     @PutMapping("/{eventId}")
     public ResponseEntity<ApiResponse<WorkScheduleEventResponse>> updateEvent(
             @AuthenticationPrincipal Long memberId,

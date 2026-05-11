@@ -42,8 +42,22 @@ public class FakeWorkScheduleEventRepository implements WorkScheduleEventReposit
     }
 
     @Override
+    public List<WorkScheduleEvent> findAllByTeamIdAndDateBetween(Long teamId, LocalDate start, LocalDate end) {
+        return store.values().stream()
+                .filter(e -> e.getMember().getTeam().getId().equals(teamId))
+                .filter(e -> !e.getDate().isBefore(start) && !e.getDate().isAfter(end))
+                .toList();
+    }
+
+    @Override
+    public List<WorkScheduleEvent> findAllByDateBetween(LocalDate start, LocalDate end) {
+        return store.values().stream()
+                .filter(e -> !e.getDate().isBefore(start) && !e.getDate().isAfter(end))
+                .toList();
+    }
+
+    @Override
     public void delete(WorkScheduleEvent event) {
         store.remove(event.getId());
     }
 }
-
