@@ -14,5 +14,9 @@ public interface WorkScheduleEventRepository {
 
     List<WorkScheduleEvent> findAllByMemberIdAndDateBetween(Long memberId, LocalDate start, LocalDate end);
 
+    List<WorkScheduleEvent> findAllByTeamIdAndDateBetween(Long teamId, LocalDate start, LocalDate end);
+
+    List<WorkScheduleEvent> findAllByDateBetween(LocalDate start, LocalDate end);
+
     void delete(WorkScheduleEvent event);
 }

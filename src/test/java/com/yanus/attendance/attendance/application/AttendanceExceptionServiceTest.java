@@ -219,13 +219,16 @@ public class AttendanceExceptionServiceTest {
         Member member = createMember("홍길동", "hong@test.com");
         workScheduleEventRepository.save(WorkScheduleEvent.create(
                 member, MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), false));
-        attendanceRepository.save(Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0)));
+        Attendance attendance = Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0));
+        attendance.checkOut(LocalDateTime.of(2026, 4, 20, 18, 0));
+        attendanceRepository.save(attendance);
 
         // when
         service.getExceptions(MONDAY, null, null, null);
 
         // then
-        assertThat(exceptionRepository.findAllByWorkDate(MONDAY)).isEmpty();
+        assertThat(exceptionRepository.findAllByWorkDate(MONDAY))
+                .noneMatch(exception -> exception.getType() == AttendanceExceptionType.NO_SCHEDULE);
     }
 
     @Test
