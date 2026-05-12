@@ -14,6 +14,7 @@ import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEvent;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEventRepository;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEventType;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepository;
 import com.yanus.attendance.attendance.presentation.dto.setting.AttendanceSettlementItemResponse;
 import com.yanus.attendance.attendance.presentation.dto.setting.AttendanceSettlementResponse;
@@ -259,6 +260,64 @@ class AttendanceSettlementServiceTest {
         assertThat(wednesday.endsNextDay()).isTrue();
         assertThat(wednesday.scheduledStartAt()).isEqualTo(LocalDateTime.of(2026, 4, 1, 22, 0));
         assertThat(wednesday.scheduledEndAt()).isEqualTo(LocalDateTime.of(2026, 4, 2, 6, 0));
+    }
+
+    @Test
+    @DisplayName("반복 일정이 있는 날짜라도 DAY_OFF면 정산에서 NO_SCHEDULE로 제외된다")
+    void day_off_event_is_excluded_from_settlement_schedule_days() {
+        // given
+        Member member = createMember(MemberRole.MEMBER);
+        workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false));
+        workScheduleEventRepository.save(WorkScheduleEvent.create(
+                member,
+                LocalDate.of(2026, 4, 20),
+                WorkScheduleEventType.DAY_OFF,
+                null,
+                null,
+                false,
+                "개인 일정"
+        ));
+
+        // when
+        AttendanceSettlementResponse response = settlementService.getMonthlySettlement(
+                member.getId(), member.getId(), YearMonth.of(2026, 4));
+
+        // then
+        AttendanceSettlementItemResponse item = findItem(response, LocalDate.of(2026, 4, 20));
+        assertThat(item.status()).isEqualTo(AttendanceSettlementStatus.NO_SCHEDULE);
+        assertThat(item.scheduledStartTime()).isNull();
+        assertThat(item.scheduledEndTime()).isNull();
+        assertThat(response.scheduledDays()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("DAY_OFF 삭제 후 반복 일정이 다시 정산에 반영된다")
+    void deleted_day_off_event_restores_recurring_schedule_settlement() {
+        // given
+        Member member = createMember(MemberRole.MEMBER);
+        workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false));
+        WorkScheduleEvent event = workScheduleEventRepository.save(WorkScheduleEvent.create(
+                member,
+                LocalDate.of(2026, 4, 20),
+                WorkScheduleEventType.DAY_OFF,
+                null,
+                null,
+                false,
+                "개인 일정"
+        ));
+        workScheduleEventRepository.delete(event);
+
+        // when
+        AttendanceSettlementResponse response = settlementService.getMonthlySettlement(
+                member.getId(), member.getId(), YearMonth.of(2026, 4));
+
+        // then
+        AttendanceSettlementItemResponse item = findItem(response, LocalDate.of(2026, 4, 20));
+        assertThat(item.status()).isEqualTo(AttendanceSettlementStatus.ABSENT);
+        assertThat(item.scheduledStartTime()).isEqualTo(LocalTime.of(9, 0));
+        assertThat(response.scheduledDays()).isEqualTo(4);
     }
 
     @Test

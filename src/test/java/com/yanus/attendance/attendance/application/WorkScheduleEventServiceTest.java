@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.attendance.FakeWorkScheduleEventRepository;
 import com.yanus.attendance.attendance.application.workschedule.WorkScheduleEventService;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEventType;
 import com.yanus.attendance.attendance.presentation.dto.workschedule.WorkScheduleEventRequest;
 import com.yanus.attendance.attendance.presentation.dto.workschedule.WorkScheduleEventResponse;
 import com.yanus.attendance.global.exception.BusinessException;
@@ -182,6 +183,77 @@ public class WorkScheduleEventServiceTest {
                 member.getId(), 2L, LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("DAY_OFF 날짜별 일정은 시간 없이 생성할 수 있다")
+    void create_day_off_event_without_time_success() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventRequest request = new WorkScheduleEventRequest(
+                LocalDate.of(2026, 5, 19),
+                WorkScheduleEventType.DAY_OFF,
+                null,
+                null,
+                false,
+                "개인 일정"
+        );
+
+        // when
+        WorkScheduleEventResponse response = workScheduleEventService.createEvent(member.getId(), request);
+
+        // then
+        assertThat(response.eventType()).isEqualTo(WorkScheduleEventType.DAY_OFF);
+        assertThat(response.startTime()).isNull();
+        assertThat(response.endTime()).isNull();
+        assertThat(response.endsNextDay()).isFalse();
+    }
+
+    @Test
+    @DisplayName("WORKING 날짜별 일정은 시작 시간과 종료 시간이 필수다")
+    void create_working_event_requires_start_time_and_end_time() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventRequest request = new WorkScheduleEventRequest(
+                LocalDate.of(2026, 5, 19),
+                WorkScheduleEventType.WORKING,
+                null,
+                null,
+                false,
+                null
+        );
+
+        // when & then
+        assertThatThrownBy(() -> workScheduleEventService.createEvent(member.getId(), request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.WORK_SCHEDULE_EVENT_TIME_REQUIRED);
+    }
+
+    @Test
+    @DisplayName("날짜별 일정을 DAY_OFF로 수정하면 시간이 제거된다")
+    void update_working_event_to_day_off_clears_time() {
+        // given
+        Member member = createMember();
+        WorkScheduleEventResponse created = workScheduleEventService.createEvent(member.getId(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 5, 19), LocalTime.of(9, 0), LocalTime.of(18, 0), false));
+
+        // when
+        WorkScheduleEventResponse updated = workScheduleEventService.updateEvent(
+                member.getId(), created.id(),
+                new WorkScheduleEventRequest(
+                        LocalDate.of(2026, 5, 19),
+                        WorkScheduleEventType.DAY_OFF,
+                        null,
+                        null,
+                        false,
+                        "개인 일정"
+                ));
+
+        // then
+        assertThat(updated.eventType()).isEqualTo(WorkScheduleEventType.DAY_OFF);
+        assertThat(updated.startTime()).isNull();
+        assertThat(updated.endTime()).isNull();
     }
 
     @Test
