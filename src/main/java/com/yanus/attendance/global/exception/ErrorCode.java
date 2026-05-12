@@ -42,6 +42,7 @@ public enum ErrorCode {
     ATTENDANCE_EXCEPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "ATTENDANCE_EXCEPTION_NOT_FOUND", "존재하지 않는 출퇴근 예외입니다."),
     INVALID_EXCEPTION_STATE_TRANSITION(HttpStatus.BAD_REQUEST, "INVALID_EXCEPTION_STATE_TRANSITION", "예외 상태를 변경할 수 없습니다."),
     INVALID_OVERNIGHT_WORK_SCHEDULE_TIME(HttpStatus.BAD_REQUEST, "INVALID_OVERNIGHT_WORK_SCHEDULE_TIME", "다음날 종료 일정은 시작 시간이 종료 시간보다 늦어야 합니다."),
+    WORK_SCHEDULE_EVENT_TIME_REQUIRED(HttpStatus.BAD_REQUEST, "WORK_SCHEDULE_EVENT_TIME_REQUIRED", "날짜별 근무 일정은 시작 시간과 종료 시간이 필요합니다."),
 
     // Team
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "존재하지 않는 팀입니다."),
