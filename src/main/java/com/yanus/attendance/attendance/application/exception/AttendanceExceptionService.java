@@ -184,6 +184,9 @@ public class AttendanceExceptionService {
                 .findByMemberIdAndDate(member.getId(), date)
                 .orElse(null);
         if (event != null) {
+            if (event.isDayOff()) {
+                return null;
+            }
             return WorkScheduleWindow.from(event);
         }
         return workScheduleRepository
