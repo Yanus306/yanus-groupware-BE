@@ -18,6 +18,7 @@ import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEvent;
+import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEventType;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionListResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionSummary;
@@ -248,6 +249,85 @@ public class AttendanceExceptionServiceTest {
         assertThat(item.scheduledEndTime()).isEqualTo(LocalTime.of(19, 0));
         assertThat(item.scheduledStartAt()).isEqualTo(LocalDateTime.of(2026, 4, 20, 10, 0));
         assertThat(item.scheduledEndAt()).isEqualTo(LocalDateTime.of(2026, 4, 20, 19, 0));
+    }
+
+    @Test
+    @DisplayName("반복 일정이 있어도 DAY_OFF 날짜에 미출근이면 MISSED_CHECK_IN을 생성하지 않는다")
+    void day_off_does_not_create_missed_check_in_even_with_recurring_schedule() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false));
+        workScheduleEventRepository.save(WorkScheduleEvent.create(
+                member,
+                MONDAY,
+                WorkScheduleEventType.DAY_OFF,
+                null,
+                null,
+                false,
+                "개인 일정"
+        ));
+
+        // when
+        service.getExceptions(MONDAY, null, null, null);
+
+        // then
+        assertThat(exceptionRepository.findAllByWorkDate(MONDAY))
+                .noneMatch(exception -> exception.getType() == AttendanceExceptionType.MISSED_CHECK_IN);
+    }
+
+    @Test
+    @DisplayName("DAY_OFF 날짜에 출근 기록이 있으면 NO_SCHEDULE 예외를 생성한다")
+    void day_off_with_attendance_creates_no_schedule_exception() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false));
+        workScheduleEventRepository.save(WorkScheduleEvent.create(
+                member,
+                MONDAY,
+                WorkScheduleEventType.DAY_OFF,
+                null,
+                null,
+                false,
+                "개인 일정"
+        ));
+        attendanceRepository.save(Attendance.checkIn(member, LocalDateTime.of(2026, 4, 20, 9, 0)));
+
+        // when
+        service.getExceptions(MONDAY, null, null, null);
+
+        // then
+        assertThat(exceptionRepository.findAllByWorkDate(MONDAY))
+                .extracting(AttendanceException::getType)
+                .contains(AttendanceExceptionType.NO_SCHEDULE);
+    }
+
+    @Test
+    @DisplayName("DAY_OFF 삭제 후 반복 일정이 다시 보이면 MISSED_CHECK_IN을 생성한다")
+    void deleted_day_off_restores_recurring_schedule_exception() {
+        // given
+        Member member = createMember("홍길동", "hong@test.com");
+        workScheduleRepository.save(WorkSchedule.create(member, DayOfWeek.MONDAY,
+                LocalTime.of(9, 0), LocalTime.of(18, 0), WeekPattern.EVERY, false));
+        WorkScheduleEvent event = workScheduleEventRepository.save(WorkScheduleEvent.create(
+                member,
+                MONDAY,
+                WorkScheduleEventType.DAY_OFF,
+                null,
+                null,
+                false,
+                "개인 일정"
+        ));
+        workScheduleEventRepository.delete(event);
+
+        // when
+        service.getExceptions(MONDAY, null, null, null);
+
+        // then
+        assertThat(exceptionRepository.findAllByWorkDate(MONDAY))
+                .extracting(AttendanceException::getType)
+                .contains(AttendanceExceptionType.MISSED_CHECK_IN);
     }
 
     @Test

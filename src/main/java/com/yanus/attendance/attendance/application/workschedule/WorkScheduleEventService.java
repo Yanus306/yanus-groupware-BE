@@ -27,7 +27,13 @@ public class WorkScheduleEventService {
         Member member = findMember(memberId);
         validateNoDuplicate(memberId, request.date());
         WorkScheduleEvent event = WorkScheduleEvent.create(
-                member, request.date(), request.startTime(), request.endTime(), request.endsNextDay());
+                member,
+                request.date(),
+                request.eventTypeOrDefault(),
+                request.startTime(),
+                request.endTime(),
+                request.endsNextDay(),
+                request.reason());
         workScheduleEventRepository.save(event);
         return WorkScheduleEventResponse.from(event);
     }
@@ -56,7 +62,12 @@ public class WorkScheduleEventService {
 
     public WorkScheduleEventResponse updateEvent(Long memberId, Long eventId, WorkScheduleEventRequest request) {
         WorkScheduleEvent event = findEventAndValidateOwner(memberId, eventId);
-        event.update(request.startTime(), request.endTime(), request.endsNextDay());
+        event.update(
+                request.eventTypeOrDefault(),
+                request.startTime(),
+                request.endTime(),
+                request.endsNextDay(),
+                request.reason());
         return WorkScheduleEventResponse.from(event);
     }
 
