@@ -27,6 +27,13 @@ public class FakeChannelRepository implements ChannelRepository {
     }
 
     @Override
+    public Optional<Channel> findByName(String name) {
+        return store.values().stream()
+                .filter(channel -> channel.getName().equals(name))
+                .findFirst();
+    }
+
+    @Override
     public List<Channel> findAll() {
         return new ArrayList<>(store.values());
     }

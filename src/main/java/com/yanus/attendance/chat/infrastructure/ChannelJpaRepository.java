@@ -27,10 +27,16 @@ public class ChannelJpaRepository implements ChannelRepository {
     }
 
     @Override
+    public Optional<Channel> findByName(String name) {
+        return port.findByName(name);
+    }
+
+    @Override
     public List<Channel> findAll() {
         return port.findAll();
     }
 }
 
 interface ChannelJpaRepositoryPort extends JpaRepository<Channel, Long> {
+    Optional<Channel> findByName(String name);
 }

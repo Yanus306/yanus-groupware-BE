@@ -9,5 +9,7 @@ public interface ChannelRepository {
 
     Optional<Channel> findById(Long id);
 
+    Optional<Channel> findByName(String name);
+
     List<Channel> findAll();
 }
