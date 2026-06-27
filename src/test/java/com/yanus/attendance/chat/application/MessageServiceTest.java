@@ -42,7 +42,7 @@ public class MessageServiceTest {
         channelRepository = new FakeChannelRepository();
         memberRepository = new FakeMemberRepository();
         teamRepository = new FakeTeamRepository();
-        messageService = new MessageService(messageRepository, channelRepository);
+        messageService = new MessageService(messageRepository, channelRepository, memberRepository);
 
         channel = channelRepository.save(Channel.create("General", ChannelType.GENERAL));
         Team team = teamRepository.save(Team.create("기본팀"));
@@ -106,5 +106,48 @@ public class MessageServiceTest {
         assertThatThrownBy(() -> messageService.getMessages(999L, latestFirst(50)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CHANNEL_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("텍스트 메시지를 전송한다")
+    void send_text_message() {
+        // when
+        MessageResponse result = messageService.sendMessage(
+                channel.getId(), sender.getId(), "안녕하세요", MessageType.TEXT);
+
+        // then
+        assertThat(result.content()).isEqualTo("안녕하세요");
+        assertThat(result.type()).isEqualTo(MessageType.TEXT);
+        assertThat(result.senderId()).isEqualTo(sender.getId());
+        assertThat(messageService.getMessages(channel.getId(), latestFirst(50))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("type이 없으면 TEXT로 저장된다")
+    void send_message_defaults_to_text() {
+        // when
+        MessageResponse result = messageService.sendMessage(
+                channel.getId(), sender.getId(), "타입 미지정", null);
+
+        // then
+        assertThat(result.type()).isEqualTo(MessageType.TEXT);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 채널에 전송 시 예외 발생")
+    void send_message_channel_not_found() {
+        // when & then
+        assertThatThrownBy(() -> messageService.sendMessage(999L, sender.getId(), "안녕", MessageType.TEXT))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CHANNEL_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 멤버가 전송 시 예외 발생")
+    void send_message_member_not_found() {
+        // when & then
+        assertThatThrownBy(() -> messageService.sendMessage(channel.getId(), 999L, "안녕", MessageType.TEXT))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_NOT_FOUND);
     }
 }
