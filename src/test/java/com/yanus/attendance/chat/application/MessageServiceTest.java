@@ -48,7 +48,8 @@ public class MessageServiceTest {
         memberRepository = new FakeMemberRepository();
         teamRepository = new FakeTeamRepository();
         storageService = new FakeStorageService();
-        messageService = new MessageService(messageRepository, channelRepository, memberRepository, storageService);
+        messageService = new MessageService(
+                messageRepository, channelRepository, memberRepository, storageService, event -> {});
         ReflectionTestUtils.setField(messageService, "bucket", "test-bucket");
 
         channel = channelRepository.save(Channel.create("General", ChannelType.GENERAL));

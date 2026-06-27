@@ -24,6 +24,14 @@ public class FakeChannelMemberRepository implements ChannelMemberRepository {
                 cm.getChannel().getId().equals(channelId) && cm.getMember().getId().equals(memberId));
     }
 
+    @Override
+    public List<Long> findMemberIdsByChannelId(Long channelId) {
+        return store.stream()
+                .filter(cm -> cm.getChannel().getId().equals(channelId))
+                .map(cm -> cm.getMember().getId())
+                .toList();
+    }
+
     public int size() {
         return store.size();
     }

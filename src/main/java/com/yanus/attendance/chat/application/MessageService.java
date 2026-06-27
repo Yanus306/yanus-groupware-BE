@@ -5,6 +5,7 @@ import com.yanus.attendance.chat.domain.ChannelRepository;
 import com.yanus.attendance.chat.domain.Message;
 import com.yanus.attendance.chat.domain.MessageRepository;
 import com.yanus.attendance.chat.domain.MessageType;
+import com.yanus.attendance.chat.application.event.NewMessageEvent;
 import com.yanus.attendance.chat.presentation.dto.MessageResponse;
 import com.yanus.attendance.drive.domain.StorageService;
 import com.yanus.attendance.global.exception.BusinessException;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class MessageService {
     private final ChannelRepository channelRepository;
     private final MemberRepository memberRepository;
     private final StorageService storageService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${minio.bucket}")
     private String bucket;
@@ -46,7 +49,9 @@ public class MessageService {
         Member sender = findMember(senderId);
         MessageType resolvedType = type == null ? MessageType.TEXT : type;
         Message message = Message.create(channel, sender, content, resolvedType);
-        return MessageResponse.from(messageRepository.save(message));
+        MessageResponse response = MessageResponse.from(messageRepository.save(message));
+        eventPublisher.publishEvent(new NewMessageEvent(response, senderId));
+        return response;
     }
 
     @Transactional
@@ -62,7 +67,9 @@ public class MessageService {
             storageService.upload(file, storedName);
             message.addFile(file.getOriginalFilename(), storedName, bucket, file.getSize(), file.getContentType());
         }
-        return MessageResponse.from(messageRepository.save(message));
+        MessageResponse response = MessageResponse.from(messageRepository.save(message));
+        eventPublisher.publishEvent(new NewMessageEvent(response, senderId));
+        return response;
     }
 
     private Channel findChannel(Long channelId) {

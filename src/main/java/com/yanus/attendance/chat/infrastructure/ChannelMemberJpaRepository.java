@@ -20,4 +20,9 @@ public class ChannelMemberJpaRepository implements ChannelMemberRepository {
     public boolean existsByChannelIdAndMemberId(Long channelId, Long memberId) {
         return repository.existsByChannelIdAndMemberId(channelId, memberId);
     }
+
+    @Override
+    public java.util.List<Long> findMemberIdsByChannelId(Long channelId) {
+        return repository.findMemberIdsByChannelId(channelId);
+    }
 }
