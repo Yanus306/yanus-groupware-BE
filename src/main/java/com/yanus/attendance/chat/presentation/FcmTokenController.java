@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "FCM 토큰", description = "푸시 알림용 디바이스 토큰 등록/해제")
@@ -32,8 +33,8 @@ public class FcmTokenController {
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> unregister(
             @AuthenticationPrincipal Long memberId,
-            @RequestBody DeviceTokenRequest request) {
-        fcmTokenService.unregister(request.token());
+            @RequestParam String token) {
+        fcmTokenService.unregister(token);
         return ResponseEntity.ok(ApiResponse.success());
     }
 }
