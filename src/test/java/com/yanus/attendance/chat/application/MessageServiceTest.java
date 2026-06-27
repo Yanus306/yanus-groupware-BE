@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.chat.FakeChannelRepository;
 import com.yanus.attendance.chat.FakeMessageRepository;
+import com.yanus.attendance.chat.FakeStorageService;
 import com.yanus.attendance.chat.domain.Channel;
 import com.yanus.attendance.chat.domain.ChannelType;
 import com.yanus.attendance.chat.domain.Message;
@@ -24,6 +25,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 public class MessageServiceTest {
 
@@ -32,6 +36,7 @@ public class MessageServiceTest {
     private FakeChannelRepository channelRepository;
     private FakeMemberRepository memberRepository;
     private FakeTeamRepository teamRepository;
+    private FakeStorageService storageService;
 
     private Channel channel;
     private Member sender;
@@ -42,7 +47,9 @@ public class MessageServiceTest {
         channelRepository = new FakeChannelRepository();
         memberRepository = new FakeMemberRepository();
         teamRepository = new FakeTeamRepository();
-        messageService = new MessageService(messageRepository, channelRepository, memberRepository);
+        storageService = new FakeStorageService();
+        messageService = new MessageService(messageRepository, channelRepository, memberRepository, storageService);
+        ReflectionTestUtils.setField(messageService, "bucket", "test-bucket");
 
         channel = channelRepository.save(Channel.create("General", ChannelType.GENERAL));
         Team team = teamRepository.save(Team.create("기본팀"));
@@ -149,5 +156,32 @@ public class MessageServiceTest {
         assertThatThrownBy(() -> messageService.sendMessage(channel.getId(), 999L, "안녕", MessageType.TEXT))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("파일 첨부 메시지를 전송한다")
+    void send_file_message() {
+        // given
+        MultipartFile file = new MockMultipartFile(
+                "files", "report.pdf", "application/pdf", "dummy".getBytes());
+
+        // when
+        MessageResponse result = messageService.sendFileMessage(
+                channel.getId(), sender.getId(), "파일 첨부", List.of(file));
+
+        // then
+        assertThat(result.type()).isEqualTo(MessageType.FILE);
+        assertThat(result.files()).hasSize(1);
+        assertThat(result.files().get(0).originalName()).isEqualTo("report.pdf");
+        assertThat(storageService.uploadCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("첨부 파일이 없으면 예외 발생")
+    void send_file_message_no_file() {
+        // when & then
+        assertThatThrownBy(() -> messageService.sendFileMessage(channel.getId(), sender.getId(), "내용", List.of()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MESSAGE_FILE_REQUIRED);
     }
 }
