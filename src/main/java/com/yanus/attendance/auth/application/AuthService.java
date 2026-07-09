@@ -3,11 +3,11 @@ package com.yanus.attendance.auth.application;
 import com.yanus.attendance.auth.domain.RefreshToken;
 import com.yanus.attendance.auth.domain.RefreshTokenRepository;
 import com.yanus.attendance.auth.infrastructure.JwtTokenProvider;
-import com.yanus.attendance.auth.presentation.dto.LoginRequest;
-import com.yanus.attendance.auth.presentation.dto.LoginResponse;
-import com.yanus.attendance.auth.presentation.dto.MeResponse;
-import com.yanus.attendance.auth.presentation.dto.RefreshRequest;
-import com.yanus.attendance.auth.presentation.dto.RegisterRequest;
+import com.yanus.attendance.auth.application.dto.AuthTokenResponse;
+import com.yanus.attendance.auth.application.dto.LoginCommand;
+import com.yanus.attendance.auth.application.dto.MeResponse;
+import com.yanus.attendance.auth.application.dto.RefreshCommand;
+import com.yanus.attendance.auth.application.dto.RegisterCommand;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
@@ -35,7 +35,7 @@ public class AuthService {
     private final EmailVerificationService emailVerificationService;
 
     @Transactional
-    public void register(RegisterRequest request) {
+    public void register(RegisterCommand request) {
         if (memberRepository.existsByEmail(request.email())) {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
@@ -56,7 +56,7 @@ public class AuthService {
     }
 
     @Transactional
-    public LoginResponse login(LoginRequest request) {
+    public AuthTokenResponse login(LoginCommand request) {
         Member member = memberRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -93,12 +93,12 @@ public class AuthService {
                 LocalDateTime.now().plusDays(7)
         ));
 
-        return new LoginResponse(accessToken, refreshTokenValue, "Bearer");
+        return new AuthTokenResponse(accessToken, refreshTokenValue, "Bearer");
     }
 
 
     @Transactional
-    public LoginResponse refresh(RefreshRequest request) {
+    public AuthTokenResponse refresh(RefreshCommand request) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.refreshToken())
                 .orElseThrow(() -> new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
@@ -124,7 +124,7 @@ public class AuthService {
                 LocalDateTime.now().plusDays(7)
         ));
 
-        return new LoginResponse(newAccessToken, newRefreshTokenValue, "Bearer");
+        return new AuthTokenResponse(newAccessToken, newRefreshTokenValue, "Bearer");
     }
 
     @Transactional
