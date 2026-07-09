@@ -1,4 +1,4 @@
-package com.yanus.attendance.drive.presentation.dto;
+package com.yanus.attendance.drive.application.dto;
 
 import com.yanus.attendance.drive.domain.DriveFile;
 import java.time.LocalDateTime;
@@ -21,18 +21,6 @@ public record DriveFileResponse(
                 file.getUploadedBy().getId(),
                 file.getUploadedBy().getName(),
                 file.getCreatedAt()
-        );
-    }
-
-    public static DriveFileResponse from(com.yanus.attendance.drive.application.dto.DriveFileResponse response) {
-        return new DriveFileResponse(
-                response.id(),
-                response.originalName(),
-                response.size(),
-                response.contentType(),
-                response.uploadedById(),
-                response.uploadedByName(),
-                response.createdAt()
         );
     }
 }
