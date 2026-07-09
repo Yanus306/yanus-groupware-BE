@@ -8,9 +8,9 @@ import com.yanus.attendance.task.domain.Task;
 import com.yanus.attendance.task.domain.TaskPriority;
 import com.yanus.attendance.task.domain.TaskQueryRepository;
 import com.yanus.attendance.task.domain.TaskRepository;
-import com.yanus.attendance.task.presentation.dto.TaskCreateRequest;
-import com.yanus.attendance.task.presentation.dto.TaskResponse;
-import com.yanus.attendance.task.presentation.dto.TaskUpdateRequest;
+import com.yanus.attendance.task.application.dto.TaskCreateCommand;
+import com.yanus.attendance.task.application.dto.TaskResponse;
+import com.yanus.attendance.task.application.dto.TaskUpdateCommand;
 import com.yanus.attendance.team.domain.TeamRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public class TaskService {
     private final MemberRepository memberRepository;
     private final TaskQueryRepository taskQueryRepository;
 
-    public TaskResponse create(Long memberId, TaskCreateRequest request) {
+    public TaskResponse create(Long memberId, TaskCreateCommand request) {
         Member creator = findMember(memberId);
         List<Member> members = resolveMembers(request.memberIds());
 
@@ -53,7 +53,7 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
-    public TaskResponse update(Long taskId, TaskUpdateRequest request) {
+    public TaskResponse update(Long taskId, TaskUpdateCommand request) {
         Task task = findTask(taskId);
         List<Member> members = resolveMembers(request.memberIds());
         task.update(request.title(), request.date(), request.time(), request.priority());

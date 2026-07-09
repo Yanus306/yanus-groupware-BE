@@ -1,4 +1,4 @@
-package com.yanus.attendance.task.presentation.dto;
+package com.yanus.attendance.task.application.dto;
 
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.task.domain.Task;
@@ -29,26 +29,10 @@ public record TaskResponse(
                 task.getPriority(),
                 task.isDone(),
                 task.isTeamTask(),
-                task.getAssignee()  != null ? task.getAssignee().getId() : null,
+                task.getAssignee() != null ? task.getAssignee().getId() : null,
                 task.getAssignee() != null ? task.getAssignee().getName() : null,
                 task.getMembers().stream().map(Member::getId).toList(),
                 task.getMembers().stream().map(Member::getName).toList()
-        );
-    }
-
-    public static TaskResponse from(com.yanus.attendance.task.application.dto.TaskResponse response) {
-        return new TaskResponse(
-                response.id(),
-                response.title(),
-                response.date(),
-                response.time(),
-                response.priority(),
-                response.done(),
-                response.isTeamTask(),
-                response.assigneeId(),
-                response.assigneeName(),
-                response.memberIds(),
-                response.memberNames()
         );
     }
 }
