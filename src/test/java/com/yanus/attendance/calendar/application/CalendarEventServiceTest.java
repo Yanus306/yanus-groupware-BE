@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.calendar.FakeCalendarEventRepository;
+import com.yanus.attendance.calendar.application.dto.CalendarEventCreateCommand;
+import com.yanus.attendance.calendar.application.dto.CalendarEventResponse;
 import com.yanus.attendance.calendar.domain.CalendarEventRepository;
-import com.yanus.attendance.calendar.presentation.dto.CalendarEventCreateRequest;
-import com.yanus.attendance.calendar.presentation.dto.CalendarEventResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
@@ -46,7 +46,7 @@ public class CalendarEventServiceTest {
     void create_event() {
         // given
         Member member = createMember();
-        CalendarEventCreateRequest request = new CalendarEventCreateRequest(
+        CalendarEventCreateCommand request = new CalendarEventCreateCommand(
                 "스프린트 회의",
                 LocalDate.of(2026, 3, 22), LocalTime.of(9, 0),
                 LocalDate.of(2026, 3, 22), LocalTime.of(10, 0));
@@ -63,10 +63,10 @@ public class CalendarEventServiceTest {
     void get_events_by_date_range() {
         // given
         Member member = createMember();
-        calendarEventService.create(member.getId(), new CalendarEventCreateRequest(
+        calendarEventService.create(member.getId(), new CalendarEventCreateCommand(
                 "이벤트1", LocalDate.of(2026, 3, 22), LocalTime.of(9, 0),
                 LocalDate.of(2026, 3, 22), LocalTime.of(10, 0)));
-        calendarEventService.create(member.getId(), new CalendarEventCreateRequest(
+        calendarEventService.create(member.getId(), new CalendarEventCreateCommand(
                 "이벤트2", LocalDate.of(2026, 3, 25), LocalTime.of(9, 0),
                 LocalDate.of(2026, 3, 25), LocalTime.of(10, 0)));
 
@@ -83,7 +83,7 @@ public class CalendarEventServiceTest {
     void get_events_by_created_by() {
         // given
         Member member = createMember();
-        calendarEventService.create(member.getId(), new CalendarEventCreateRequest(
+        calendarEventService.create(member.getId(), new CalendarEventCreateCommand(
                 "내 이벤트", LocalDate.of(2026, 3, 22), LocalTime.of(9, 0),
                 LocalDate.of(2026, 3, 22), LocalTime.of(10, 0)));
 
@@ -100,13 +100,13 @@ public class CalendarEventServiceTest {
         // given
         Member member = createMember();
         CalendarEventResponse created = calendarEventService.create(member.getId(),
-                new CalendarEventCreateRequest("원래 제목",
+                new CalendarEventCreateCommand("원래 제목",
                         LocalDate.of(2026, 3, 22), LocalTime.of(9, 0),
                         LocalDate.of(2026, 3, 22), LocalTime.of(10, 0)));
 
         // when
         CalendarEventResponse response = calendarEventService.update(created.id(),
-                new CalendarEventCreateRequest("수정된 제목",
+                new CalendarEventCreateCommand("수정된 제목",
                         LocalDate.of(2026, 3, 23), LocalTime.of(9, 0),
                         LocalDate.of(2026, 3, 23), LocalTime.of(11, 0)));
 
@@ -120,7 +120,7 @@ public class CalendarEventServiceTest {
         // given
         Member member = createMember();
         CalendarEventResponse created = calendarEventService.create(member.getId(),
-                new CalendarEventCreateRequest("삭제할 이벤트",
+                new CalendarEventCreateCommand("삭제할 이벤트",
                         LocalDate.of(2026, 3, 22), LocalTime.of(9, 0),
                         LocalDate.of(2026, 3, 22), LocalTime.of(10, 0)));
 
@@ -129,7 +129,7 @@ public class CalendarEventServiceTest {
 
         // then
         assertThatThrownBy(() -> calendarEventService.update(created.id(),
-                new CalendarEventCreateRequest("수정", LocalDate.now(), LocalTime.of(9, 0),
+                new CalendarEventCreateCommand("수정", LocalDate.now(), LocalTime.of(9, 0),
                         LocalDate.now(), LocalTime.of(10, 0))))
                 .isInstanceOf(BusinessException.class);
     }

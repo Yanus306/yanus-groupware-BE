@@ -2,8 +2,8 @@ package com.yanus.attendance.calendar.application;
 
 import com.yanus.attendance.calendar.domain.CalendarEvent;
 import com.yanus.attendance.calendar.domain.CalendarEventRepository;
-import com.yanus.attendance.calendar.presentation.dto.CalendarEventCreateRequest;
-import com.yanus.attendance.calendar.presentation.dto.CalendarEventResponse;
+import com.yanus.attendance.calendar.application.dto.CalendarEventCreateCommand;
+import com.yanus.attendance.calendar.application.dto.CalendarEventResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
@@ -22,7 +22,7 @@ public class CalendarEventService {
     private final CalendarEventRepository calendarEventRepository;
     private final MemberRepository memberRepository;
 
-    public CalendarEventResponse create(Long memberId, CalendarEventCreateRequest request) {
+    public CalendarEventResponse create(Long memberId, CalendarEventCreateCommand request) {
         Member member = findMember(memberId);
         CalendarEvent event = CalendarEvent.create(member, request.title(),
                 request.startDate(), request.startTime(),
@@ -31,7 +31,7 @@ public class CalendarEventService {
         return CalendarEventResponse.from(event);
     }
 
-    public CalendarEventResponse update(Long eventId, CalendarEventCreateRequest request) {
+    public CalendarEventResponse update(Long eventId, CalendarEventCreateCommand request) {
         CalendarEvent event = findEvent(eventId);
         event.update(request.title(),
                 request.startDate(), request.startTime(),
