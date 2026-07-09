@@ -2,7 +2,6 @@ package com.yanus.attendance.task;
 
 import com.yanus.attendance.task.domain.Task;
 import com.yanus.attendance.task.domain.TaskQueryRepository;
-import com.yanus.attendance.task.domain.TaskRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;

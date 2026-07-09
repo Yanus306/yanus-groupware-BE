@@ -5,7 +5,6 @@ import com.yanus.attendance.member.application.MemberService;
 import com.yanus.attendance.member.application.dto.ProfileUpdateCommand;
 import com.yanus.attendance.member.application.dto.RoleChangeCommand;
 import com.yanus.attendance.member.application.dto.TeamChangeCommand;
-import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
 import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
@@ -38,7 +37,7 @@ public class MemberController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<MemberResponse>>> findAll(
             @RequestParam(required = false) String teamName,
-            @RequestParam(required = false) MemberRole role) {
+            @RequestParam(required = false) String role) {
         List<MemberResponse> response = memberService.findAll(teamName, role).stream()
                 .map(MemberResponse::from)
                 .toList();

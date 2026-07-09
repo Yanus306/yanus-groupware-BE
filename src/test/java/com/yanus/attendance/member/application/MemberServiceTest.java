@@ -80,7 +80,7 @@ public class MemberServiceTest {
         // given
         Member actorId = createMember("asdasd@asdasd.com", MemberRole.ADMIN);
         Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
-        RoleChangeCommand request = new RoleChangeCommand(MemberRole.TEAM_LEAD);
+        RoleChangeCommand request = new RoleChangeCommand("TEAM_LEAD");
 
         // when
         memberService.changeRole(actorId.getId(), member.getId(), request);
@@ -230,7 +230,7 @@ public class MemberServiceTest {
         // given
         Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
         Member target = createMember("target@yanus.com", MemberRole.MEMBER);
-        RoleChangeCommand request = new RoleChangeCommand(MemberRole.TEAM_LEAD);
+        RoleChangeCommand request = new RoleChangeCommand("TEAM_LEAD");
 
         // when
         memberService.changeRole(admin.getId(), target.getId(), request);
@@ -347,7 +347,7 @@ public class MemberServiceTest {
         // given
         Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
         Member target = createMember("target@yanus.com", MemberRole.MEMBER);
-        RoleChangeCommand request = new RoleChangeCommand(MemberRole.TEAM_LEAD);
+        RoleChangeCommand request = new RoleChangeCommand("TEAM_LEAD");
 
         // when
         memberService.changeRole(admin.getId(), target.getId(), request);

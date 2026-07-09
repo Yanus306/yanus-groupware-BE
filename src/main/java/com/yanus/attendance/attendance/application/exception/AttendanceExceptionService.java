@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +60,18 @@ public class AttendanceExceptionService {
     @Transactional
     public AttendanceExceptionListResponse getList(
             LocalDate date,
+            String type,
+            String status,
+            String teamName) {
+        return getList(date,
+                parseEnum(type, AttendanceExceptionType.class),
+                parseEnum(status, AttendanceExceptionStatus.class),
+                teamName
+        );
+    }
+
+    private AttendanceExceptionListResponse getList(
+            LocalDate date,
             AttendanceExceptionType type,
             AttendanceExceptionStatus status,
             String teamName) {
@@ -70,6 +83,17 @@ public class AttendanceExceptionService {
                 .map(this::toResponse)
                 .toList();
         return new AttendanceExceptionListResponse(date, summary, items);
+    }
+
+    private <T extends Enum<T>> T parseEnum(String rawValue, Class<T> enumType) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(enumType, rawValue.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
     }
 
     @Transactional

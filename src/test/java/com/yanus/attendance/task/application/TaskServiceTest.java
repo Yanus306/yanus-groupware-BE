@@ -14,8 +14,8 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.task.FakeTaskQueryRepository;
 import com.yanus.attendance.task.FakeTaskRepository;
-import com.yanus.attendance.task.domain.TaskPriority;
 import com.yanus.attendance.task.domain.TaskRepository;
+import com.yanus.attendance.task.domain.TaskPriority;
 import com.yanus.attendance.team.domain.Team;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -51,7 +51,7 @@ public class TaskServiceTest {
     void create_personal_task() {
         // given
         Member member = createMember();
-        TaskCreateCommand request = new TaskCreateCommand("테스트 작성", LocalDate.now(), LocalTime.of(9, 0), TaskPriority.HIGH, null, false, null);
+        TaskCreateCommand request = new TaskCreateCommand("테스트 작성", LocalDate.now(), LocalTime.of(9, 0), "HIGH", null, false, null);
 
         // when
         TaskResponse response = taskService.create(member.getId(), request);
@@ -67,7 +67,7 @@ public class TaskServiceTest {
     void toggle_done() {
         // given
         Member member = createMember();
-        TaskCreateCommand request = new TaskCreateCommand("테스트 작성", LocalDate.now(), null, TaskPriority.MEDIUM, null, false, null);
+        TaskCreateCommand request = new TaskCreateCommand("테스트 작성", LocalDate.now(), null, "MEDIUM", null, false, null);
         TaskResponse created = taskService.create(member.getId(), request);
 
         // when
@@ -82,11 +82,11 @@ public class TaskServiceTest {
     void update_task() {
         // given
         Member member = createMember();
-        TaskCreateCommand createRequest = new TaskCreateCommand("원래 제목", LocalDate.now(), null, TaskPriority.LOW, null, false, null);
+        TaskCreateCommand createRequest = new TaskCreateCommand("원래 제목", LocalDate.now(), null, "LOW", null, false, null);
         TaskResponse created = taskService.create(member.getId(), createRequest);
 
         // when
-        TaskUpdateCommand updateRequest = new TaskUpdateCommand("수정된 제목", LocalDate.now().plusDays(1), null, TaskPriority.HIGH, null);
+        TaskUpdateCommand updateRequest = new TaskUpdateCommand("수정된 제목", LocalDate.now().plusDays(1), null, "HIGH", null);
         TaskResponse response = taskService.update(created.id(), updateRequest);
 
         // then
@@ -99,7 +99,7 @@ public class TaskServiceTest {
     void delete_task() {
         // given
         Member member = createMember();
-        TaskCreateCommand request = new TaskCreateCommand("삭제할 Task", LocalDate.now(), null, TaskPriority.LOW, null, false, null);
+        TaskCreateCommand request = new TaskCreateCommand("삭제할 Task", LocalDate.now(), null, "LOW", null, false, null);
         TaskResponse created = taskService.create(member.getId(), request);
 
         // when
@@ -119,7 +119,7 @@ public class TaskServiceTest {
         Member member2 = memberRepository.save(
                 Member.create("김철수", "kim@naver.com", "password", MemberRole.MEMBER, MemberStatus.ACTIVE, creator.getTeam()));
         TaskCreateCommand request = new TaskCreateCommand(
-                "팀 작업", LocalDate.now(), null, TaskPriority.HIGH,
+                "팀 작업", LocalDate.now(), null, "HIGH",
                 null, true, List.of(creator.getId(), member2.getId()));
 
         // when
@@ -141,13 +141,13 @@ public class TaskServiceTest {
                 Member.create("이영희", "lee@naver.com", "password", MemberRole.MEMBER, MemberStatus.ACTIVE, creator.getTeam()));
 
         TaskCreateCommand createRequest = new TaskCreateCommand(
-                "팀 작업", LocalDate.now(), null, TaskPriority.HIGH,
+                "팀 작업", LocalDate.now(), null, "HIGH",
                 null, true, List.of(creator.getId(), member2.getId()));
         TaskResponse created = taskService.create(creator.getId(), createRequest);
 
         // when
         TaskUpdateCommand updateRequest = new TaskUpdateCommand(
-                "수정된 작업", LocalDate.now(), null, TaskPriority.MEDIUM, List.of(member3.getId()));
+                "수정된 작업", LocalDate.now(), null, "MEDIUM", List.of(member3.getId()));
         TaskResponse response = taskService.update(created.id(), updateRequest);
 
         // then
@@ -160,7 +160,7 @@ public class TaskServiceTest {
         // given
         Member creator = createMember();
         TaskCreateCommand request = new TaskCreateCommand(
-                "개인 작업", LocalDate.now(), null, TaskPriority.LOW, null, false, null);
+                "개인 작업", LocalDate.now(), null, "LOW", null, false, null);
 
         // when
         TaskResponse response = taskService.create(creator.getId(), request);

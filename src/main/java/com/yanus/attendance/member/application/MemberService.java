@@ -16,6 +16,7 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamRepository;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,8 +40,8 @@ public class MemberService {
         return MemberResponse.from(member);
     }
 
-    public List<MemberResponse> findAll(String teamName, MemberRole role) {
-        return memberQueryRepository.findAllByFilter(teamName, role)
+    public List<MemberResponse> findAll(String teamName, String role) {
+        return memberQueryRepository.findAllByFilter(teamName, parseEnum(role, MemberRole.class))
                 .stream()
                 .map(MemberResponse::from)
                 .toList();
@@ -52,9 +53,10 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         String previousRole = member.getRole().name();
-        member.changeRole(command.role());
+        MemberRole nextRole = parseEnum(command.role(), MemberRole.class);
+        member.changeRole(nextRole);
         auditLogService.log(actorId, actor.getRole(), memberId,
-                AuditAction.ROLE_CHANGE, previousRole, command.role().name());
+                AuditAction.ROLE_CHANGE, previousRole, nextRole.name());
     }
 
     @Transactional
@@ -142,5 +144,16 @@ public class MemberService {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
         return sb.toString();
+    }
+
+    private <T extends Enum<T>> T parseEnum(String rawValue, Class<T> enumType) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(enumType, rawValue.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
     }
 }

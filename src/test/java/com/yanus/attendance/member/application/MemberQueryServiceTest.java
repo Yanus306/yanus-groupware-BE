@@ -12,7 +12,6 @@ import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -81,7 +80,7 @@ public class MemberQueryServiceTest {
         saveMember("2팀", MemberRole.TEAM_LEAD);
 
         // when
-        List<MemberResponse> result = memberService.findAll("2팀", MemberRole.ADMIN);
+        List<MemberResponse> result = memberService.findAll("2팀", "ADMIN");
 
         // then
         assertThat(result).hasSize(1);

@@ -1,8 +1,6 @@
 package com.yanus.attendance.attendance.presentation.exception;
 
 import com.yanus.attendance.attendance.application.exception.AttendanceExceptionService;
-import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatus;
-import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.application.dto.exception.AttendanceExceptionListResponse;
 import com.yanus.attendance.attendance.presentation.dto.exception.AttendanceExceptionNoteRequest;
 import com.yanus.attendance.attendance.application.dto.exception.AttendanceExceptionResponse;
@@ -34,8 +32,8 @@ public class AttendanceExceptionController {
     @GetMapping
     public AttendanceExceptionListResponse getExceptions(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) AttendanceExceptionType type,
-            @RequestParam(required = false) AttendanceExceptionStatus status,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String teamName) {
         return attendanceExceptionService.getList(date, type, status, teamName);
     }
