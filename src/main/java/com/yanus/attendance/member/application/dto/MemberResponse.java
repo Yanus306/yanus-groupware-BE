@@ -1,4 +1,4 @@
-package com.yanus.attendance.member.presentation.dto;
+package com.yanus.attendance.member.application.dto;
 
 import com.yanus.attendance.member.domain.Member;
 
@@ -19,9 +19,5 @@ public record MemberResponse(
                 member.getStatus().name(),
                 member.getTeam().getName()
         );
-    }
-
-    public static MemberResponse from(com.yanus.attendance.member.application.dto.MemberResponse response) {
-        return new MemberResponse(response.id(), response.name(), response.email(), response.role(), response.status(), response.team());
     }
 }

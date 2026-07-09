@@ -13,10 +13,11 @@ import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
-import com.yanus.attendance.member.presentation.dto.MemberResponse;
-import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
-import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
-import com.yanus.attendance.member.presentation.dto.TemporaryPasswordResponse;
+import com.yanus.attendance.member.application.dto.MemberResponse;
+import com.yanus.attendance.member.application.dto.ProfileUpdateCommand;
+import com.yanus.attendance.member.application.dto.RoleChangeCommand;
+import com.yanus.attendance.member.application.dto.TemporaryPasswordResponse;
+import com.yanus.attendance.member.application.dto.TeamChangeCommand;
 import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.domain.Team;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,7 @@ public class MemberServiceTest {
         teamRepository = new FakeTeamRepository();
         auditLogRepository = new FakeAuditLogRepository();
         auditLogService = new AuditLogService(auditLogRepository);
+        memberQueryRepository = new FakeMemberQueryRepository();
         memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository, auditLogService);
     }
 
@@ -78,7 +80,7 @@ public class MemberServiceTest {
         // given
         Member actorId = createMember("asdasd@asdasd.com", MemberRole.ADMIN);
         Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
-        RoleChangeRequest request = new RoleChangeRequest(MemberRole.TEAM_LEAD);
+        RoleChangeCommand request = new RoleChangeCommand(MemberRole.TEAM_LEAD);
 
         // when
         memberService.changeRole(actorId.getId(), member.getId(), request);
@@ -123,7 +125,7 @@ public class MemberServiceTest {
     void update_profile_name() {
         // given
         Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
-        ProfileUpdateRequest request = new ProfileUpdateRequest("김철수", null);
+        ProfileUpdateCommand request = new ProfileUpdateCommand("김철수", null);
 
         // when
         memberService.updateProfile(member.getId(), request);
@@ -138,7 +140,7 @@ public class MemberServiceTest {
     void update_profile_password() {
         // given
         Member member = createMember("hong@yanus.com", MemberRole.MEMBER);
-        ProfileUpdateRequest request = new ProfileUpdateRequest(null, "newPassword123");
+        ProfileUpdateCommand request = new ProfileUpdateCommand(null, "newPassword123");
 
         // when
         memberService.updateProfile(member.getId(), request);
@@ -160,7 +162,7 @@ public class MemberServiceTest {
                 Member.create("정용태", "jyt@naver.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
 
         // when
-        memberService.changeTeam(actorId.getId(), member.getId(), teamB.getId());
+        memberService.changeTeam(actorId.getId(), member.getId(), new TeamChangeCommand(teamB.getId()));
 
         // then
         Member updated = memberRepository.findById(member.getId()).get();
@@ -174,7 +176,7 @@ public class MemberServiceTest {
         Team team = teamRepository.save(Team.create("1팀"));
 
         // when & then
-        assertThatThrownBy(() -> memberService.changeTeam(999L, 120L, team.getId()))
+        assertThatThrownBy(() -> memberService.changeTeam(999L, 120L, new TeamChangeCommand(team.getId())))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_NOT_FOUND);
     }
@@ -189,7 +191,7 @@ public class MemberServiceTest {
                 Member.create("정용태", "jyt@naver.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, team));
 
         // when & then`
-        assertThatThrownBy(() -> memberService.changeTeam(admin.getId(), member.getId(), 999L))
+        assertThatThrownBy(() -> memberService.changeTeam(admin.getId(), member.getId(), new TeamChangeCommand(999L)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
     }
@@ -228,7 +230,7 @@ public class MemberServiceTest {
         // given
         Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
         Member target = createMember("target@yanus.com", MemberRole.MEMBER);
-        RoleChangeRequest request = new RoleChangeRequest(MemberRole.TEAM_LEAD);
+        RoleChangeCommand request = new RoleChangeCommand(MemberRole.TEAM_LEAD);
 
         // when
         memberService.changeRole(admin.getId(), target.getId(), request);
@@ -280,7 +282,7 @@ public class MemberServiceTest {
                 Member.create("팀원", "member@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
 
         // when
-        memberService.changeTeam(teamLead.getId(), target.getId(), teamB.getId());
+        memberService.changeTeam(teamLead.getId(), target.getId(), new TeamChangeCommand(teamB.getId()));
 
         // then
         assertThat(memberRepository.findById(target.getId()).get().getTeam().getId())
@@ -300,7 +302,7 @@ public class MemberServiceTest {
                 Member.create("팀원", "member@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamB));
 
         // when & then
-        assertThatThrownBy(() -> memberService.changeTeam(teamLead.getId(), target.getId(), teamC.getId()))
+        assertThatThrownBy(() -> memberService.changeTeam(teamLead.getId(), target.getId(), new TeamChangeCommand(teamC.getId())))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
     }
@@ -317,7 +319,7 @@ public class MemberServiceTest {
                 Member.create("팀원", "member@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.INACTIVE, teamA));
 
         // when & then
-        assertThatThrownBy(() -> memberService.changeTeam(teamLead.getId(), target.getId(), teamB.getId()))
+        assertThatThrownBy(() -> memberService.changeTeam(teamLead.getId(), target.getId(), new TeamChangeCommand(teamB.getId())))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
     }
@@ -334,7 +336,7 @@ public class MemberServiceTest {
                 Member.create("팀원", "target@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
 
         // when & then
-        assertThatThrownBy(() -> memberService.changeTeam(actor.getId(), target.getId(), teamB.getId()))
+        assertThatThrownBy(() -> memberService.changeTeam(actor.getId(), target.getId(), new TeamChangeCommand(teamB.getId())))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
     }
@@ -345,7 +347,7 @@ public class MemberServiceTest {
         // given
         Member admin = createMember("admin@yanus.com", MemberRole.ADMIN);
         Member target = createMember("target@yanus.com", MemberRole.MEMBER);
-        RoleChangeRequest request = new RoleChangeRequest(MemberRole.TEAM_LEAD);
+        RoleChangeCommand request = new RoleChangeCommand(MemberRole.TEAM_LEAD);
 
         // when
         memberService.changeRole(admin.getId(), target.getId(), request);
@@ -382,7 +384,7 @@ public class MemberServiceTest {
                 Member.create("팀원", "target@yanus.com", "encoded", MemberRole.MEMBER, MemberStatus.ACTIVE, teamA));
 
         // when
-        memberService.changeTeam(admin.getId(), target.getId(), teamB.getId());
+        memberService.changeTeam(admin.getId(), target.getId(), new TeamChangeCommand(teamB.getId()));
 
         // then
         assertThat(auditLogRepository.findAll()).hasSize(1);

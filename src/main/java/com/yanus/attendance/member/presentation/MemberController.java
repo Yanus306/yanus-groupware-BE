@@ -2,6 +2,9 @@ package com.yanus.attendance.member.presentation;
 
 import com.yanus.attendance.global.response.ApiResponse;
 import com.yanus.attendance.member.application.MemberService;
+import com.yanus.attendance.member.application.dto.ProfileUpdateCommand;
+import com.yanus.attendance.member.application.dto.RoleChangeCommand;
+import com.yanus.attendance.member.application.dto.TeamChangeCommand;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
@@ -11,7 +14,6 @@ import com.yanus.attendance.member.presentation.dto.TemporaryPasswordResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,13 +39,17 @@ public class MemberController {
     public ResponseEntity<ApiResponse<List<MemberResponse>>> findAll(
             @RequestParam(required = false) String teamName,
             @RequestParam(required = false) MemberRole role) {
-        return ResponseEntity.ok(ApiResponse.success(memberService.findAll(teamName, role)));
+        List<MemberResponse> response = memberService.findAll(teamName, role).stream()
+                .map(MemberResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/{memberId}")
     public ResponseEntity<ApiResponse<MemberResponse>> findById(
             @PathVariable Long memberId) {
-        return ResponseEntity.ok(ApiResponse.success(memberService.findById(memberId)));
+        com.yanus.attendance.member.application.dto.MemberResponse response = memberService.findById(memberId);
+        return ResponseEntity.ok(ApiResponse.success(MemberResponse.from(response)));
     }
 
     @PatchMapping("/{memberId}/role")
@@ -51,7 +57,7 @@ public class MemberController {
             @AuthenticationPrincipal Long actorId,
             @PathVariable Long memberId,
             @RequestBody RoleChangeRequest request) {
-        memberService.changeRole(actorId, memberId, request);
+        memberService.changeRole(actorId, memberId, new RoleChangeCommand(request.role()));
         return ResponseEntity.ok(ApiResponse.success());
     }
 
@@ -76,7 +82,7 @@ public class MemberController {
             @AuthenticationPrincipal Long actorId,
             @PathVariable Long memberId,
             @RequestBody TeamChangeRequest request) {
-        memberService.changeTeam(actorId, memberId, request.teamId());
+        memberService.changeTeam(actorId, memberId, new TeamChangeCommand(request.teamId()));
         return ResponseEntity.ok(ApiResponse.success());
     }
 
@@ -84,14 +90,16 @@ public class MemberController {
     public ResponseEntity<ApiResponse<TemporaryPasswordResponse>> resetPassword(
             @AuthenticationPrincipal Long actorId,
             @PathVariable Long memberId) {
-        return ResponseEntity.ok(ApiResponse.success(memberService.resetPassword(actorId, memberId)));
+        com.yanus.attendance.member.application.dto.TemporaryPasswordResponse response
+                = memberService.resetPassword(actorId, memberId);
+        return ResponseEntity.ok(ApiResponse.success(TemporaryPasswordResponse.from(response)));
     }
 
     @PutMapping("/me")
     public ResponseEntity<ApiResponse<Void>> updateProfile(
             @AuthenticationPrincipal Long memberId,
             @RequestBody ProfileUpdateRequest request) {
-        memberService.updateProfile(memberId, request);
+        memberService.updateProfile(memberId, new ProfileUpdateCommand(request.name(), request.password()));
         return ResponseEntity.ok(ApiResponse.success());
     }
 }
