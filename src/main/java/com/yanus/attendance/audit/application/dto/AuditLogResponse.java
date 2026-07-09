@@ -1,11 +1,11 @@
-package com.yanus.attendance.audit.presentation.dto;
+package com.yanus.attendance.audit.application.dto;
 
 import com.yanus.attendance.audit.domain.AuditAction;
 import com.yanus.attendance.audit.domain.AuditLog;
 import com.yanus.attendance.member.domain.MemberRole;
 import java.time.LocalDateTime;
 
-public record AuditLogResponse (
+public record AuditLogResponse(
         Long id,
         Long actorId,
         MemberRole actorRole,
@@ -25,19 +25,6 @@ public record AuditLogResponse (
                 log.getPreviousValue(),
                 log.getNewValue(),
                 log.getCreatedAt()
-        );
-    }
-
-    public static AuditLogResponse from(com.yanus.attendance.audit.application.dto.AuditLogResponse response) {
-        return new AuditLogResponse(
-                response.id(),
-                response.actorId(),
-                response.actorRole(),
-                response.targetId(),
-                response.action(),
-                response.previousValue(),
-                response.newValue(),
-                response.createdAt()
         );
     }
 }

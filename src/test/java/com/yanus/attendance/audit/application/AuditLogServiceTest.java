@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.yanus.attendance.audit.FakeAuditLogRepository;
 import com.yanus.attendance.audit.domain.AuditAction;
-import com.yanus.attendance.audit.presentation.dto.AuditLogResponse;
+import com.yanus.attendance.audit.application.dto.AuditLogResponse;
 import com.yanus.attendance.member.domain.MemberRole;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

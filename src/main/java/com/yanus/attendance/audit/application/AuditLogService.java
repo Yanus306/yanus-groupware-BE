@@ -3,7 +3,7 @@ package com.yanus.attendance.audit.application;
 import com.yanus.attendance.audit.domain.AuditAction;
 import com.yanus.attendance.audit.domain.AuditLog;
 import com.yanus.attendance.audit.domain.AuditLogRepository;
-import com.yanus.attendance.audit.presentation.dto.AuditLogResponse;
+import com.yanus.attendance.audit.application.dto.AuditLogResponse;
 import com.yanus.attendance.member.domain.MemberRole;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
