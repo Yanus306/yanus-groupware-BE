@@ -1,4 +1,4 @@
-package com.yanus.attendance.leave.presentation.dto;
+package com.yanus.attendance.leave.application.dto;
 
 import com.yanus.attendance.leave.domain.LeaveCategory;
 import com.yanus.attendance.leave.domain.LeaveRequest;
@@ -28,20 +28,6 @@ public record LeaveResponse(
                 request.getStatus(),
                 request.getSubmittedAt(),
                 request.getReviewedAt()
-        );
-    }
-
-    public static LeaveResponse from(com.yanus.attendance.leave.application.dto.LeaveResponse response) {
-        return new LeaveResponse(
-                response.id(),
-                response.memberId(),
-                response.memberName(),
-                response.category(),
-                response.detail(),
-                response.date(),
-                response.status(),
-                response.submittedAt(),
-                response.reviewedAt()
         );
     }
 }

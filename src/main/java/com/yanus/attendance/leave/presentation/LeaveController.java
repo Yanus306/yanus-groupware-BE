@@ -2,8 +2,8 @@ package com.yanus.attendance.leave.presentation;
 
 import com.yanus.attendance.global.response.ApiResponse;
 import com.yanus.attendance.leave.application.LeaveService;
+import com.yanus.attendance.leave.application.dto.LeaveCreateCommand;
 import com.yanus.attendance.leave.presentation.dto.LeaveCreateRequest;
-import com.yanus.attendance.leave.presentation.dto.LeaveResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,35 +27,48 @@ public class LeaveController {
     private final LeaveService leaveService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<LeaveResponse>> create(
+    public ResponseEntity<ApiResponse<com.yanus.attendance.leave.presentation.dto.LeaveResponse>> create(
             @AuthenticationPrincipal Long memberId,
             @RequestBody LeaveCreateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(leaveService.create(memberId, request)));
+        LeaveCreateCommand command = new LeaveCreateCommand(request.category(), request.detail(), request.date());
+        com.yanus.attendance.leave.application.dto.LeaveResponse response =
+                leaveService.create(memberId, command);
+        return ResponseEntity.ok(ApiResponse.success(com.yanus.attendance.leave.presentation.dto.LeaveResponse.from(response)));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<LeaveResponse>>> getMyLeaveRequests(
+    public ResponseEntity<ApiResponse<List<com.yanus.attendance.leave.presentation.dto.LeaveResponse>>> getMyLeaveRequests(
             @AuthenticationPrincipal Long memberId) {
-        return ResponseEntity.ok(ApiResponse.success(leaveService.getMyLeaveRequests(memberId)));
+        List<com.yanus.attendance.leave.presentation.dto.LeaveResponse> responses = leaveService.getMyLeaveRequests(memberId).stream()
+                .map(com.yanus.attendance.leave.presentation.dto.LeaveResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @GetMapping("/admin")
-    public ResponseEntity<ApiResponse<List<LeaveResponse>>> getTeamLeaveRequests(
+    public ResponseEntity<ApiResponse<List<com.yanus.attendance.leave.presentation.dto.LeaveResponse>>> getTeamLeaveRequests(
             @RequestParam Long teamId) {
-        return ResponseEntity.ok(ApiResponse.success(leaveService.getTeamLeaveRequests(teamId)));
+        List<com.yanus.attendance.leave.presentation.dto.LeaveResponse> responses = leaveService.getTeamLeaveRequests(teamId).stream()
+                .map(com.yanus.attendance.leave.presentation.dto.LeaveResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @PatchMapping("/{leaveId}/approve")
-    public ResponseEntity<ApiResponse<LeaveResponse>> approve(
+    public ResponseEntity<ApiResponse<com.yanus.attendance.leave.presentation.dto.LeaveResponse>> approve(
             @PathVariable Long leaveId,
             @AuthenticationPrincipal Long reviewerId) {
-        return ResponseEntity.ok(ApiResponse.success(leaveService.approve(leaveId, reviewerId)));
+        com.yanus.attendance.leave.application.dto.LeaveResponse response =
+                leaveService.approve(leaveId, reviewerId);
+        return ResponseEntity.ok(ApiResponse.success(com.yanus.attendance.leave.presentation.dto.LeaveResponse.from(response)));
     }
 
     @PatchMapping("/{leaveId}/reject")
-    public ResponseEntity<ApiResponse<LeaveResponse>> reject(
+    public ResponseEntity<ApiResponse<com.yanus.attendance.leave.presentation.dto.LeaveResponse>> reject(
             @PathVariable Long leaveId,
             @AuthenticationPrincipal Long reviewerId) {
-        return ResponseEntity.ok(ApiResponse.success(leaveService.reject(leaveId, reviewerId)));
+        com.yanus.attendance.leave.application.dto.LeaveResponse response =
+                leaveService.reject(leaveId, reviewerId);
+        return ResponseEntity.ok(ApiResponse.success(com.yanus.attendance.leave.presentation.dto.LeaveResponse.from(response)));
     }
 }

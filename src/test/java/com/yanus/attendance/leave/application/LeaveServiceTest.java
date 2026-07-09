@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.leave.FakeLeaveRepository;
+import com.yanus.attendance.leave.application.dto.LeaveCreateCommand;
+import com.yanus.attendance.leave.application.dto.LeaveResponse;
 import com.yanus.attendance.leave.domain.LeaveCategory;
 import com.yanus.attendance.leave.domain.LeaveRepository;
 import com.yanus.attendance.leave.domain.LeaveStatus;
-import com.yanus.attendance.leave.presentation.dto.LeaveCreateRequest;
-import com.yanus.attendance.leave.presentation.dto.LeaveResponse;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
@@ -48,7 +48,7 @@ public class LeaveServiceTest {
     void create_leave_request() {
         // given
         Member member = createMember();
-        LeaveCreateRequest request = new LeaveCreateRequest(LeaveCategory.VACATION, "연차 사용", LocalDate.now());
+        LeaveCreateCommand request = new LeaveCreateCommand(LeaveCategory.VACATION, "연차 사용", LocalDate.now());
 
         // when
         LeaveResponse response = leaveService.create(member.getId(), request);
@@ -63,8 +63,8 @@ public class LeaveServiceTest {
     void get_my_leave_requests() {
         // given
         Member member = createMember();
-        leaveService.create(member.getId(), new LeaveCreateRequest(LeaveCategory.VACATION, "연차", LocalDate.now()));
-        leaveService.create(member.getId(), new LeaveCreateRequest(LeaveCategory.SICK_LEAVE, "병가", LocalDate.now().plusDays(1)));
+        leaveService.create(member.getId(), new LeaveCreateCommand(LeaveCategory.VACATION, "연차", LocalDate.now()));
+        leaveService.create(member.getId(), new LeaveCreateCommand(LeaveCategory.SICK_LEAVE, "병가", LocalDate.now().plusDays(1)));
 
         // when
         List<LeaveResponse> responses = leaveService.getMyLeaveRequests(member.getId());
@@ -78,7 +78,7 @@ public class LeaveServiceTest {
     void get_team_leave_requests() {
         // given
         Member member = createMember();
-        leaveService.create(member.getId(), new LeaveCreateRequest(LeaveCategory.VACATION, "연차", LocalDate.now()));
+        leaveService.create(member.getId(), new LeaveCreateCommand(LeaveCategory.VACATION, "연차", LocalDate.now()));
 
         // when
         List<LeaveResponse> responses = leaveService.getTeamLeaveRequests(1L);
@@ -95,7 +95,7 @@ public class LeaveServiceTest {
         Member reviewer = memberRepository.save(
                 Member.create("리뷰어", "reviewer@naver.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE,
                         Team.create("1팀")));
-        LeaveResponse created = leaveService.create(member.getId(), new LeaveCreateRequest(LeaveCategory.VACATION, "연차", LocalDate.now()));
+        LeaveResponse created = leaveService.create(member.getId(), new LeaveCreateCommand(LeaveCategory.VACATION, "연차", LocalDate.now()));
 
         // when
         LeaveResponse response = leaveService.approve(created.id(), reviewer.getId());
@@ -112,7 +112,7 @@ public class LeaveServiceTest {
         Member reviewer = memberRepository.save(
                 Member.create("리뷰어", "reviewer@naver.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE,
                         Team.create("1팀")));
-        LeaveResponse created = leaveService.create(member.getId(), new LeaveCreateRequest(LeaveCategory.VACATION, "연차", LocalDate.now()));
+        LeaveResponse created = leaveService.create(member.getId(), new LeaveCreateCommand(LeaveCategory.VACATION, "연차", LocalDate.now()));
 
         // when
         LeaveResponse response = leaveService.reject(created.id(), reviewer.getId());
@@ -129,7 +129,7 @@ public class LeaveServiceTest {
         Member reviewer = memberRepository.save(
                 Member.create("리뷰어", "reviewer@naver.com", "password", MemberRole.ADMIN, MemberStatus.ACTIVE,
                         Team.create("1팀")));
-        LeaveResponse created = leaveService.create(member.getId(), new LeaveCreateRequest(LeaveCategory.VACATION, "연차", LocalDate.now()));
+        LeaveResponse created = leaveService.create(member.getId(), new LeaveCreateCommand(LeaveCategory.VACATION, "연차", LocalDate.now()));
         leaveService.approve(created.id(), reviewer.getId());
 
         // when & then

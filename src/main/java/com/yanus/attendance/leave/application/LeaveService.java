@@ -4,8 +4,8 @@ import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.leave.domain.LeaveRepository;
 import com.yanus.attendance.leave.domain.LeaveRequest;
-import com.yanus.attendance.leave.presentation.dto.LeaveCreateRequest;
-import com.yanus.attendance.leave.presentation.dto.LeaveResponse;
+import com.yanus.attendance.leave.application.dto.LeaveCreateCommand;
+import com.yanus.attendance.leave.application.dto.LeaveResponse;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import java.util.List;
@@ -21,7 +21,7 @@ public class LeaveService {
     private final LeaveRepository leaveRepository;
     private final MemberRepository memberRepository;
 
-    public LeaveResponse create(Long memberId, LeaveCreateRequest request) {
+    public LeaveResponse create(Long memberId, LeaveCreateCommand request) {
         Member member = findMember(memberId);
         LeaveRequest leaveRequest = LeaveRequest.create(member, request.category(), request.detail(), request.date());
         leaveRepository.save(leaveRequest);
