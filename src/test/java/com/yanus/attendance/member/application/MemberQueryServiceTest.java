@@ -4,15 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.yanus.attendance.audit.FakeAuditLogRepository;
 import com.yanus.attendance.audit.application.AuditLogService;
+import com.yanus.attendance.member.application.dto.MemberResponse;
 import com.yanus.attendance.member.FakeMemberQueryRepository;
 import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
-import com.yanus.attendance.member.presentation.dto.MemberResponse;
 import com.yanus.attendance.team.FakeTeamRepository;
 import com.yanus.attendance.team.domain.Team;
-import com.yanus.attendance.team.domain.TeamRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,13 +24,15 @@ public class MemberQueryServiceTest {
     private FakeTeamRepository teamRepository;
     private FakeMemberRepository memberRepository;
     private FakeMemberQueryRepository memberQueryRepository;
-    private AuditLogService auditLogRepository;
+    private AuditLogService auditLogService;
 
     @BeforeEach
     void setUp() {
         memberRepository = new FakeMemberRepository();
         memberQueryRepository = new FakeMemberQueryRepository();
-        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository, auditLogRepository);
+        teamRepository = new FakeTeamRepository();
+        auditLogService = new AuditLogService(new FakeAuditLogRepository());
+        memberService = new MemberService(memberRepository, memberQueryRepository, new BCryptPasswordEncoder(), teamRepository, auditLogService);
     }
 
     private Member saveMember(String teamName, MemberRole role) {
@@ -79,7 +80,7 @@ public class MemberQueryServiceTest {
         saveMember("2팀", MemberRole.TEAM_LEAD);
 
         // when
-        List<MemberResponse> result = memberService.findAll("2팀", MemberRole.ADMIN);
+        List<MemberResponse> result = memberService.findAll("2팀", "ADMIN");
 
         // then
         assertThat(result).hasSize(1);

@@ -4,11 +4,13 @@ import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.leave.domain.LeaveRepository;
 import com.yanus.attendance.leave.domain.LeaveRequest;
-import com.yanus.attendance.leave.presentation.dto.LeaveCreateRequest;
-import com.yanus.attendance.leave.presentation.dto.LeaveResponse;
+import com.yanus.attendance.leave.domain.LeaveCategory;
+import com.yanus.attendance.leave.application.dto.LeaveCreateCommand;
+import com.yanus.attendance.leave.application.dto.LeaveResponse;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +23,23 @@ public class LeaveService {
     private final LeaveRepository leaveRepository;
     private final MemberRepository memberRepository;
 
-    public LeaveResponse create(Long memberId, LeaveCreateRequest request) {
+    public LeaveResponse create(Long memberId, LeaveCreateCommand request) {
         Member member = findMember(memberId);
-        LeaveRequest leaveRequest = LeaveRequest.create(member, request.category(), request.detail(), request.date());
+        LeaveCategory category = parseEnum(request.category(), LeaveCategory.class);
+        LeaveRequest leaveRequest = LeaveRequest.create(member, category, request.detail(), request.date());
         leaveRepository.save(leaveRequest);
         return LeaveResponse.from(leaveRequest);
+    }
+
+    private <T extends Enum<T>> T parseEnum(String rawValue, Class<T> enumType) {
+        if (rawValue == null || rawValue.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+        try {
+            return Enum.valueOf(enumType, rawValue.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
     }
 
     @Transactional(readOnly = true)

@@ -1,8 +1,5 @@
 package com.yanus.attendance.task.presentation.dto;
 
-import com.yanus.attendance.member.domain.Member;
-import com.yanus.attendance.task.domain.Task;
-import com.yanus.attendance.task.domain.TaskPriority;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -12,7 +9,7 @@ public record TaskResponse(
         String title,
         LocalDate date,
         LocalTime time,
-        TaskPriority priority,
+        String priority,
         boolean done,
         boolean isTeamTask,
         Long assigneeId,
@@ -20,19 +17,19 @@ public record TaskResponse(
         List<Long> memberIds,
         List<String> memberNames
 ) {
-    public static TaskResponse from(Task task) {
+    public static TaskResponse from(com.yanus.attendance.task.application.dto.TaskResponse response) {
         return new TaskResponse(
-                task.getId(),
-                task.getTitle(),
-                task.getDate(),
-                task.getTime(),
-                task.getPriority(),
-                task.isDone(),
-                task.isTeamTask(),
-                task.getAssignee()  != null ? task.getAssignee().getId() : null,
-                task.getAssignee() != null ? task.getAssignee().getName() : null,
-                task.getMembers().stream().map(Member::getId).toList(),
-                task.getMembers().stream().map(Member::getName).toList()
+                response.id(),
+                response.title(),
+                response.date(),
+                response.time(),
+                response.priority().name(),
+                response.done(),
+                response.isTeamTask(),
+                response.assigneeId(),
+                response.assigneeName(),
+                response.memberIds(),
+                response.memberNames()
         );
     }
 }

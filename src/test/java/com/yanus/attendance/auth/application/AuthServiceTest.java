@@ -8,11 +8,11 @@ import static org.mockito.Mockito.mock;
 
 import com.yanus.attendance.auth.FakeEmailVerificationTokenRepository;
 import com.yanus.attendance.auth.FakeRefreshTokenRepository;
+import com.yanus.attendance.auth.application.dto.AuthTokenResponse;
+import com.yanus.attendance.auth.application.dto.LoginCommand;
+import com.yanus.attendance.auth.application.dto.RefreshCommand;
+import com.yanus.attendance.auth.application.dto.RegisterCommand;
 import com.yanus.attendance.auth.infrastructure.JwtTokenProvider;
-import com.yanus.attendance.auth.presentation.dto.LoginRequest;
-import com.yanus.attendance.auth.presentation.dto.LoginResponse;
-import com.yanus.attendance.auth.presentation.dto.RefreshRequest;
-import com.yanus.attendance.auth.presentation.dto.RegisterRequest;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;
@@ -72,7 +72,7 @@ class AuthServiceTest {
     void register_success() {
         // given
         Team team = savedTeam();
-        RegisterRequest request = new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId());
+        RegisterCommand request = new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId());
 
         // when
         authService.register(request);
@@ -86,7 +86,7 @@ class AuthServiceTest {
     void duplicate_email_throw_error() {
         // given
         Team team = savedTeam();
-        RegisterRequest request = new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId());
+        RegisterCommand request = new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId());
         authService.register(request);
 
         // when & then
@@ -100,12 +100,12 @@ class AuthServiceTest {
     void login_success() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
         activate("hong@yanus.com");
-        LoginRequest request = new LoginRequest("hong@yanus.com", "password123");
+        LoginCommand request = new LoginCommand("hong@yanus.com", "password123");
 
         // when
-        LoginResponse response = authService.login(request);
+        AuthTokenResponse response = authService.login(request);
 
         // then
         assertThat(response.accessToken()).isNotBlank();
@@ -117,7 +117,7 @@ class AuthServiceTest {
     @DisplayName("존재하지 않는 이메일로 로그인 시 예외 발생")
     void not_exist_email_throw_error() {
         // given
-        LoginRequest request = new LoginRequest("none@yanus.com", "password123");
+        LoginCommand request = new LoginCommand("none@yanus.com", "password123");
 
         // when & then
         assertThatThrownBy(() -> authService.login(request))
@@ -130,8 +130,8 @@ class AuthServiceTest {
     void incorrect_password_throw_error() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
-        LoginRequest request = new LoginRequest("hong@yanus.com", "wrongpassword");
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
+        LoginCommand request = new LoginCommand("hong@yanus.com", "wrongpassword");
 
         // when & then
         assertThatThrownBy(() -> authService.login(request))
@@ -144,13 +144,13 @@ class AuthServiceTest {
     void refresh_token_reissue_access_token() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
         activate("hong@yanus.com");
-        LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
-        RefreshRequest request = new RefreshRequest(loginResponse.refreshToken());
+        AuthTokenResponse loginResponse = authService.login(new LoginCommand("hong@yanus.com", "password123"));
+        RefreshCommand request = new RefreshCommand(loginResponse.refreshToken());
 
         // when
-        LoginResponse response = authService.refresh(request);
+        AuthTokenResponse response = authService.refresh(request);
 
         // then
         assertThat(response.accessToken()).isNotBlank();
@@ -162,7 +162,7 @@ class AuthServiceTest {
     @DisplayName("만료된 리프레쉬 토큰으로 재발급 시 예외 발생")
     void invalid_refresh_token_throw_error() {
         // given
-        RefreshRequest request = new RefreshRequest("invalid-refresh-token");
+        RefreshCommand request = new RefreshCommand("invalid-refresh-token");
 
         // when & then
         assertThatThrownBy(() -> authService.refresh(request))
@@ -175,9 +175,9 @@ class AuthServiceTest {
     void logout_removes_refresh_token() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
         activate("hong@yanus.com");
-        LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
+        AuthTokenResponse loginResponse = authService.login(new LoginCommand("hong@yanus.com", "password123"));
 
         // when
         authService.logout(1L);
@@ -191,11 +191,11 @@ class AuthServiceTest {
     void inactive_member_loging_throw_error() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
         Member member = memberRepository.findByEmail("hong@yanus.com").get();
         member.activate();
         member.deactivate();
-        LoginRequest request = new LoginRequest("hong@yanus.com", "password123");
+        LoginCommand request = new LoginCommand("hong@yanus.com", "password123");
 
         // when & then
         assertThatThrownBy(() -> authService.login(request))
@@ -208,13 +208,13 @@ class AuthServiceTest {
     void refresh_token_reissue_new_token() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("김인직", "asdasd@naver.com", "asdasd12", team.getId()));
+        authService.register(new RegisterCommand("김인직", "asdasd@naver.com", "asdasd12", team.getId()));
         activate("asdasd@naver.com");
-        LoginResponse loginResponse = authService.login(new LoginRequest("asdasd@naver.com", "asdasd12"));
+        AuthTokenResponse loginResponse = authService.login(new LoginCommand("asdasd@naver.com", "asdasd12"));
         String oldRefreshToken = loginResponse.refreshToken();
 
         // when
-        LoginResponse response = authService.refresh(new RefreshRequest(oldRefreshToken));
+        AuthTokenResponse response = authService.refresh(new RefreshCommand(oldRefreshToken));
 
         // then
         assertThat(response.refreshToken()).isNotEqualTo(oldRefreshToken);
@@ -226,14 +226,14 @@ class AuthServiceTest {
     void used_refresh_token_throw_error() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
         activate("hong@yanus.com");
-        LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
+        AuthTokenResponse loginResponse = authService.login(new LoginCommand("hong@yanus.com", "password123"));
         String oldRefreshToken = loginResponse.refreshToken();
-        authService.refresh(new RefreshRequest(oldRefreshToken));
+        authService.refresh(new RefreshCommand(oldRefreshToken));
 
         // when & then
-        assertThatThrownBy(() -> authService.refresh(new RefreshRequest(oldRefreshToken)))
+        assertThatThrownBy(() -> authService.refresh(new RefreshCommand(oldRefreshToken)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TOKEN_REUSED);
     }
@@ -243,17 +243,17 @@ class AuthServiceTest {
     void reissue_token_invalidates_account_tokens() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
         activate("hong@yanus.com");
-        LoginResponse loginResponse = authService.login(new LoginRequest("hong@yanus.com", "password123"));
+        AuthTokenResponse loginResponse = authService.login(new LoginCommand("hong@yanus.com", "password123"));
         String oldRefreshToken = loginResponse.refreshToken();
-        LoginResponse rotated = authService.refresh(new RefreshRequest(oldRefreshToken));
+        AuthTokenResponse rotated = authService.refresh(new RefreshCommand(oldRefreshToken));
 
-        assertThatThrownBy(() -> authService.refresh(new RefreshRequest(oldRefreshToken)))
+        assertThatThrownBy(() -> authService.refresh(new RefreshCommand(oldRefreshToken)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TOKEN_REUSED);
 
-        assertThatThrownBy(() -> authService.refresh(new RefreshRequest(rotated.refreshToken())))
+        assertThatThrownBy(() -> authService.refresh(new RefreshCommand(rotated.refreshToken())))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.REFRESH_TOKEN_NOT_FOUND);
     }
@@ -263,16 +263,16 @@ class AuthServiceTest {
     void 로그인_5회_실패_시_계정가_잠긴다() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
 
         // when
         for (int i = 0; i < 5; i++) {
-            assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
+            assertThatThrownBy(() -> authService.login(new LoginCommand("hong@yanus.com", "wrongpassword")))
                     .isInstanceOf(BusinessException.class);
         }
 
         // then
-        assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "password123")))
+        assertThatThrownBy(() -> authService.login(new LoginCommand("hong@yanus.com", "password123")))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ACCOUNT_LOCKED);
     }
@@ -282,22 +282,22 @@ class AuthServiceTest {
     void login_success_resets_failed_attempts() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
         activate("hong@yanus.com");
         for (int i = 0; i < 4; i++) {
-            assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
+            assertThatThrownBy(() -> authService.login(new LoginCommand("hong@yanus.com", "wrongpassword")))
                     .isInstanceOf(BusinessException.class);
         }
-        authService.login(new LoginRequest("hong@yanus.com", "password123"));
+        authService.login(new LoginCommand("hong@yanus.com", "password123"));
 
         // when
         for (int i = 0; i < 4; i++) {
-            assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
+            assertThatThrownBy(() -> authService.login(new LoginCommand("hong@yanus.com", "wrongpassword")))
                     .isInstanceOf(BusinessException.class);
         }
 
         // then
-        assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "wrongpassword")))
+        assertThatThrownBy(() -> authService.login(new LoginCommand("hong@yanus.com", "wrongpassword")))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ACCOUNT_LOCKED);
     }
@@ -309,7 +309,7 @@ class AuthServiceTest {
         Team team = savedTeam();
 
         // when
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
 
         // then
         assertThat(memberRepository.findByEmail("hong@yanus.com").get().getStatus())
@@ -321,10 +321,10 @@ class AuthServiceTest {
     void PENDING_member_login_throw_error() {
         // given
         Team team = savedTeam();
-        authService.register(new RegisterRequest("홍길동", "hong@yanus.com", "password123", team.getId()));
+        authService.register(new RegisterCommand("홍길동", "hong@yanus.com", "password123", team.getId()));
 
         // when & then
-        assertThatThrownBy(() -> authService.login(new LoginRequest("hong@yanus.com", "password123")))
+        assertThatThrownBy(() -> authService.login(new LoginCommand("hong@yanus.com", "password123")))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_PENDING);
     }

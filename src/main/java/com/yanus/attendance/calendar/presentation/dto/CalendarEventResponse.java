@@ -1,6 +1,5 @@
 package com.yanus.attendance.calendar.presentation.dto;
 
-import com.yanus.attendance.calendar.domain.CalendarEvent;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -14,16 +13,16 @@ public record CalendarEventResponse(
         Long createdById,
         String createdByName
 ) {
-    public static CalendarEventResponse from(CalendarEvent event) {
+    public static CalendarEventResponse from(com.yanus.attendance.calendar.application.dto.CalendarEventResponse response) {
         return new CalendarEventResponse(
-                event.getId(),
-                event.getTitle(),
-                event.getStartDate(),
-                event.getStartTime(),
-                event.getEndDate(),
-                event.getEndTime(),
-                event.getCreatedBy().getId(),
-                event.getCreatedBy().getName()
+                response.id(),
+                response.title(),
+                response.startDate(),
+                response.startTime(),
+                response.endDate(),
+                response.endTime(),
+                response.createdById(),
+                response.createdByName()
         );
     }
 }

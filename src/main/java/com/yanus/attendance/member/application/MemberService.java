@@ -4,17 +4,19 @@ import com.yanus.attendance.audit.application.AuditLogService;
 import com.yanus.attendance.audit.domain.AuditAction;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
+import com.yanus.attendance.member.application.dto.MemberResponse;
+import com.yanus.attendance.member.application.dto.ProfileUpdateCommand;
+import com.yanus.attendance.member.application.dto.RoleChangeCommand;
+import com.yanus.attendance.member.application.dto.TemporaryPasswordResponse;
+import com.yanus.attendance.member.application.dto.TeamChangeCommand;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberQueryRepository;
 import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
-import com.yanus.attendance.member.presentation.dto.MemberResponse;
-import com.yanus.attendance.member.presentation.dto.ProfileUpdateRequest;
-import com.yanus.attendance.member.presentation.dto.RoleChangeRequest;
-import com.yanus.attendance.member.presentation.dto.TemporaryPasswordResponse;
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamRepository;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,22 +40,23 @@ public class MemberService {
         return MemberResponse.from(member);
     }
 
-    public List<MemberResponse> findAll(String teamName, MemberRole role) {
-        return memberQueryRepository.findAllByFilter(teamName, role)
+    public List<MemberResponse> findAll(String teamName, String role) {
+        return memberQueryRepository.findAllByFilter(teamName, parseEnum(role, MemberRole.class))
                 .stream()
                 .map(MemberResponse::from)
                 .toList();
     }
 
     @Transactional
-    public void changeRole(Long actorId, Long memberId, RoleChangeRequest request) {
+    public void changeRole(Long actorId, Long memberId, RoleChangeCommand command) {
         Member actor = validateAdmin(actorId);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         String previousRole = member.getRole().name();
-        member.changeRole(request.role());
+        MemberRole nextRole = parseEnum(command.role(), MemberRole.class);
+        member.changeRole(nextRole);
         auditLogService.log(actorId, actor.getRole(), memberId,
-                AuditAction.ROLE_CHANGE, previousRole, request.role().name());
+                AuditAction.ROLE_CHANGE, previousRole, nextRole.name());
     }
 
     @Transactional
@@ -77,19 +80,19 @@ public class MemberService {
     }
 
     @Transactional
-    public void updateProfile(Long memberId, ProfileUpdateRequest request) {
+    public void updateProfile(Long memberId, ProfileUpdateCommand request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         member.updateProfile(request.name(), request.password(), passwordEncoder);
     }
 
     @Transactional
-    public void changeTeam(Long actorId, Long memberId, Long teamId) {
+    public void changeTeam(Long actorId, Long memberId, TeamChangeCommand command) {
         Member actor = memberRepository.findById(actorId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         Member target = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-        Team team = teamRepository.findById(teamId)
+        Team team = teamRepository.findById(command.teamId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
         validateTeamChangePermission(actor, target);
         String previousTeam = target.getTeam().getName();
@@ -141,5 +144,16 @@ public class MemberService {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
         return sb.toString();
+    }
+
+    private <T extends Enum<T>> T parseEnum(String rawValue, Class<T> enumType) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(enumType, rawValue.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
     }
 }

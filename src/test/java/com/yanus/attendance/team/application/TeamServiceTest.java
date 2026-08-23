@@ -10,9 +10,9 @@ import com.yanus.attendance.member.FakeMemberRepository;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
+import com.yanus.attendance.team.application.dto.TeamResponse;
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.FakeTeamRepository;
-import com.yanus.attendance.team.presentation.dto.TeamCreateRequest;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +45,7 @@ public class TeamServiceTest {
         Member member = createMember(MemberRole.ADMIN);
 
         // when
-        TeamCreateRequest result = teamService.createTeam(member.getId(), name);
+        TeamResponse result = teamService.createTeam(member.getId(), name);
 
         // then
         assertThat(result.name()).isEqualTo("1팀");
@@ -112,7 +112,7 @@ public class TeamServiceTest {
         teamRepository.save(Team.create("2팀"));
 
         // when
-        List<TeamCreateRequest> result = teamService.findAll();
+        List<TeamResponse> result = teamService.findAll();
 
         // then
         assertThat(result).hasSize(2);
@@ -125,7 +125,7 @@ public class TeamServiceTest {
         teamRepository.save(Team.create("2팀"));
 
         // when
-        TeamCreateRequest result = teamService.findById(1L);
+        TeamResponse result = teamService.findById(1L);
 
         // then
         assertThat(result.name()).isEqualTo("2팀");
@@ -175,7 +175,7 @@ public class TeamServiceTest {
         Member admin = createMember(MemberRole.ADMIN);
 
         // when
-        TeamCreateRequest result = teamService.createTeam(admin.getId(), "새팀");
+        TeamResponse result = teamService.createTeam(admin.getId(), "새팀");
 
         // then
         assertThat(result.name()).isEqualTo("새팀");

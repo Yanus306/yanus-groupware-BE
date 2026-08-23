@@ -2,6 +2,8 @@ package com.yanus.attendance.task.presentation;
 
 import com.yanus.attendance.global.response.ApiResponse;
 import com.yanus.attendance.task.application.TaskService;
+import com.yanus.attendance.task.application.dto.TaskCreateCommand;
+import com.yanus.attendance.task.application.dto.TaskUpdateCommand;
 import com.yanus.attendance.task.presentation.dto.TaskCreateRequest;
 import com.yanus.attendance.task.presentation.dto.TaskResponse;
 import com.yanus.attendance.task.presentation.dto.TaskUpdateRequest;
@@ -35,7 +37,17 @@ public class TaskController {
     public ResponseEntity<ApiResponse<TaskResponse>> create(
             @AuthenticationPrincipal Long memberId,
             @RequestBody TaskCreateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(taskService.create(memberId, request)));
+        TaskCreateCommand command = new TaskCreateCommand(
+                request.title(),
+                request.date(),
+                request.time(),
+                request.priority(),
+                request.assigneeId(),
+                request.isTeamTask(),
+                request.memberIds()
+        );
+        com.yanus.attendance.task.application.dto.TaskResponse response = taskService.create(memberId, command);
+        return ResponseEntity.ok(ApiResponse.success(TaskResponse.from(response)));
     }
 
     @GetMapping
@@ -45,22 +57,37 @@ public class TaskController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         if ("TEAM".equals(type)) {
-            return ResponseEntity.ok(ApiResponse.success(taskService.getTeamTasks(memberId, startDate, endDate)));
+            List<TaskResponse> responses = taskService.getTeamTasks(memberId, startDate, endDate).stream()
+                    .map(TaskResponse::from)
+                    .toList();
+            return ResponseEntity.ok(ApiResponse.success(responses));
         }
-        return ResponseEntity.ok(ApiResponse.success(taskService.getMyTasks(memberId, startDate, endDate)));
+        List<TaskResponse> responses = taskService.getMyTasks(memberId, startDate, endDate).stream()
+                .map(TaskResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @PutMapping("/{taskId}")
     public ResponseEntity<ApiResponse<TaskResponse>> update(
             @PathVariable Long taskId,
             @RequestBody TaskUpdateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(taskService.update(taskId, request)));
+        TaskUpdateCommand command = new TaskUpdateCommand(
+                request.title(),
+                request.date(),
+                request.time(),
+                request.priority(),
+                request.memberIds()
+        );
+        com.yanus.attendance.task.application.dto.TaskResponse response = taskService.update(taskId, command);
+        return ResponseEntity.ok(ApiResponse.success(TaskResponse.from(response)));
     }
 
     @PatchMapping("/{taskId}/done")
     public ResponseEntity<ApiResponse<TaskResponse>> toggleDone(
             @PathVariable Long taskId ) {
-        return ResponseEntity.ok(ApiResponse.success(taskService.toggleDone(taskId)));
+        com.yanus.attendance.task.application.dto.TaskResponse response = taskService.toggleDone(taskId);
+        return ResponseEntity.ok(ApiResponse.success(TaskResponse.from(response)));
     }
 
     @DeleteMapping("/{taskId}")

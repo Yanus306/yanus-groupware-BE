@@ -1,28 +1,24 @@
-package com.yanus.attendance.attendance.presentation.dto.attendance;
+package com.yanus.attendance.attendance.application.dto.attendance;
 
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
-import com.yanus.attendance.member.domain.Member;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public record AttendanceRangeResponse(
-        Long attendanceId,
+public record AttendanceResponse(
+        Long id,
         Long memberId,
         String memberName,
-        String teamName,
         LocalDate workDate,
         LocalDateTime checkInTime,
         LocalDateTime checkOutTime,
         AttendanceStatus status
 ) {
-    public static AttendanceRangeResponse from(Attendance attendance) {
-        Member member = attendance.getMember();
-        return new AttendanceRangeResponse(
+    public static AttendanceResponse from(Attendance attendance) {
+        return new AttendanceResponse(
                 attendance.getId(),
-                member.getId(),
-                member.getName(),
-                member.getTeam() != null ? member.getTeam().getName() : null,
+                attendance.getMember().getId(),
+                attendance.getMember().getName(),
                 attendance.getWorkDate(),
                 attendance.getCheckInTime(),
                 attendance.getCheckOutTime(),

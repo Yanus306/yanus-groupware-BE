@@ -2,6 +2,10 @@ package com.yanus.attendance.auth.presentation;
 
 import com.yanus.attendance.auth.application.AuthService;
 import com.yanus.attendance.auth.application.EmailVerificationService;
+import com.yanus.attendance.auth.application.dto.AuthTokenResponse;
+import com.yanus.attendance.auth.application.dto.LoginCommand;
+import com.yanus.attendance.auth.application.dto.RefreshCommand;
+import com.yanus.attendance.auth.application.dto.RegisterCommand;
 import com.yanus.attendance.auth.presentation.dto.LoginRequest;
 import com.yanus.attendance.auth.presentation.dto.LoginResponse;
 import com.yanus.attendance.auth.presentation.dto.MeResponse;
@@ -31,18 +35,20 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Void>> register(@RequestBody RegisterRequest request) {
-        authService.register(request);
+        authService.register(new RegisterCommand(request.name(), request.email(), request.password(), request.teamId()));
         return ResponseEntity.ok(ApiResponse.success());
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(authService.login(request)));
+        AuthTokenResponse response = authService.login(new LoginCommand(request.email(), request.password()));
+        return ResponseEntity.ok(ApiResponse.success(LoginResponse.from(response)));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<LoginResponse>> refresh(@RequestBody RefreshRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(authService.refresh(request)));
+        AuthTokenResponse response = authService.refresh(new RefreshCommand(request.refreshToken()));
+        return ResponseEntity.ok(ApiResponse.success(LoginResponse.from(response)));
     }
 
     @PostMapping("/logout")
@@ -65,6 +71,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<MeResponse>> me(@AuthenticationPrincipal Long memberId) {
-        return ResponseEntity.ok(ApiResponse.success(authService.me(memberId)));
+        com.yanus.attendance.auth.application.dto.MeResponse response = authService.me(memberId);
+        return ResponseEntity.ok(ApiResponse.success(MeResponse.from(response)));
     }
 }

@@ -1,8 +1,5 @@
 package com.yanus.attendance.leave.presentation.dto;
 
-import com.yanus.attendance.leave.domain.LeaveCategory;
-import com.yanus.attendance.leave.domain.LeaveRequest;
-import com.yanus.attendance.leave.domain.LeaveStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -10,24 +7,24 @@ public record LeaveResponse(
         Long id,
         Long memberId,
         String memberName,
-        LeaveCategory category,
+        String category,
         String detail,
         LocalDate date,
-        LeaveStatus status,
+        String status,
         LocalDateTime submittedAt,
         LocalDateTime reviewedAt
 ) {
-    public static LeaveResponse from(LeaveRequest request) {
+    public static LeaveResponse from(com.yanus.attendance.leave.application.dto.LeaveResponse response) {
         return new LeaveResponse(
-                request.getId(),
-                request.getMember().getId(),
-                request.getMember().getName(),
-                request.getCategory(),
-                request.getDetail(),
-                request.getDate(),
-                request.getStatus(),
-                request.getSubmittedAt(),
-                request.getReviewedAt()
+                response.id(),
+                response.memberId(),
+                response.memberName(),
+                response.category().name(),
+                response.detail(),
+                response.date(),
+                response.status().name(),
+                response.submittedAt(),
+                response.reviewedAt()
         );
     }
 }

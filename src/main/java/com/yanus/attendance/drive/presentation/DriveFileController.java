@@ -31,7 +31,9 @@ public class DriveFileController {
     public ResponseEntity<ApiResponse<DriveFileResponse>> upload(
             @AuthenticationPrincipal Long memberId,
             @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(ApiResponse.success(driveFileService.upload(memberId, file)));
+        com.yanus.attendance.drive.application.dto.DriveFileResponse response =
+                driveFileService.upload(memberId, file);
+        return ResponseEntity.ok(ApiResponse.success(DriveFileResponse.from(response)));
     }
 
     @GetMapping("/{fileId}/download")
@@ -56,6 +58,9 @@ public class DriveFileController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<DriveFileResponse>>> getAllFiles(
             @AuthenticationPrincipal Long actorId) {
-        return ResponseEntity.ok(ApiResponse.success(driveFileService.getAllFiles(actorId)));
+        List<DriveFileResponse> responses = driveFileService.getAllFiles(actorId).stream()
+                .map(DriveFileResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 }

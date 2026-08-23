@@ -1,0 +1,6 @@
+package com.yanus.attendance.member.application.dto;
+
+public record TeamChangeCommand(
+        Long teamId
+) {
+}

@@ -1,6 +1,5 @@
 package com.yanus.attendance.drive.presentation.dto;
 
-import com.yanus.attendance.drive.domain.DriveFile;
 import java.time.LocalDateTime;
 
 public record DriveFileResponse(
@@ -12,15 +11,15 @@ public record DriveFileResponse(
         String uploadedByName,
         LocalDateTime createdAt
 ) {
-    public static DriveFileResponse from(DriveFile file) {
+    public static DriveFileResponse from(com.yanus.attendance.drive.application.dto.DriveFileResponse response) {
         return new DriveFileResponse(
-                file.getId(),
-                file.getOriginalName(),
-                file.getSize(),
-                file.getContentType(),
-                file.getUploadedBy().getId(),
-                file.getUploadedBy().getName(),
-                file.getCreatedAt()
+                response.id(),
+                response.originalName(),
+                response.size(),
+                response.contentType(),
+                response.uploadedById(),
+                response.uploadedByName(),
+                response.createdAt()
         );
     }
 }

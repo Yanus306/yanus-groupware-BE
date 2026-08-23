@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.presentation.dto.setting;
+package com.yanus.attendance.attendance.application.dto.setting;
 
 import java.util.List;
 

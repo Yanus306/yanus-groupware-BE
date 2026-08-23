@@ -1,7 +1,5 @@
 package com.yanus.attendance.member.presentation.dto;
 
-import com.yanus.attendance.member.domain.Member;
-
 public record MemberResponse(
         Long id,
         String name,
@@ -10,14 +8,7 @@ public record MemberResponse(
         String status,
         String team
 ) {
-    public static MemberResponse from(Member member) {
-        return new MemberResponse(
-                member.getId(),
-                member.getName(),
-                member.getEmail(),
-                member.getRole().name(),
-                member.getStatus().name(),
-                member.getTeam().getName()
-        );
+    public static MemberResponse from(com.yanus.attendance.member.application.dto.MemberResponse response) {
+        return new MemberResponse(response.id(), response.name(), response.email(), response.role(), response.status(), response.team());
     }
 }

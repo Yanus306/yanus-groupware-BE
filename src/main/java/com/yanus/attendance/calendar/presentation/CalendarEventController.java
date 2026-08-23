@@ -1,6 +1,7 @@
 package com.yanus.attendance.calendar.presentation;
 
 import com.yanus.attendance.calendar.application.CalendarEventService;
+import com.yanus.attendance.calendar.application.dto.CalendarEventCreateCommand;
 import com.yanus.attendance.calendar.presentation.dto.CalendarEventCreateRequest;
 import com.yanus.attendance.calendar.presentation.dto.CalendarEventResponse;
 import com.yanus.attendance.global.response.ApiResponse;
@@ -33,27 +34,51 @@ public class CalendarEventController {
     public ResponseEntity<ApiResponse<CalendarEventResponse>> create(
             @AuthenticationPrincipal Long memberId,
             @RequestBody CalendarEventCreateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(calendarEventService.create(memberId, request)));
+        CalendarEventCreateCommand command = new CalendarEventCreateCommand(
+                request.title(),
+                request.startDate(),
+                request.startTime(),
+                request.endDate(),
+                request.endTime()
+        );
+        com.yanus.attendance.calendar.application.dto.CalendarEventResponse response =
+                calendarEventService.create(memberId, command);
+        return ResponseEntity.ok(ApiResponse.success(CalendarEventResponse.from(response)));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CalendarEventResponse>>> getByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(ApiResponse.success(calendarEventService.getByDateRange(startDate, endDate)));
+        List<CalendarEventResponse> responses = calendarEventService.getByDateRange(startDate, endDate).stream()
+                .map(CalendarEventResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @GetMapping("/me")
     public  ResponseEntity<ApiResponse<List<CalendarEventResponse>>> getByCreatedBy(
             @AuthenticationPrincipal Long memberId) {
-        return ResponseEntity.ok(ApiResponse.success(calendarEventService.getByCreatedBy(memberId)));
+        List<CalendarEventResponse> responses = calendarEventService.getByCreatedBy(memberId).stream()
+                .map(CalendarEventResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @PutMapping("/{eventId}")
     public ResponseEntity<ApiResponse<CalendarEventResponse>> update(
             @PathVariable Long eventId,
             @RequestBody CalendarEventCreateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(calendarEventService.update(eventId, request)));
+        CalendarEventCreateCommand command = new CalendarEventCreateCommand(
+                request.title(),
+                request.startDate(),
+                request.startTime(),
+                request.endDate(),
+                request.endTime()
+        );
+        com.yanus.attendance.calendar.application.dto.CalendarEventResponse response =
+                calendarEventService.update(eventId, command);
+        return ResponseEntity.ok(ApiResponse.success(CalendarEventResponse.from(response)));
     }
 
     @DeleteMapping("/{eventId}")

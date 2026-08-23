@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.presentation.dto.setting;
+package com.yanus.attendance.attendance.application.dto.setting;
 
 import com.yanus.attendance.attendance.domain.setting.AttendanceSetting;
 import java.time.LocalTime;

@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.presentation.dto.exception;
+package com.yanus.attendance.attendance.application.dto.exception;
 
 import java.util.List;
 

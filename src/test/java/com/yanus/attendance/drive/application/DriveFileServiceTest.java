@@ -7,7 +7,7 @@ import com.yanus.attendance.drive.FakeDriveFileRepository;
 import com.yanus.attendance.drive.FakeStorageService;
 import com.yanus.attendance.drive.domain.DriveFileRepository;
 import com.yanus.attendance.drive.domain.StorageService;
-import com.yanus.attendance.drive.presentation.dto.DriveFileResponse;
+import com.yanus.attendance.drive.application.dto.DriveFileResponse;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;

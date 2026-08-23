@@ -3,8 +3,8 @@ package com.yanus.attendance.audit.presentation;
 import com.yanus.attendance.audit.application.AuditLogService;
 import com.yanus.attendance.audit.presentation.dto.AuditLogResponse;
 import com.yanus.attendance.global.response.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +21,9 @@ public class AuditLogController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<AuditLogResponse>>> findAll() {
-        return ResponseEntity.ok(ApiResponse.success(auditLogService.findAll()));
+        List<AuditLogResponse> responses = auditLogService.findAll().stream()
+                .map(AuditLogResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 }

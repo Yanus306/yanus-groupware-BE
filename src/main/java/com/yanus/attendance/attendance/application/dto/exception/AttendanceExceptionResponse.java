@@ -1,4 +1,4 @@
-package com.yanus.attendance.attendance.presentation.dto.exception;
+package com.yanus.attendance.attendance.application.dto.exception;
 
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.exception.*;

@@ -5,9 +5,9 @@ import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
+import com.yanus.attendance.team.application.dto.TeamResponse;
 import com.yanus.attendance.team.domain.Team;
 import com.yanus.attendance.team.domain.TeamRepository;
-import com.yanus.attendance.team.presentation.dto.TeamCreateRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,26 +21,26 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final MemberRepository memberRepository;
 
-    public List<TeamCreateRequest> findAll() {
+    public List<TeamResponse> findAll() {
         return teamRepository.findAll().stream()
-                .map(TeamCreateRequest::from)
+                .map(TeamResponse::from)
                 .toList();
     }
 
-    public TeamCreateRequest findById(Long id) {
+    public TeamResponse findById(Long id) {
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        return TeamCreateRequest.from(team);
+        return TeamResponse.from(team);
     }
 
     @Transactional
-    public TeamCreateRequest createTeam(Long actorId, String name) {
+    public TeamResponse createTeam(Long actorId, String name) {
         validateAdmin(actorId);
         if (teamRepository.findByName(name).isPresent()) {
             throw new BusinessException(ErrorCode.TEAM_ALREADY_EXISTS);
         }
         Team team = Team.create(name);
-        return TeamCreateRequest.from(teamRepository.save(team));
+        return TeamResponse.from(teamRepository.save(team));
     }
 
     @Transactional

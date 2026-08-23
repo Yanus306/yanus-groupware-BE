@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### OS Metadata ###
+.DS_Store
+
 ### Secrets ###
 .env
 *.env
@@ -47,3 +50,6 @@ application-prod.properties
 CLAUDE.md
 api.md
 AGENTS.md
+.opencode/
+.persona/
+result/

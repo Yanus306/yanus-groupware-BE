@@ -5,16 +5,16 @@ import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.task.domain.Task;
-import com.yanus.attendance.task.domain.TaskPriority;
 import com.yanus.attendance.task.domain.TaskQueryRepository;
 import com.yanus.attendance.task.domain.TaskRepository;
-import com.yanus.attendance.task.presentation.dto.TaskCreateRequest;
-import com.yanus.attendance.task.presentation.dto.TaskResponse;
-import com.yanus.attendance.task.presentation.dto.TaskUpdateRequest;
-import com.yanus.attendance.team.domain.TeamRepository;
+import com.yanus.attendance.task.domain.TaskPriority;
+import com.yanus.attendance.task.application.dto.TaskCreateCommand;
+import com.yanus.attendance.task.application.dto.TaskResponse;
+import com.yanus.attendance.task.application.dto.TaskUpdateCommand;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,20 +28,20 @@ public class TaskService {
     private final MemberRepository memberRepository;
     private final TaskQueryRepository taskQueryRepository;
 
-    public TaskResponse create(Long memberId, TaskCreateRequest request) {
+    public TaskResponse create(Long memberId, TaskCreateCommand request) {
         Member creator = findMember(memberId);
         List<Member> members = resolveMembers(request.memberIds());
 
         if (request.isTeamTask()) {
             Member assignee = request.assigneeId() != null ? findMember(request.assigneeId()) : creator;
             Task task = Task.createTeam(creator, assignee, creator.getTeam(),
-                    request.title(), request.date(), request.time(), request.priority(), members);
+                    request.title(), request.date(), request.time(), parsePriority(request.priority()), members);
             taskRepository.save(task);
             return TaskResponse.from(task);
         }
 
         Task task = Task.createPersonal(creator, request.title(), request.date(),
-                request.time(), request.priority(), members);
+                request.time(), parsePriority(request.priority()), members);
         taskRepository.save(task);
         return TaskResponse.from(task);
     }
@@ -53,10 +53,10 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
-    public TaskResponse update(Long taskId, TaskUpdateRequest request) {
+    public TaskResponse update(Long taskId, TaskUpdateCommand request) {
         Task task = findTask(taskId);
         List<Member> members = resolveMembers(request.memberIds());
-        task.update(request.title(), request.date(), request.time(), request.priority());
+        task.update(request.title(), request.date(), request.time(), parsePriority(request.priority()));
         task.updateMembers(members);
         return TaskResponse.from(task);
     }
@@ -95,5 +95,16 @@ public class TaskService {
             return new ArrayList<>();
         }
         return memberRepository.findAllByIds(memberIds);
+    }
+
+    private TaskPriority parsePriority(String rawValue) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return null;
+        }
+        try {
+            return TaskPriority.valueOf(rawValue.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
     }
 }
