@@ -65,6 +65,10 @@ public enum ErrorCode {
     DRIVE_FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "DRIVE_FILE_NOT_FOUND", "파일을 찾을 수 없습니다."),
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE_UPLOAD_FAILED", "파일 업로드에 실패했습니다."),
 
+    // Chat
+    CHANNEL_NOT_FOUND(HttpStatus.NOT_FOUND, "CHANNEL_NOT_FOUND", "존재하지 않는 채널입니다."),
+    MESSAGE_FILE_REQUIRED(HttpStatus.BAD_REQUEST, "MESSAGE_FILE_REQUIRED", "첨부 파일이 필요합니다."),
+
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;

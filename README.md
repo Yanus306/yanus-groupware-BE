@@ -1,6 +1,6 @@
 # Yanus Groupware — Backend
 
-> TDD + DDD 기반으로 설계한 그룹웨어 백엔드 프로젝트
+> 그룹웨어 백엔드 프로젝트
 
 ---
 
