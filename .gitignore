@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### OS Metadata ###
+.DS_Store
+
 ### Secrets ###
 .env
 *.env
