@@ -53,3 +53,12 @@ AGENTS.md
 .opencode/
 .persona/
 result/
+# Persona Harness generated context noise
+node_modules/
+.opencode/node_modules/
+.persona/rules/
+.persona/evidence/
+.persona/.init-backups/
+.persona/.ph-init-manifest.json
+.persona
+.gradle/
