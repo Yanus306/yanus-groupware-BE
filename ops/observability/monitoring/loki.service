@@ -1,0 +1,19 @@
+[Unit]
+Description=Yanus Loki log storage
+After=network-online.target
+Wants=network-online.target
+[Service]
+User=loki
+Group=loki
+ExecStart=/usr/local/bin/loki -config.file=/etc/loki/config.yml
+Restart=on-failure
+RestartSec=5
+MemoryMax=1G
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/loki
+PrivateTmp=true
+UMask=0027
+[Install]
+WantedBy=multi-user.target

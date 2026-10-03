@@ -142,7 +142,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "호스트 선택으로 앱 서버와 DB 서버를 구분합니다. CPU·메모리·디스크·네트워크의 변화와 API 지연 시간을 함께 확인하세요."
+        "content": "호스트 선택으로 app-server·data-server·monitoring-server를 구분합니다. CPU·메모리·디스크·네트워크의 변화와 API 지연 시간을 함께 확인하세요."
       }
     },
     {
@@ -169,7 +169,7 @@
           },
           "options": {
             "mode": "markdown",
-            "content": "### 앱 서버와 DB 서버를 먼저 선택하세요\n| 상황 | 함께 볼 지표 | 다음 점검 |\n| --- | --- | --- |\n| CPU가 높고 API도 느림 | CPU user·system·iowait, Load, 02 GC | CPU 계산 작업인지 디스크 대기인지 구분합니다. Load는 CPU 수와 함께 판단합니다. |\n| 메모리가 부족함 | Available, Cache, Swap, 02 JVM Heap | 가용 메모리 감소와 Swap 증가가 지속되는지 확인합니다. Linux Cache 사용 자체는 장애가 아닙니다. |\n| 저장·DB 요청이 느림 | Read·Write 지연·처리량, iowait | data-server라면 05의 DB 처리와 함께 확인합니다. 처리량 증가만으로 느린 디스크를 단정하지 않습니다. |\n| 디스크가 가득 참 | 루트 사용률·가용 용량 + 03 파일 보존 | 85% 경고·95% 긴급 기준을 확인하고 증가한 파일을 조사합니다. DB·TSDB·로그를 임의 삭제하지 않습니다. |\n| 외부 연결 실패·지연 | RX·TX, Errors, Dropped | 실제 인터페이스의 오류가 지속되는지 확인하고 방화벽·링크·목적지 연결을 점검합니다. |\n\n**호스트 비교:** All로 동시에 확인한 뒤 문제가 있는 서버 하나를 선택합니다. 자원 상승 시각을 API P95·DB 처리와 맞춰 원인인지 결과인지 확인합니다."
+            "content": "### 앱·DB·모니터링 서버를 먼저 선택하세요\n| 상황 | 함께 볼 지표 | 다음 점검 |\n| --- | --- | --- |\n| CPU가 높고 API도 느림 | CPU user·system·iowait, Load, 02 GC | CPU 계산 작업인지 디스크 대기인지 구분합니다. Load는 CPU 수와 함께 판단합니다. |\n| 메모리가 부족함 | Available, Cache, Swap, 02 JVM Heap | 가용 메모리 감소와 Swap 증가가 지속되는지 확인합니다. Linux Cache 사용 자체는 장애가 아닙니다. |\n| Grafana 조회만 느림 | monitoring-server CPU·Available·디스크 I/O | 모니터링 서버를 선택하고 Grafana·Prometheus·Loki 상태를 확인합니다. 수집 15초와 화면 갱신 30초는 조회 지연과 구분합니다. |\n| 저장·DB 요청이 느림 | Read·Write 지연·처리량, iowait | data-server라면 05의 DB 처리와 함께 확인합니다. 처리량 증가만으로 느린 디스크를 단정하지 않습니다. |\n| 디스크가 가득 참 | 루트 사용률·가용 용량 + 03 파일 보존 | 85% 경고·95% 긴급 기준을 확인하고 증가한 파일을 조사합니다. DB·TSDB·로그를 임의 삭제하지 않습니다. |\n| 외부 연결 실패·지연 | RX·TX, Errors, Dropped | 실제 인터페이스의 오류가 지속되는지 확인하고 방화벽·링크·목적지 연결을 점검합니다. |\n\n**호스트 비교:** All로 동시에 확인한 뒤 문제가 있는 서버 하나를 선택합니다. 자원 상승 시각을 API P95·DB 처리와 맞춰 원인인지 결과인지 확인합니다."
           }
         }
       ]

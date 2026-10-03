@@ -9,6 +9,7 @@ for (const file of fs.readdirSync(directory).filter(name => name.endsWith('.json
   const board = JSON.parse(fs.readFileSync(path.join(directory, file), 'utf8'));
   for (const panel of board.panels) {
     for (const target of panel.targets || []) {
+      if ((target.datasource || panel.datasource)?.type === 'loki') continue;
       const query = target.expr.replaceAll('$environment', 'prod').replaceAll('$instance', '.*')
         .replaceAll('$__rate_interval', '5m').replaceAll('$__range', '30m');
       const url = new URL('/api/v1/query', base);

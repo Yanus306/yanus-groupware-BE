@@ -48,18 +48,19 @@ const help = {
   'yanus-logs': `### 오류 원문과 보존 문제를 구분하세요
 | 상황 | 무엇을 볼지 | 확인 방법 |
 | --- | --- | --- |
-| 5xx·지연 원인 확인 | ERROR·WARN 발생량과 API 오류 시각 | 02에서 시간을 좁히고 아래 SSH 명령으로 같은 시각의 예외 원문을 확인합니다. |
+| 5xx·지연 원인 확인 | ERROR·WARN 발생량과 API 오류 시각 | 02에서 시간을 좁히고 아래 로그 본문을 확인합니다. 응답의 X-Request-ID를 요청 ID 입력칸에 넣으면 관련 요청·예외를 모아 볼 수 있습니다. |
 | WARN 증가, 서비스는 정상 | 레벨별 발생 추세 | 반복 경고의 원인을 확인합니다. WARN 수만으로 장애를 확정하지 않습니다. |
 | 파일 존재 DOWN | 파일 존재·로그 파일 경로 | yanus 서비스와 디렉터리 권한을 확인하고 journalctl에서 로그 초기화 실패를 찾습니다. |
 | 보존 상태 수집 경과가 계속 증가 | metadata 수집 경과·Node 수집 | yanus-log-metrics.timer와 service 실행 결과, textfile 수집을 확인합니다. 수집은 1분 간격입니다. |
 | 로그 크기·디스크 증가 | 현재 파일·압축 파일 수 + 04 디스크 | 회전·보존 정책과 반복 오류를 확인합니다. 원인·증거를 확보하기 전에 로그를 지우지 않습니다. |
 
-**이 화면에는 로그 본문 검색 기능이 없습니다.** 로그 발생량은 Micrometer 카운터이고 본문은 파일·journal에서 확인합니다. 화면과 로그 시각을 KST로 맞추고 공유 전 토큰·개인정보를 제거합니다.`,
-  'yanus-hosts': `### 앱 서버와 DB 서버를 먼저 선택하세요
+**본문은 Loki, 발생량은 Micrometer입니다.** 요청 ID는 응답의 X-Request-ID 또는 로그 상세에서 확인합니다. 빈 요청 ID 입력칸은 전체 요청을 보여줍니다. 4xx는 인증·권한·업무 거절을 구분하고, 5xx는 exceptionType·stackTrace의 원인 유형과 발생 위치를 확인합니다. 예외 원문 메시지·body·토큰은 저장하지 않습니다. Loki 본문은 7일, 원본 파일은 14일·300MB 상한입니다.`,
+  'yanus-hosts': `### 앱·DB·모니터링 서버를 먼저 선택하세요
 | 상황 | 함께 볼 지표 | 다음 점검 |
 | --- | --- | --- |
 | CPU가 높고 API도 느림 | CPU user·system·iowait, Load, 02 GC | CPU 계산 작업인지 디스크 대기인지 구분합니다. Load는 CPU 수와 함께 판단합니다. |
 | 메모리가 부족함 | Available, Cache, Swap, 02 JVM Heap | 가용 메모리 감소와 Swap 증가가 지속되는지 확인합니다. Linux Cache 사용 자체는 장애가 아닙니다. |
+| Grafana 조회만 느림 | monitoring-server CPU·Available·디스크 I/O | 모니터링 서버를 선택하고 Grafana·Prometheus·Loki 상태를 확인합니다. 수집 15초와 화면 갱신 30초는 조회 지연과 구분합니다. |
 | 저장·DB 요청이 느림 | Read·Write 지연·처리량, iowait | data-server라면 05의 DB 처리와 함께 확인합니다. 처리량 증가만으로 느린 디스크를 단정하지 않습니다. |
 | 디스크가 가득 참 | 루트 사용률·가용 용량 + 03 파일 보존 | 85% 경고·95% 긴급 기준을 확인하고 증가한 파일을 조사합니다. DB·TSDB·로그를 임의 삭제하지 않습니다. |
 | 외부 연결 실패·지연 | RX·TX, Errors, Dropped | 실제 인터페이스의 오류가 지속되는지 확인하고 방화벽·링크·목적지 연결을 점검합니다. |
@@ -166,6 +167,11 @@ function builder(board) {
       specs.forEach((s, i) => panel(s[0], s[1], s[2] || 'short', i * w, w, 8, 'timeseries'));
       y += 8;
     },
+    logs(title, expression) {
+      const source = { type: 'loki', uid: 'yanus-loki' };
+      board.panels.push({ id: id++, title, description: '응답 X-Request-ID 또는 로그 상세의 requestId를 입력하세요. 빈 입력은 전체 로그입니다. 상세에서 errorCode, exceptionType, stackTrace, status, elapsedMs를 확인합니다.', type: 'logs', datasource: source, gridPos: { x: 0, y, w: 24, h: 12 }, targets: [{ refId: 'A', datasource: source, expr: expression, queryType: 'range', maxLines: 200 }], options: { showTime: true, showLabels: false, showCommonLabels: false, wrapLogMessage: true, enableLogDetails: true, prettifyLogMessage: true, sortOrder: 'Descending', dedupStrategy: 'none' }, fieldConfig: { defaults: {}, overrides: [] } });
+      y += 12;
+    },
     table(title, expression, unit = 'short') {
       const p = panel(title, expression, unit, 0, 24, 7, 'table', { options: { showHeader: true, cellHeight: 'sm', sortBy: [] }, transformations: [{ id: 'labelsToFields', options: { mode: 'columns' } }, { id: 'organize', options: { excludeByName: { Time: true }, renameByName: { Value: '현재 값', instance: '호스트', job: '수집 대상' } } }] });
       p.targets.forEach(t => { t.instant = true; t.range = false; t.format = 'table'; }); y += 7;
@@ -204,16 +210,19 @@ b.graphs([['Active · Idle · Max', ['active', 'idle', 'max'].map(n => ({ expr: 
 b.graphs([['Connection Acquire 평균', `rate(hikaricp_connections_acquire_seconds_sum{${host}}[${interval}]) / clamp_min(rate(hikaricp_connections_acquire_seconds_count{${host}}[${interval}]),0.000001)`, 's'], ['Connection Usage 평균', `rate(hikaricp_connections_usage_seconds_sum{${host}}[${interval}]) / clamp_min(rate(hikaricp_connections_usage_seconds_count{${host}}[${interval}]),0.000001)`, 's']]);
 
 b = builder(boards[2]);
-b.note('로그 보존 · 확인', 'PROD 애플리케이션 로그는 파일에 보존합니다. 이 화면은 **로그 레벨별 발생량과 보존 상태**를 보여줍니다. 로그 본문 검색은 아래 SSH 명령으로 확인합니다.');
+b.note('로그 보존 · 확인', 'PROD 요청·예외 로그를 Loki에서 조회합니다. **요청 ID**에 응답의 X-Request-ID를 넣어 요청 완료·업무 오류·외부 서비스 이벤트를 연결하세요. 본문은 7일, 원본 파일은 14일·300MB 상한으로 보존합니다.');
+boards[2].templating.list.push({ name: 'requestId', label: '요청 ID', type: 'textbox', query: '', current: { text: '', value: '' }, options: [], hide: 0 });
 const logs = `${environment},instance="app-server"`;
 b.stats([['파일 존재', `yanus_log_file_exists{${logs}}`, 'short', 'up'], ['현재 파일 크기', `yanus_log_file_size_bytes{${logs}}`, 'bytes'], ['보존 일수', `yanus_log_retention_days{${logs}}`, 'd'], ['압축 파일', `yanus_log_archives{${logs}}`]]);
 b.graphs([['레벨별 로그 / 초', [{ expr: `sum by(level)(rate(logback_events_total{${environment}}[${interval}]))`, legend: '{{level}}' }], 'ops'], ['WARN · ERROR 발생량', [{ expr: `sum by(level)(increase(logback_events_total{${environment},level=~"warn|error"}[$__range]))`, legend: '{{level}}' }]]]);
 b.graphs([['로그 파일 크기', `yanus_log_file_size_bytes{${logs}}`, 'bytes'], ['보존 상태 수집 경과', `time() - yanus_log_collection_timestamp_seconds{${logs}}`, 's']]);
+b.row('요청 · 예외 본문');
+b.logs('요청 ID로 로그 추적', '{environment="$environment",service="backend",instance="app-server"} |= ${requestId:doublequote} | json');
 b.note('애플리케이션 로그 조회', '```bash\nssh app-server\nsudo tail -n 200 /var/log/yanus/prod/application.log\nsudo journalctl -u yanus --since "30 minutes ago" --no-pager\nsudo grep -E "WARN|ERROR" /var/log/yanus/prod/application.log | tail -n 100\n```\n\n파일은 날짜·20MB 단위로 gzip 회전하며 14일 / 총 300MB를 상한으로 보존합니다. Logback이 회전하므로 같은 파일에 logrotate를 중복 적용하지 않습니다.', 7);
 b.note('HTTP · Nginx 로그', '```bash\nsudo tail -n 100 /var/log/nginx/access.log\nsudo tail -n 100 /var/log/nginx/error.log\n```\n\n조회 시간은 대시보드와 맞추세요. 로그 본문과 토큰·개인정보는 이슈나 공유 캡처에 그대로 옮기지 않습니다.', 6);
 
 b = builder(boards[3]);
-b.note('운영 호스트 자원', '호스트 선택으로 앱 서버와 DB 서버를 구분합니다. CPU·메모리·디스크·네트워크의 변화와 API 지연 시간을 함께 확인하세요.');
+b.note('운영 호스트 자원', '호스트 선택으로 app-server·data-server·monitoring-server를 구분합니다. CPU·메모리·디스크·네트워크의 변화와 API 지연 시간을 함께 확인하세요.');
 b.stats([['Node 수집', `up{${host},job="yanus-node"}`, 'short', 'up'], ['CPU', cpu, 'percent'], ['메모리', memory, 'percent'], ['디스크 /', disk, 'percent']]);
 b.row('CPU · Load');
 b.graphs([['CPU 모드', [{ expr: `100 * avg by(instance,mode)(rate(node_cpu_seconds_total{${host},mode=~"user|system|iowait|idle"}[${interval}]))`, legend: '{{instance}} {{mode}}' }], 'percent'], ['Load 1m · 5m · 15m', [1, 5, 15].map(n => ({ expr: `node_load${n}{${host}}`, legend: `{{instance}} ${n}m` }))]]);

@@ -126,6 +126,18 @@
         "options": [],
         "sort": 1,
         "hide": 0
+      },
+      {
+        "name": "requestId",
+        "label": "요청 ID",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "options": [],
+        "hide": 0
       }
     ]
   },
@@ -142,7 +154,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "PROD 애플리케이션 로그는 파일에 보존합니다. 이 화면은 **로그 레벨별 발생량과 보존 상태**를 보여줍니다. 로그 본문 검색은 아래 SSH 명령으로 확인합니다."
+        "content": "PROD 요청·예외 로그를 Loki에서 조회합니다. **요청 ID**에 응답의 X-Request-ID를 넣어 요청 완료·업무 오류·외부 서비스 이벤트를 연결하세요. 본문은 7일, 원본 파일은 14일·300MB 상한으로 보존합니다."
       }
     },
     {
@@ -169,7 +181,7 @@
           },
           "options": {
             "mode": "markdown",
-            "content": "### 오류 원문과 보존 문제를 구분하세요\n| 상황 | 무엇을 볼지 | 확인 방법 |\n| --- | --- | --- |\n| 5xx·지연 원인 확인 | ERROR·WARN 발생량과 API 오류 시각 | 02에서 시간을 좁히고 아래 SSH 명령으로 같은 시각의 예외 원문을 확인합니다. |\n| WARN 증가, 서비스는 정상 | 레벨별 발생 추세 | 반복 경고의 원인을 확인합니다. WARN 수만으로 장애를 확정하지 않습니다. |\n| 파일 존재 DOWN | 파일 존재·로그 파일 경로 | yanus 서비스와 디렉터리 권한을 확인하고 journalctl에서 로그 초기화 실패를 찾습니다. |\n| 보존 상태 수집 경과가 계속 증가 | metadata 수집 경과·Node 수집 | yanus-log-metrics.timer와 service 실행 결과, textfile 수집을 확인합니다. 수집은 1분 간격입니다. |\n| 로그 크기·디스크 증가 | 현재 파일·압축 파일 수 + 04 디스크 | 회전·보존 정책과 반복 오류를 확인합니다. 원인·증거를 확보하기 전에 로그를 지우지 않습니다. |\n\n**이 화면에는 로그 본문 검색 기능이 없습니다.** 로그 발생량은 Micrometer 카운터이고 본문은 파일·journal에서 확인합니다. 화면과 로그 시각을 KST로 맞추고 공유 전 토큰·개인정보를 제거합니다."
+            "content": "### 오류 원문과 보존 문제를 구분하세요\n| 상황 | 무엇을 볼지 | 확인 방법 |\n| --- | --- | --- |\n| 5xx·지연 원인 확인 | ERROR·WARN 발생량과 API 오류 시각 | 02에서 시간을 좁히고 아래 로그 본문을 확인합니다. 응답의 X-Request-ID를 요청 ID 입력칸에 넣으면 관련 요청·예외를 모아 볼 수 있습니다. |\n| WARN 증가, 서비스는 정상 | 레벨별 발생 추세 | 반복 경고의 원인을 확인합니다. WARN 수만으로 장애를 확정하지 않습니다. |\n| 파일 존재 DOWN | 파일 존재·로그 파일 경로 | yanus 서비스와 디렉터리 권한을 확인하고 journalctl에서 로그 초기화 실패를 찾습니다. |\n| 보존 상태 수집 경과가 계속 증가 | metadata 수집 경과·Node 수집 | yanus-log-metrics.timer와 service 실행 결과, textfile 수집을 확인합니다. 수집은 1분 간격입니다. |\n| 로그 크기·디스크 증가 | 현재 파일·압축 파일 수 + 04 디스크 | 회전·보존 정책과 반복 오류를 확인합니다. 원인·증거를 확보하기 전에 로그를 지우지 않습니다. |\n\n**본문은 Loki, 발생량은 Micrometer입니다.** 요청 ID는 응답의 X-Request-ID 또는 로그 상세에서 확인합니다. 빈 요청 ID 입력칸은 전체 요청을 보여줍니다. 4xx는 인증·권한·업무 거절을 구분하고, 5xx는 exceptionType·stackTrace의 원인 유형과 발생 위치를 확인합니다. 예외 원문 메시지·body·토큰은 저장하지 않습니다. Loki 본문은 7일, 원본 파일은 14일·300MB 상한입니다."
           }
         }
       ]
@@ -780,11 +792,66 @@
     },
     {
       "id": 10,
+      "type": "row",
+      "title": "요청 · 예외 본문",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 11,
+      "title": "요청 ID로 로그 추적",
+      "description": "응답 X-Request-ID 또는 로그 상세의 requestId를 입력하세요. 빈 입력은 전체 로그입니다. 상세에서 errorCode, exceptionType, stackTrace, status, elapsedMs를 확인합니다.",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "yanus-loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "yanus-loki"
+          },
+          "expr": "{environment=\"$environment\",service=\"backend\",instance=\"app-server\"} |= ${requestId:doublequote} | json",
+          "queryType": "range",
+          "maxLines": 200
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
       "type": "text",
       "title": "애플리케이션 로그 조회",
       "gridPos": {
         "x": 0,
-        "y": 25,
+        "y": 38,
         "w": 24,
         "h": 7
       },
@@ -794,12 +861,12 @@
       }
     },
     {
-      "id": 11,
+      "id": 13,
       "type": "text",
       "title": "HTTP · Nginx 로그",
       "gridPos": {
         "x": 0,
-        "y": 32,
+        "y": 45,
         "w": 24,
         "h": 6
       },

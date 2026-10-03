@@ -26,7 +26,13 @@ for (const uid of expected) {
     throw new Error(`Missing guidance or hidden metrics: ${uid}`);
   }
   results.push({ uid, title: dashboard.title, panels: dashboard.panels.length, provisioned: meta.provisioned, help: true });
+  if (uid === 'yanus-logs' && (!dashboard.templating.list.some(variable => variable.name === 'requestId')
+      || !dashboard.panels.some(panel => panel.type === 'logs' && panel.datasource?.uid === 'yanus-loki'))) {
+    throw new Error('Missing native Loki request tracing');
+  }
 }
 const health = await get('/api/datasources/uid/yanus-prometheus/health');
 if (health.status !== 'OK') throw new Error(`Datasource: ${health.status}`);
-console.log(JSON.stringify({ dashboards: results, datasource: health.status }, null, 2));
+const lokiHealth = await get('/api/datasources/uid/yanus-loki/health');
+if (lokiHealth.status !== 'OK') throw new Error(`Loki datasource: ${lokiHealth.status}`);
+console.log(JSON.stringify({ dashboards: results, datasource: health.status, loki: lokiHealth.status }, null, 2));
