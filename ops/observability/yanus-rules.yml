@@ -1,0 +1,50 @@
+groups:
+  - name: yanus-prod
+    rules:
+      - alert: YanusTargetDown
+        expr: up{environment="prod",job=~"yanus-backend|yanus-node|yanus-postgres"} == 0
+        for: 1m
+        labels: {severity: critical, environment: prod}
+        annotations:
+          summary: 'PROD {{ $labels.instance }} {{ $labels.job }} 수집 중단'
+          description: '서비스 상태와 exporter/scrape 연결을 함께 확인하세요.'
+      - alert: YanusHigh5xxRate
+        expr: (sum(rate(http_server_requests_seconds_count{environment="prod",uri!~"/actuator.*",status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{environment="prod",uri!~"/actuator.*"}[5m])),0.001)) > 0.05 and sum(increase(http_server_requests_seconds_count{environment="prod",uri!~"/actuator.*"}[5m])) >= 20
+        for: 5m
+        labels: {severity: critical, environment: prod, service: backend, instance: app-server}
+        annotations: {summary: 'PROD API 5xx 비율 5% 초과', description: '최근 5분 요청 20건 이상일 때 평가합니다.'}
+      - alert: YanusHighLatency
+        expr: histogram_quantile(0.95,sum by(le)(rate(http_server_requests_seconds_bucket{environment="prod",uri!~"/actuator.*"}[5m]))) > 1 and sum(increase(http_server_requests_seconds_count{environment="prod",uri!~"/actuator.*"}[5m])) >= 20
+        for: 5m
+        labels: {severity: warning, environment: prod, service: backend, instance: app-server}
+        annotations: {summary: 'PROD API P95 1초 초과'}
+      - alert: YanusHighCpu
+        expr: 100 * (1 - avg by(instance)(rate(node_cpu_seconds_total{environment="prod",mode="idle"}[5m]))) > 85
+        for: 10m
+        labels: {severity: warning, environment: prod}
+        annotations: {summary: 'PROD {{ $labels.instance }} CPU 85% 초과'}
+      - alert: YanusLowMemory
+        expr: node_memory_MemAvailable_bytes{environment="prod"} / node_memory_MemTotal_bytes{environment="prod"} < 0.1
+        for: 5m
+        labels: {severity: warning, environment: prod}
+        annotations: {summary: 'PROD {{ $labels.instance }} 가용 메모리 10% 미만'}
+      - alert: YanusDiskWarning
+        expr: 100 * (1 - node_filesystem_avail_bytes{environment="prod",mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{environment="prod",mountpoint="/",fstype!~"tmpfs|overlay"}) > 85
+        for: 5m
+        labels: {severity: warning, environment: prod}
+        annotations: {summary: 'PROD {{ $labels.instance }} 디스크 85% 초과'}
+      - alert: YanusDiskCritical
+        expr: 100 * (1 - node_filesystem_avail_bytes{environment="prod",mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{environment="prod",mountpoint="/",fstype!~"tmpfs|overlay"}) > 95
+        for: 2m
+        labels: {severity: critical, environment: prod}
+        annotations: {summary: 'PROD {{ $labels.instance }} 디스크 95% 초과'}
+      - alert: YanusHikariPending
+        expr: hikaricp_connections_pending{environment="prod"} > 0
+        for: 2m
+        labels: {severity: warning, environment: prod}
+        annotations: {summary: 'PROD Hikari 연결 대기 지속'}
+      - alert: YanusPostgresDown
+        expr: pg_up{environment="prod"} == 0
+        for: 1m
+        labels: {severity: critical, environment: prod}
+        annotations: {summary: 'PROD PostgreSQL 연결 실패'}

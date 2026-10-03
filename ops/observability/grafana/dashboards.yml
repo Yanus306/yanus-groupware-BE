@@ -1,0 +1,12 @@
+apiVersion: 1
+providers:
+  - name: yanus-prod
+    orgId: 1
+    folder: Yanus · PROD
+    folderUid: yanus-prod
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/yanus-dashboards

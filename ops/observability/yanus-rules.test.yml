@@ -1,0 +1,41 @@
+rule_files:
+  - yanus-rules.yml
+evaluation_interval: 1m
+tests:
+  - name: target-down-after-one-minute
+    interval: 1m
+    input_series:
+      - series: 'up{environment="prod",job="yanus-backend",instance="app-server",service="backend"}'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: YanusTargetDown
+        exp_alerts:
+          - exp_labels: {severity: critical, environment: prod, job: yanus-backend, instance: app-server, service: backend}
+            exp_annotations:
+              summary: PROD app-server yanus-backend 수집 중단
+              description: 서비스 상태와 exporter/scrape 연결을 함께 확인하세요.
+  - name: low-traffic-does-not-page
+    interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{environment="prod",uri="/api/v1/example",status="500"}'
+        values: '0+1x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: YanusHigh5xxRate
+        exp_alerts: []
+  - name: sustained-five-percent-with-enough-traffic
+    interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{environment="prod",uri="/api/v1/example",status="500"}'
+        values: '0+60x20'
+      - series: 'http_server_requests_seconds_count{environment="prod",uri="/api/v1/example",status="200"}'
+        values: '0+240x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: YanusHigh5xxRate
+        exp_alerts:
+          - exp_labels: {severity: critical, environment: prod, service: backend, instance: app-server}
+            exp_annotations:
+              summary: PROD API 5xx 비율 5% 초과
+              description: 최근 5분 요청 20건 이상일 때 평가합니다.

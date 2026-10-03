@@ -1,0 +1,10 @@
+[Unit]
+Description=Yanus log retention metadata for Node Exporter
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/yanus-collect-log-metrics
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/prometheus/node-exporter
+ProtectHome=true
