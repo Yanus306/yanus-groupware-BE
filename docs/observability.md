@@ -1,6 +1,8 @@
 # PROD 운영 관찰
 
-운영 주소: https://grafana.yanus.bond/ · 이슈: [#201](https://github.com/Yanus306/yanus-groupware-BE/issues/201)
+운영 주소: https://grafana.yanus.bond/ · 최신 작업: [#202](https://github.com/Yanus306/yanus-groupware-BE/issues/202) · 최초 구성: [#201](https://github.com/Yanus306/yanus-groupware-BE/issues/201)
+
+2026-10-04 KST에 Grafana·Prometheus를 전용 `monitoring-server`로 이전하고 Loki 본문 검색을 추가했다. VM은 Hyper-V Generation 1, Ubuntu 24.04 LTS, 2 vCPU·고정 4GB·동적 VHDX 64GB이며 `C:\Hyper-V\monitoring-server`의 NVMe에 저장한다. 고정 MAC과 DHCP 예약으로 주소를 유지한다. 실제 주소·접속 계정은 비공개 운영 접속 문서를 사용한다.
 
 ## 대시보드
 
@@ -8,8 +10,8 @@
 | --- | --- | --- |
 | 01 전체 상태 | 장애 진입점 | 수집 UP, RPS, 4xx·5xx, P95, JVM, Hikari, 서버 자원, 현재 알림 조건 |
 | 02 API 요청·오류 | 애플리케이션 병목 분석 | API별 요청·지연, JVM Heap·GC·Thread, Tomcat, Hikari |
-| 03 로그 | 발생량·파일 보존 확인 | Logback 레벨별 발생량, 파일 존재·크기·보존 메타데이터, SSH 조회 절차 |
-| 04 서버 자원 | app-server와 data-server 구분 | CPU·Load, 메모리·Swap, 디스크·I/O, 네트워크 |
+| 03 로그 | 요청·예외 추적 | Loki 본문·요청 ID 검색, 예외 유형·스택, Logback 발생량, 파일 보존 상태 |
+| 04 서버 자원 | 앱·DB·모니터링 서버 구분 | CPU·Load, 메모리·Swap, 디스크·I/O, 네트워크 |
 | 05 PostgreSQL | 자체 운영 DB 분석 | 연결, 크기, 트랜잭션, 캐시, Deadlock, Tuple, Temp, DB 호스트 자원 |
 
 PROD만 제공한다. 실제 운영 DB는 PostgreSQL이며 RDS·DEV 메뉴는 생성하지 않는다. 메뉴 이동 시 시간 범위와 호스트 선택을 유지한다. PostgreSQL 화면은 고정된 운영 DB를 조회한다.
@@ -27,7 +29,7 @@ PROD만 제공한다. 실제 운영 DB는 PostgreSQL이며 RDS·DEV 메뉴는 �
 | 4xx 증가 | 02 API 요청·오류 | 400·401·403·404 구분 → 요청 값·인증·권한·경로. 서버 재시작부터 하지 않는다. |
 | P95·P99 증가 | 02 API 요청·오류 | 요청량 → GC Pause → Tomcat Busy/Max → Hikari Pending → DB·서버 I/O |
 | Hikari Pending·Timeout | 02 및 05 | Active/Max·Acquire → DB 연결·긴 트랜잭션·느린 처리. 풀 크기부터 늘리지 않는다. |
-| WARN·ERROR 원인 확인 | 03 로그 | 오류 시각을 KST로 맞춰 파일·journal을 조회하고 토큰·개인정보를 제거한다. |
+| WARN·ERROR 원인 확인 | 03 로그 | 오류 시각을 KST로 맞추고 응답 X-Request-ID를 요청 ID에 입력한다. exceptionType·stackTrace의 원인 유형·위치를 확인한다. |
 | 로그가 없거나 metadata가 오래됨 | 03 로그 | 파일 권한·yanus 서비스·metadata timer/textfile 수집. 무요청과 수집 실패를 구분한다. |
 | CPU·메모리·Swap 상승 | 04 서버 자원 | 해당 호스트 선택 → user/system/iowait·Available·Swap → API·JVM/DB 지연과 시각 비교 |
 | 디스크 사용·I/O 지연 증가 | 04 및 05 | 여유 용량·read/write 지연 → 증가한 파일·작업 조사. DB·TSDB·로그를 임의 삭제하지 않는다. |
@@ -41,42 +43,70 @@ P95는 요청의 약 95%가 완료되는 시간이다. 적은 요청량으로 �
 flowchart LR
     Browser -->|HTTPS 443| Cloudflare
     Cloudflare -->|HTTPS 443| Nginx
-    Nginx -->|loopback 3000| Grafana
+    Nginx -->|private 3000| Grafana
     Grafana -->|loopback 9090| Prometheus
-    Prometheus -->|loopback 9091| SpringActuator
-    Prometheus -->|loopback 9100| AppNodeExporter
+    Prometheus -->|private 9092| MetricsProxy
+    MetricsProxy -->|loopback 9091| SpringActuator
+    Prometheus -->|private 9100| AppNodeExporter
     Prometheus -->|private 9100| DataNodeExporter
     Prometheus -->|private 9187| PostgresExporter
+    Prometheus -->|loopback 9100| MonitoringNodeExporter
     PostgresExporter -->|Unix socket peer| PostgreSQL
+    AppJSON --> Alloy
+    Alloy -->|private 3101 + basic auth| IngestProxy
+    IngestProxy -->|loopback 3100| Loki
+    Grafana -->|loopback 3100| Loki
 ```
 
-Cloudflare는 프록시 CNAME `grafana → api.yanus.bond`를 사용한다. 기존 외부 443 → app-server Nginx 443 경로를 재사용하므로 Grafana 3000의 추가 포트포워딩은 필요 없다. 80은 HTTPS 리다이렉트용이다. Grafana·Prometheus·Spring 관리 포트는 loopback에만 바인딩하고 DB 호스트 exporter 두 개는 private 주소에 바인딩하여 app-server 출발지만 UFW로 허용한다.
+Cloudflare는 프록시 CNAME `grafana → api.yanus.bond`를 사용한다. 기존 외부 443 → app-server Nginx 443 → monitoring-server의 private Grafana 3000 경로를 재사용한다. 추가 포트포워딩은 필요 없다. 80은 HTTPS 리다이렉트용이다.
 
-수집 간격과 규칙 평가 간격은 15초, 대시보드 갱신은 30초다. 모든 대상은 `environment=prod`, 역할별 `service`, `instance=app-server|data-server`를 갖는다. Prometheus 자체 상태까지 총 5개 대상을 수집한다. TSDB는 `/var/lib/prometheus/metrics2`에 최대 14일·2GB로 보존한다. Grafana와 Prometheus의 systemd 메모리 상한은 각각 512MB다.
+| 서버 | 포트·바인딩 | 허용 범위 |
+| --- | --- | --- |
+| app-server | 관리 9091 loopback | 로컬 관리 및 scrape proxy |
+| app-server | Nginx private 9092 | monitoring-server만 GET /actuator/prometheus |
+| app-server | Node 9100 모든 IPv4 인터페이스 | UFW로 monitoring-server만 허용, 기존 loopback도 가능 |
+| data-server | private 9100·9187 | monitoring-server 및 기존 app-server UFW 규칙 |
+| monitoring-server | private 3000·3101 | app-server만; 3101은 basic auth 및 push 경로만 |
+| monitoring-server | loopback 9090·3100·9100 | Prometheus·Loki·자체 Node 내부용 |
+
+Loki 자체 인증은 끄고 loopback에 제한했다. 수집 게이트웨이가 source ACL·UFW·basic auth를 적용한다. Grafana 익명 접속과 회원가입은 비활성이다.
+
+수집·규칙 평가 간격은 15초, 화면 갱신은 30초다. 모든 대상은 `environment=prod`, 역할별 `service`, `instance=app-server|data-server|monitoring-server`를 갖는다. backend 1·Node 3·Postgres 1·Prometheus 1로 총 6개를 수집한다. TSDB는 `/var/lib/prometheus/metrics2`에 최대 14일·2GB로 보존한다. Grafana 최대 1536MiB, Prometheus·Loki 각각 최대 1GiB, 앱 Alloy 최대 256MiB다. 이전 Grafana의 384MiB MemoryHigh는 새 서버에 적용하지 않았다.
 
 Postgres Exporter는 OS `prometheus` 계정과 동일한 DB 역할로 Unix socket peer 인증을 사용한다. `pg_monitor` 및 `yanus` DB CONNECT 권한만 부여하며 업무 DB 비밀번호를 복사하지 않는다.
 
 ## 설치와 배포
 
-현재 서버는 Ubuntu native systemd 구성이다. 사전 설치 패키지는 app-server의 `grafana`, `prometheus`, `prometheus-node-exporter`, data-server의 `prometheus-node-exporter`, `prometheus-postgres-exporter`다. Grafana는 공식 `apt.grafana.com` 서명 저장소를 사용한다. 최초 관찰 버전은 Grafana 13.2.3, Prometheus 2.45.3, Node Exporter 1.7.0, Postgres Exporter 0.15.0이다.
+현재 서버는 Ubuntu native systemd 구성이다. Grafana·Prometheus·Loki는 monitoring-server, Alloy·backend·Nginx·Node는 app-server, PostgreSQL·exporter는 data-server에서 실행한다. 실제 설치 버전은 Grafana 13.2.3, Prometheus 2.45.3, Node Exporter 1.7.0, Postgres Exporter 0.15.0, Loki 3.7.8, Alloy 1.20.1이다. Grafana·Alloy는 공식 서명 APT 저장소, Loki는 공식 release의 고정 SHA256을 확인한다.
 
-운영 중인 애플리케이션 JAR와 dev 브랜치의 업무 코드가 다르므로 이번 배포는 `observabilityBundle`로 관리 보안 구성과 Prometheus 의존성만 추가한다. Spring Boot PropertiesLauncher의 `loader.path`로 외부 JAR를 로딩하며 기존 `/home/yanus/app/app.jar`는 교체하지 않는다. DB 스키마를 변경하지 않는다.
+운영 JAR와 dev의 DTO·업무 코드가 달라 `observabilityBundle`에 관리/감사 조회 보안, 공통 로깅, 호환 가능한 Email·MinIO·JWT 클래스 및 Prometheus 의존성만 포함한다. AuthService·컨트롤러 DTO·기존 업무 스케줄러는 포함하지 않는다. PropertiesLauncher의 `loader.path`를 사용하며 기존 `/home/yanus/app/app.jar`와 DB 스키마는 보존한다.
 
 ```bash
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test build observabilityBundle
 node ops/observability/generate-dashboards.mjs
-scp -r ops/observability app-server:/tmp/yanus-observability
-scp -r build/observability app-server:/tmp/yanus-observability-bundle
-scp ops/observability/install-data.sh data-server:/tmp/yanus-install-data.sh
-ssh data-server 'bash /tmp/yanus-install-data.sh DATA_PRIVATE_IP APP_PRIVATE_IP'
-ssh app-server 'bash /tmp/yanus-observability/install-app.sh DATA_PRIVATE_IP /tmp/yanus-observability-bundle'
+scp -r ops/observability monitoring-server:/tmp/yanus-observability
+ssh monitoring-server 'bash /tmp/yanus-observability/monitoring/install-monitoring.sh APP_PRIVATE_IP DATA_PRIVATE_IP MONITORING_PRIVATE_IP'
+scp -r ops/observability app-server:/tmp/yanus-logging-ops
+scp -r build/observability app-server:/tmp/yanus-logging-bundle
+ssh app-server 'bash /tmp/yanus-logging-ops/monitoring/prepare-app-scrape.sh APP_PRIVATE_IP MONITORING_PRIVATE_IP'
+# Loki 수집 비밀번호를 보호된 경로로 전달한 뒤 실행한다.
+ssh app-server 'bash /tmp/yanus-logging-ops/monitoring/install-logging.sh MONITORING_PRIVATE_IP /tmp/yanus-logging-bundle /protected/path/loki-password'
 ```
 
-`DATA_PRIVATE_IP`와 `APP_PRIVATE_IP`는 운영 접속 문서의 실제 주소로 바꾼다. 스크립트는 root로 실행하며 기존 service 사용자·Cloudflare origin 인증서·Nginx가 존재해야 한다. 설치 시각별 설정 백업과 원본 JAR SHA256을 `/var/backups/yanus-observability/<UTC timestamp>`에 저장한다. 애플리케이션과 관찰 서비스를 재시작하므로 배포 시간에 실행한다.
+IP 자리표시자는 비공개 운영 접속 문서의 주소로 바꾼다. root로 실행하며 기존 service 사용자·origin 인증서·Nginx가 필요하다. 새 모니터링 설치 스크립트는 Grafana·Prometheus를 중지한 상태로 끝낸다. data-server의 9100·9187에 monitoring-server 출발지 UFW 규칙도 먼저 추가한다. 최초 설치 전용인 `install-app.sh`는 구 app-server 모니터링 구성을 다시 만들므로 이전 후에는 사용하지 않는다.
+
+이전 순서는 다음과 같다.
+
+1. 기존 Grafana·Prometheus를 중지하고 일관된 Grafana DB·plugins·암호화 키·관리 계정 파일 및 TSDB를 백업한다. app-server의 `monitoring-migration/state.tar.gz`에 보관한 뒤 기존 서비스는 검증 중 복구 경로로 재시작한다.
+2. 새 서버의 중지된 서비스에 데이터를 복원하고 새 OS의 grafana/prometheus 소유자로 변경한다. 기존 DB 암호화 키를 반드시 함께 복원한다.
+3. 새 서비스 시작 → 계정 인증·5개 provisioning·6개 UP·과거 TSDB 확인 → app Nginx Grafana upstream을 새 private 3000으로 바꾼다.
+4. 공개 HTTPS 로그인·조회 확인 후 app의 이전 grafana-server/prometheus만 stop/disable한다. 파일·DB·TSDB는 삭제하지 않는다.
+
+로깅 배포는 설정·bundle·OpenAPI·원본 JAR 해시를 `/var/backups/yanus-observability/logging-<UTC>`에 백업한다. 건강 상태는 최대 120회 확인하며 실패하면 이전 bundle/설정/Nginx를 복원한다. 재시작과 데이터 복사는 배포 시간에 실행한다.
 
 파일 provisioning이 대시보드의 기준이다. UI 수정은 저장하지 않는다. JSON은 `generate-dashboards.mjs`에서 재생성하여 배포한다. Grafana 비밀번호와 secret key는 서버의 `/etc/grafana/yanus-admin-password`, `/etc/grafana/yanus-secret-key`에 `root:grafana 0640`으로 보관한다. 값은 Git·이슈·공유 캡처에 넣지 않는다. `grafana.ini`의 초기 admin 설정은 기존 DB 계정의 비밀번호를 자동 변경하지 않는다.
 
-차후 승인된 전체 애플리케이션 배포가 Prometheus 의존성과 MonitoringSecurityConfig를 포함하면 외부 bundle 로딩을 제거하고 native ExecStart로 복구한다. loopback 관리 포트와 추가 설정 파일은 계속 사용한다.
+차후 전체 애플리케이션 배포가 이번 모든 관찰·보안·로그 클래스를 포함하면 외부 bundle 로딩을 제거하고 native ExecStart로 복구한다. loopback 관리 포트와 추가 설정 파일은 계속 사용한다.
 
 ## 로그
 
@@ -90,7 +120,13 @@ sudo grep -E 'WARN|ERROR' /var/log/yanus/prod/application.log | tail -n 100
 sudo tail -n 100 /var/log/nginx/grafana-error.log
 ```
 
-Loki·Tempo는 설치하지 않았다. 따라서 03 로그는 로그 본문 검색 화면이 아니다. 운영 장애 기록에는 발생 시각, URI, 상태 코드, request/trace 식별자 등 필요한 정보만 남기고 토큰과 개인정보를 제거한다.
+파일과 console에 한 줄 JSON을 기록한다. 요청 ID는 Nginx 생성 ID를 backend MDC·응답 헤더까지 공유한다. 직접 요청은 유효한 32자리 hex/UUID만 받아들이고 나머지는 새 UUID로 바꾼다. method·MVC 경로 템플릿·상태·elapsedMs를 남기며 인증/권한 단계에서 매핑 전 거부되면 `/unmatched`다. body·querystring·헤더·이메일·파일명·토큰은 추가 이벤트에 기록하지 않는다. 예외 메시지는 보관하지 않고 원인 클래스·스택 프레임만 기록한다. 로그 메시지의 credential/Bearer/JWT/email 패턴도 마스킹한다.
+
+예상 업무 거절은 INFO, 원인 있는 4xx는 WARN, 5xx/예상하지 못한 예외는 ERROR다. 처리된 500은 handler ERROR 한 건과 완료 INFO 한 건을 공유 ID로 남긴다. SMTP/MinIO는 결과·시간만 기록하고 기존 예외 원인을 보존한다. 공통 스케줄러는 실행별 ID·시작·종료·안전한 실패 원인을 기록하며 다음 실행과 MDC가 섞이지 않는다. 스케줄러 실제 실행 경계는 로컬 native scheduler 테스트로 확인했으며 업무 cron을 강제로 실행하지 않았다.
+
+Alloy는 파일을 읽어 JSON만 Loki에 전송한다. `alloy` 사용자에 디렉터리 탐색·현재/새 파일 읽기 ACL을 부여하며 쓰기 권한은 주지 않는다. requestId를 Loki label로 만들지 않고 JSON 필드로 검색한다. Loki 본문은 7일, batch_wait는 1초, 화면 최대 200줄이다. 빈 요청 ID는 전체 로그, 응답의 X-Request-ID 입력은 해당 요청이다. 이는 분산 tracing/Tempo 구현이 아니다. `/api/v1/audit-logs` GET은 ADMIN만 허용한다.
+
+API Nginx access log는 requestId·method·status·elapsedSeconds·upstreamSeconds만 JSON으로 남긴다. IP·URL·query/body는 제외한다. 기존 과거 plain 로그는 백업/파일에 남아 있지만 Alloy JSON 수집에서 제외된다.
 
 ## 알림 조건
 
@@ -110,26 +146,33 @@ Loki·Tempo는 설치하지 않았다. 따라서 03 로그는 로그 본문 검�
 ## 검증
 
 ```bash
-ssh -N -L 127.0.0.1:3300:127.0.0.1:3000 -L 127.0.0.1:39090:127.0.0.1:9090 app-server
+ssh -N -L 127.0.0.1:39090:127.0.0.1:9090 monitoring-server
 # 다른 터미널
 node ops/observability/verify-dashboards.mjs
-GRAFANA_PASSWORD_FILE=/protected/path/grafana-password node ops/observability/verify-grafana.mjs
-ssh app-server 'promtool check config /etc/prometheus/prometheus.yml'
-scp ops/observability/yanus-rules*.yml app-server:/tmp/
-ssh app-server 'cd /tmp && promtool test rules yanus-rules.test.yml'
+GRAFANA_URL=https://grafana.yanus.bond GRAFANA_PASSWORD_FILE=/protected/path/grafana-password node ops/observability/verify-grafana.mjs
+GRAFANA_URL=https://grafana.yanus.bond GRAFANA_PASSWORD_FILE=/protected/path/grafana-password REQUEST_ID=KNOWN_REQUEST_ID node ops/observability/verify-loki.mjs
+ssh monitoring-server 'promtool check config /etc/prometheus/prometheus.yml'
+scp ops/observability/yanus-rules*.yml monitoring-server:/tmp/
+ssh monitoring-server 'cd /tmp && promtool test rules yanus-rules.test.yml'
 ```
 
 verifier는 실제 Prometheus 쿼리 오류를 실패로 처리하고 빈 결과·NaN을 따로 보고한다. 정상 시 ALERTS는 비어 있고 무요청 구간의 histogram은 NaN일 수 있다. 이 값을 가짜 트래픽으로 채우지 않는다. 규칙 fixture는 운영 데이터와 분리된 promtool 테스트다.
 
-배포 확인: 외부 HTTPS 로그인 리다이렉트, 미인증 API 차단, 5개 scrape UP, Grafana 5개 provisioning과 datasource health, 로그 권한·수집 timer, 기존 JAR checksum. Spring 보안 테스트는 실제 public/management 포트를 각각 호출하여 접근 경계를 검증한다.
+2026-10-04 확인: Gradle test/build/observabilityBundle 274개 실패 0, 100 PromQL 오류 0, 6개 UP, Grafana·Loki health OK, 공개 계정 로그인, 실제 03 요청 ID 검색·04 모니터링 호스트, 로그 640·Alloy 읽기 ACL·수집 timer, 원본 JAR checksum·OpenAPI 일치. 실제 감사 조회 익명/MEMBER 403·ADMIN 200을 확인했다. 업무 변경 없는 origin Nginx의 invalid login body 한 건으로 안전한 INTERNAL_ERROR 응답·동일 ID의 ERROR 1/완료 1·스택·query canary 누락을 확인했고 Loki와 공개 UI에서 같은 두 건을 조회했다. Cloudflare를 경유한 해당 canary 요청은 403으로 차단되어 오류 검증은 origin 경로에서 수행했다.
+
+이전에는 app Grafana의 MemoryHigh=384MiB 제한에 의한 high event 12,483회 및 메모리 PSI가 관찰됐다. 새 VM의 Grafana high/max/oom 및 메모리 PSI는 측정 시 0이었다. 짧은 사후 표본에서 서버 내부 30분 UP/CPU 조회는 Prometheus 0.9–2.0ms, Grafana proxy 7.8–10.2ms였다. Mac SSH 경유 3종 조회는 Grafana 26–108ms, 공개 HTTPS는 301–476ms였다. 공개 health 단일 요청은 이전 2.035초·이후 1.023초였으나 서로 다른 시각의 소표본이므로 개선율/SLO를 단정하지 않는다. 수집 15초·화면 30초의 갱신 대기는 처리 지연과 구분한다.
+
+새 VM을 종료 후 고정 MAC으로 재시작하고 동일 IP·서비스 자동 시작·DB health를 확인했다. Persona의 read/receipt authority가 없어 필수 finish 게이트는 실제 테스트와 별도로 미통과 상태다.
 
 ## 장애 대응과 롤백
 
-- Grafana 접속 실패: 공개 DNS → Cloudflare 프록시 → 기존 443 포워딩 → `nginx -t` → `systemctl status grafana-server` 순서로 확인한다. 새 DNS가 공용 resolver에서 정상인데 로컬만 NXDOMAIN이면 resolver의 음성 캐시 만료를 확인한다.
+- Grafana 접속 실패: 공개 DNS → Cloudflare → 기존 app 443 → `nginx -t` → 새 VM private 3000 연결 → monitoring-server의 grafana-server 순서로 확인한다.
 - API P95 증가: 02의 오류·URI → JVM GC·Tomcat Busy → Hikari Pending → 05의 DB 연결·트랜잭션 → 04의 디스크 I/O를 확인한다.
-- 수집 DOWN: `systemctl status`, loopback/private 바인딩, data-server의 app-server 출발지 UFW 규칙, exporter의 실제 `/metrics` 응답을 확인한다.
-- 로그 누락: 파일 소유권·UMask, `systemctl status yanus-log-metrics.timer`, textfile 수집 시각과 디스크 여유를 확인한다.
+- 수집 DOWN: monitoring-server의 Prometheus targets → 해당 exporter/서비스 → 9092 Nginx 경로·loopback 9091 → monitoring-server 출발지 UFW 규칙을 확인한다.
+- 로그 누락: Grafana Loki health → Loki·Alloy service/journal → push 인증 → 파일 읽기 ACL·JSON → timer/textfile 상태 순서로 확인한다.
 
-애플리케이션만 복구하려면 이번에 추가한 `/etc/systemd/system/yanus.service.d/observability.conf`를 백업 디렉터리로 이동하고 `systemctl daemon-reload && systemctl restart yanus`를 실행한다. 기존 ExecStart와 원본 JAR가 다시 사용된다. 기존의 다른 drop-in은 삭제하지 않는다. 이후 `/var/backups/yanus-observability/<배포시각>/application.sha256`을 검증한다.
+이번 로그 배포만 복구하려면 Alloy를 중지하고 `logging-<UTC>`의 `lib`·application-observability.properties·Nginx yanus 설정을 원래 위치에 복원한다. 새 nginx-api-log.conf는 이전 백업 유무에 따라 복원/제거하고 nginx -t 후 reload, yanus restart 및 health·checksum을 확인한다. 기존 관리 구성을 유지한다. 이전 전부를 해제하려는 경우에만 observability.conf를 백업 위치로 옮겨 원래 ExecStart를 복구한다. 다른 drop-in을 삭제하지 않는다.
+
+모니터링 이전 롤백은 app의 이전 Prometheus·Grafana를 enable/start하고 백업 `monitoring-migration/yanus-grafana`를 복원한 뒤 nginx -t/reload한다. 기존 state는 보존돼 있다. 새 VM 서비스는 원인 조사 후 중지하며 새 TSDB/Loki를 임의 삭제하지 않는다. 기존 백엔드·DB·443 설정은 유지한다.
 
 관찰 서비스 전체를 중지할 때는 이번 서비스·timer만 중지하고 이번 Nginx symlink·Cloudflare grafana CNAME만 제거한다. 로그·TSDB·Grafana DB는 보존하고 기존 API/DB 포트와 DNS 레코드를 건드리지 않는다. exporter peer 역할은 사용 여부를 확인한 뒤 별도 정리한다.
