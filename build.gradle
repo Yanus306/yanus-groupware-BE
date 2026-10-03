@@ -68,6 +68,13 @@ tasks.register('observabilityJar', Jar) {
 	archiveFileName = 'yanus-observability.jar'
 	from(sourceSets.main.output) {
 		include 'com/yanus/attendance/global/config/MonitoringSecurityConfig.class'
+		include 'com/yanus/attendance/global/config/SecurityConfig.class'
+		include 'com/yanus/attendance/global/logging/**'
+		include 'com/yanus/attendance/global/exception/GlobalExceptionHandler.class'
+		include 'com/yanus/attendance/global/exception/BusinessException.class'
+		include 'com/yanus/attendance/drive/infrastructure/MinioStorageService.class'
+		include 'com/yanus/attendance/auth/application/EmailService.class'
+		include 'com/yanus/attendance/auth/infrastructure/JwtTokenProvider.class'
 	}
 }
 

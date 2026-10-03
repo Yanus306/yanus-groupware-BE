@@ -9,11 +9,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 import javax.crypto.SecretKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JwtTokenProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     private final SecretKey secretKey;
     private final long accessExpiration;
@@ -44,6 +47,8 @@ public class JwtTokenProvider {
             getClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            LOG.atInfo().addKeyValue("event", "auth.token.rejected")
+                    .addKeyValue("errorCode", e.getClass().getSimpleName()).log("Token rejected");
             return false;
         }
     }
