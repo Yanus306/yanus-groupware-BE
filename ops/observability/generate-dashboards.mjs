@@ -141,7 +141,8 @@ function builder(board) {
         const p = panel(s[0], s[1], s[2] || 'short', i * w, w, 4, 'stat');
         p.targets.forEach(t => { t.instant = true; t.range = false; });
         p.options.graphMode = 'none';
-        p.options.textMode = 'value';
+        p.options.textMode = ['Node 수집', 'CPU', '메모리', '디스크 /'].includes(s[0])
+          ? 'value_and_name' : 'value';
         p.fieldConfig.defaults.thresholds.steps = [{ color: 'green', value: null }];
         if (s[2] === 'percent') {
           p.fieldConfig.defaults.thresholds.steps = s[0].includes('비율')
