@@ -23,6 +23,83 @@ const memory = `100 * (1 - node_memory_MemAvailable_bytes{${host}} / node_memory
 const disk = `100 * (1 - node_filesystem_avail_bytes{${host},mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{${host},mountpoint="/",fstype!~"tmpfs|overlay"})`;
 const heap = `100 * sum(jvm_memory_used_bytes{${host},area="heap"}) / sum(jvm_memory_max_bytes{${host},area="heap",id=~".*Old.*|.*Tenured.*"})`;
 
+const help = {
+  'yanus-overview': `### 서비스가 안 되거나 느릴 때 여기서 시작하세요
+| 증상 | 먼저 볼 지표 | 다음 점검 |
+| --- | --- | --- |
+| 화면·API가 응답하지 않음 | 백엔드 수집, DB 연결, 수집 대상 상태 | DOWN 대상의 service/exporter 상태와 연결을 확인합니다. UP이어도 업무 오류는 02에서 확인합니다. |
+| 서버 오류가 늘어남 | 5xx 비율, 요청량·상태 코드 | 02에서 문제가 생긴 URI·시간을 좁힌 뒤 03의 ERROR 로그를 같은 시간으로 조회합니다. |
+| 로그인·권한 요청 실패 | 4xx 비율 | 401·403인지 400·404인지 02에서 구분하고 요청·인증·권한을 확인합니다. 4xx만 보고 서버를 재시작하지 않습니다. |
+| 요청이 평소보다 느림 | P95, Hikari Pending, CPU·메모리 | 02의 JVM·Tomcat·Hikari → 05 PostgreSQL → 04 서버 I/O 순서로 좁힙니다. |
+| 숫자나 그래프가 비어 있음 | 시간·호스트 선택, 수집 UP | All·최근 30분으로 되돌립니다. 요청 없음은 무요청 구간이며, DOWN이나 수집 없음과 구분합니다. |
+
+**운영 순서:** 장애 시각과 영향 범위를 기록 → 아래 화면에서 근거 확인 → 원인을 확인한 뒤 조치 → 같은 지표와 실제 API로 회복 확인. 알림 조건 목록이 비어 있으면 현재 Pending·Firing이 없는 것입니다.`,
+  'yanus-api': `### API 오류·지연을 원인별로 구분하세요
+| 상황 | 확인 순서 | 조치 판단 |
+| --- | --- | --- |
+| 5xx 증가 | 상태 코드 → API별 요청량·P95 → ERROR 로그 | 특정 URI만 영향받는지 확인하고 예외·DB·외부 서비스 오류를 구분합니다. |
+| P95·P99 증가 | 요청량 변화 → GC Pause → Tomcat Busy → Hikari Pending | 요청 수와 함께 해석합니다. 적은 요청의 백분위로 평상시 성능을 단정하지 않습니다. |
+| Heap이 계속 증가 | Heap Used·Max + GC Pause·횟수 | GC 후에도 내려오지 않는지 확인합니다. 톱니 모양의 증가·회수는 정상일 수 있습니다. |
+| Tomcat Busy가 Max에 접근 | Busy·Current·Max + API 지연 | 긴 요청·DB 대기를 먼저 확인합니다. 스레드 수부터 늘리면 DB 병목이 커질 수 있습니다. |
+| Hikari Pending 또는 Timeout 발생 | Active가 Max에 붙는지 → Acquire 지연 → 05 DB 연결·처리 | 느린 SQL·트랜잭션·DB 연결 문제를 확인한 뒤 풀 크기 변경을 판단합니다. |
+| 4xx만 증가 | 400·401·403·404 구분 + URI | 요청 값, 인증 만료, 권한, 경로를 확인합니다. UNKNOWN은 Spring 경로 매핑 전 거부일 수 있습니다. |
+
+**P95:** 요청 100개 중 대략 95개가 이 시간 이내에 완료됐다는 뜻입니다. 상단 값은 현재 계산 구간, 하단 그래프는 선택 기간의 추세입니다. 무요청 구간은 지연을 계산하지 않습니다.`,
+  'yanus-logs': `### 오류 원문과 보존 문제를 구분하세요
+| 상황 | 무엇을 볼지 | 확인 방법 |
+| --- | --- | --- |
+| 5xx·지연 원인 확인 | ERROR·WARN 발생량과 API 오류 시각 | 02에서 시간을 좁히고 아래 SSH 명령으로 같은 시각의 예외 원문을 확인합니다. |
+| WARN 증가, 서비스는 정상 | 레벨별 발생 추세 | 반복 경고의 원인을 확인합니다. WARN 수만으로 장애를 확정하지 않습니다. |
+| 파일 존재 DOWN | 파일 존재·로그 파일 경로 | yanus 서비스와 디렉터리 권한을 확인하고 journalctl에서 로그 초기화 실패를 찾습니다. |
+| 보존 상태 수집 경과가 계속 증가 | metadata 수집 경과·Node 수집 | yanus-log-metrics.timer와 service 실행 결과, textfile 수집을 확인합니다. 수집은 1분 간격입니다. |
+| 로그 크기·디스크 증가 | 현재 파일·압축 파일 수 + 04 디스크 | 회전·보존 정책과 반복 오류를 확인합니다. 원인·증거를 확보하기 전에 로그를 지우지 않습니다. |
+
+**이 화면에는 로그 본문 검색 기능이 없습니다.** 로그 발생량은 Micrometer 카운터이고 본문은 파일·journal에서 확인합니다. 화면과 로그 시각을 KST로 맞추고 공유 전 토큰·개인정보를 제거합니다.`,
+  'yanus-hosts': `### 앱 서버와 DB 서버를 먼저 선택하세요
+| 상황 | 함께 볼 지표 | 다음 점검 |
+| --- | --- | --- |
+| CPU가 높고 API도 느림 | CPU user·system·iowait, Load, 02 GC | CPU 계산 작업인지 디스크 대기인지 구분합니다. Load는 CPU 수와 함께 판단합니다. |
+| 메모리가 부족함 | Available, Cache, Swap, 02 JVM Heap | 가용 메모리 감소와 Swap 증가가 지속되는지 확인합니다. Linux Cache 사용 자체는 장애가 아닙니다. |
+| 저장·DB 요청이 느림 | Read·Write 지연·처리량, iowait | data-server라면 05의 DB 처리와 함께 확인합니다. 처리량 증가만으로 느린 디스크를 단정하지 않습니다. |
+| 디스크가 가득 참 | 루트 사용률·가용 용량 + 03 파일 보존 | 85% 경고·95% 긴급 기준을 확인하고 증가한 파일을 조사합니다. DB·TSDB·로그를 임의 삭제하지 않습니다. |
+| 외부 연결 실패·지연 | RX·TX, Errors, Dropped | 실제 인터페이스의 오류가 지속되는지 확인하고 방화벽·링크·목적지 연결을 점검합니다. |
+
+**호스트 비교:** All로 동시에 확인한 뒤 문제가 있는 서버 하나를 선택합니다. 자원 상승 시각을 API P95·DB 처리와 맞춰 원인인지 결과인지 확인합니다.`,
+  'yanus-postgres': `### DB 문제인지 연결 풀 문제인지 구분하세요
+| 상황 | 확인 순서 | 다음 점검 |
+| --- | --- | --- |
+| DB 연결 DOWN | pg_up → postgres/exporter 상태 | DB 자체 중단과 exporter 인증·socket 문제를 구분합니다. 지표만 보고 DB를 재시작하지 않습니다. |
+| Hikari Pending·Timeout 증가 | 02 Active·Max → DB별 연결 → DB CPU·I/O | 긴 트랜잭션·DB 연결 한도·느린 처리를 확인합니다. 풀만 늘리지 않습니다. |
+| API가 느리고 DB 처리량 변화 | Commit·Rollback, Cache Hit, Tuple·Temp Bytes | 작업량 증가, 롤백 반복, 디스크 읽기·임시 파일 증가를 함께 확인합니다. |
+| Deadlock 증가 | Deadlocks 추세 + 같은 시각의 예외 | 충돌한 트랜잭션과 잠금 순서를 조사합니다. PostgreSQL 로그와 요청 정보를 연결합니다. |
+| DB 크기·디스크 증가 | DB 크기, Temp Bytes, data-server 디스크 | 데이터 증가와 일시적 작업을 구분하고 보존·용량 계획을 확인합니다. |
+
+**해석 범위:** 자체 운영 PostgreSQL의 기본 통계입니다. Cache Hit는 DB 활동이 있는 구간에서 해석하며, 이 화면만으로 SQL별 지연이나 잠금 원인을 확정할 수 없습니다. 쿼리별 분석은 별도 DB 조사로 진행합니다.`,
+};
+
+function description(title) {
+  const guidance = [
+    [/UP|백엔드 수집|DB 연결|Node 수집|수집 대상 상태|파일 존재/, '연결·수집 성공 여부입니다. DOWN이면 서비스 상태, exporter와 네트워크를 구분해 확인하세요. UP은 업무 기능 전체의 정상 보장이 아닙니다.'],
+    [/4xx/, '인증·권한·요청 값·경로 문제를 구분하세요. 상태 코드별 요청량과 URI를 확인하고 같은 시각의 로그를 조회합니다.'],
+    [/5xx|상태 코드/, '서버 오류가 늘면 영향 URI와 요청량을 함께 보고 ERROR 로그·DB·외부 서비스 연결을 확인하세요.'],
+    [/P50|P95|P99|응답 지연/, 'P95는 요청의 약 95%가 완료되는 시간입니다. 요청량·GC·Tomcat·Hikari와 함께 보고 무요청 구간은 계산하지 않습니다.'],
+    [/RPS|요청량/, '초당 요청 수입니다. 평소 트래픽 및 오류·지연과 비교하세요. 0은 무요청일 수 있으며 수집 UP을 따로 확인합니다.'],
+    [/Hikari|Active|Idle|Pending|Acquire|Connection Usage/, '연결 대기·Timeout이 생기면 Active가 Max에 도달하는지 확인하고 PostgreSQL 처리·긴 트랜잭션을 조사하세요. 풀 크기부터 늘리지 않습니다.'],
+    [/Tomcat|Busy|KeepAlive/, '요청 처리 스레드·연결입니다. Busy가 Max에 접근하면서 지연이 늘면 긴 요청·DB 대기를 먼저 확인하세요.'],
+    [/Heap|GC|Thread|Classes/, 'Heap은 GC 후 회수되는지, Pause는 지연 시각과 겹치는지 확인하세요. 톱니 모양의 Heap 추세는 정상일 수 있습니다.'],
+    [/CPU|Load/, '지속 상승과 API·DB 지연을 함께 보세요. user/system과 iowait를 구분하고 Load는 CPU 개수와 비교합니다.'],
+    [/메모리|Available|Swap/, '가용 메모리 감소와 Swap 증가가 지속되는지 확인하세요. Cache 사용량 자체는 메모리 장애가 아닙니다.'],
+    [/디스크|용량|Read|Write|Temp Bytes|DB 크기/, '사용률·가용 용량·I/O 지연을 함께 확인하세요. 증가한 파일과 작업을 조사하고 DB·로그·TSDB를 임의 삭제하지 않습니다.'],
+    [/로그|보존|파일 크기|압축 파일|WARN|ERROR/, 'API 오류 시각과 맞춰 파일·journal 원문을 확인하세요. 이 패널은 발생량 또는 보존 메타데이터이며 로그 본문 검색이 아닙니다.'],
+    [/Network|RX|TX|Packets/, '실제 인터페이스의 오류·드롭이 지속되는지 보고 링크·방화벽·목적지 연결을 확인하세요.'],
+    [/Cache Hit/, 'DB 활동이 있는 구간에서 해석하세요. 낮은 비율과 디스크 읽기·API 지연이 함께 증가하는지 확인합니다.'],
+    [/Deadlocks|Transaction|Tuple|DB별 연결|연결 수/, 'DB 처리·연결 추세를 Hikari 대기 및 API 지연과 비교하세요. Deadlock은 같은 시각의 DB·애플리케이션 로그로 원인을 조사합니다.'],
+    [/Firing/, '현재 Pending·Firing 조건만 표시합니다. 목록이 비어 있으면 해당 조건이 없습니다. 외부 알림 수신지는 아직 연결되지 않았습니다.'],
+  ];
+  return guidance.find(([pattern]) => pattern.test(title))?.[1]
+    || '선택한 호스트·기간의 실제 메트릭입니다. 단일 값보다 추세와 관련 API·서버·DB 지표를 함께 확인하세요.';
+}
+
 function dashboard(uid, title) {
   return {
     id: null, uid, title, schemaVersion: 39, version: 1,
@@ -44,7 +121,7 @@ function builder(board) {
   function panel(title, expressions, unit, x, w, h, type, extra = {}) {
     const specs = typeof expressions === 'string' ? [{ expr: expressions, legend: '{{instance}}' }] : expressions;
     const result = {
-      id: id++, title, type, datasource, gridPos: { x, y, w, h },
+      id: id++, title, description: description(title), type, datasource, gridPos: { x, y, w, h },
       targets: specs.map((spec, index) => ({ refId: String.fromCharCode(65 + index), expr: spec.expr, legendFormat: spec.legend, range: true, editorMode: 'code' })),
       fieldConfig: { defaults: { unit, min: 0, decimals: 2, color: { mode: type === 'stat' ? 'thresholds' : 'palette-classic' }, noValue: '수집 없음', thresholds: { mode: 'absolute', steps: [{ color: 'green', value: null }, { color: 'orange', value: 85 }, { color: 'red', value: 95 }] }, custom: { drawStyle: 'line', lineWidth: 2, fillOpacity: 10, spanNulls: false, axisPlacement: 'auto' } }, overrides: [] },
       options: type === 'stat'
@@ -165,6 +242,18 @@ b.note('DB 지연 해석', '기본 PostgreSQL 통계만으로 SQL별 지연이�
 
 fs.mkdirSync(directory, { recursive: true });
 for (const [index, board] of boards.entries()) {
+  const y = board.panels[0].gridPos.h;
+  const needsSeparator = board.panels[1].type !== 'row';
+  for (const panel of board.panels.slice(1)) panel.gridPos.y += needsSeparator ? 2 : 1;
+  const helpRow = {
+    id: 10000, type: 'row', title: '도움말 · 어떤 상황에서 보고 어떻게 점검하나요?', collapsed: true,
+    gridPos: { x: 0, y, w: 24, h: 1 },
+    panels: [{ id: 10001, type: 'text', title: '증상 → 지표 → 다음 점검',
+      gridPos: { x: 0, y: y + 1, w: 24, h: 11 }, options: { mode: 'markdown', content: help[board.uid] } }],
+  };
+  const separator = { id: 10002, type: 'row', title: '운영 지표', collapsed: false,
+    panels: [], gridPos: { x: 0, y: y + 1, w: 24, h: 1 } };
+  board.panels.splice(1, 0, helpRow, ...(needsSeparator ? [separator] : []));
   fs.writeFileSync(path.join(directory, destinations[index][2]), `${JSON.stringify(board, null, 2)}\n`);
 }
 console.log(JSON.stringify(boards.map(board => ({ uid: board.uid, title: board.title, panels: board.panels.length })), null, 2));

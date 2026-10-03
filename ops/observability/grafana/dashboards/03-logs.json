@@ -146,8 +146,51 @@
       }
     },
     {
+      "id": 10000,
+      "type": "row",
+      "title": "도움말 · 어떤 상황에서 보고 어떻게 점검하나요?",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 10001,
+          "type": "text",
+          "title": "증상 → 지표 → 다음 점검",
+          "gridPos": {
+            "x": 0,
+            "y": 4,
+            "w": 24,
+            "h": 11
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "### 오류 원문과 보존 문제를 구분하세요\n| 상황 | 무엇을 볼지 | 확인 방법 |\n| --- | --- | --- |\n| 5xx·지연 원인 확인 | ERROR·WARN 발생량과 API 오류 시각 | 02에서 시간을 좁히고 아래 SSH 명령으로 같은 시각의 예외 원문을 확인합니다. |\n| WARN 증가, 서비스는 정상 | 레벨별 발생 추세 | 반복 경고의 원인을 확인합니다. WARN 수만으로 장애를 확정하지 않습니다. |\n| 파일 존재 DOWN | 파일 존재·로그 파일 경로 | yanus 서비스와 디렉터리 권한을 확인하고 journalctl에서 로그 초기화 실패를 찾습니다. |\n| 보존 상태 수집 경과가 계속 증가 | metadata 수집 경과·Node 수집 | yanus-log-metrics.timer와 service 실행 결과, textfile 수집을 확인합니다. 수집은 1분 간격입니다. |\n| 로그 크기·디스크 증가 | 현재 파일·압축 파일 수 + 04 디스크 | 회전·보존 정책과 반복 오류를 확인합니다. 원인·증거를 확보하기 전에 로그를 지우지 않습니다. |\n\n**이 화면에는 로그 본문 검색 기능이 없습니다.** 로그 발생량은 Micrometer 카운터이고 본문은 파일·journal에서 확인합니다. 화면과 로그 시각을 KST로 맞추고 공유 전 토큰·개인정보를 제거합니다."
+          }
+        }
+      ]
+    },
+    {
+      "id": 10002,
+      "type": "row",
+      "title": "운영 지표",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
       "id": 2,
       "title": "파일 존재",
+      "description": "연결·수집 성공 여부입니다. DOWN이면 서비스 상태, exporter와 네트워크를 구분해 확인하세요. UP은 업무 기능 전체의 정상 보장이 아닙니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -155,7 +198,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 3,
+        "y": 5,
         "w": 6,
         "h": 4
       },
@@ -234,6 +277,7 @@
     {
       "id": 3,
       "title": "현재 파일 크기",
+      "description": "API 오류 시각과 맞춰 파일·journal 원문을 확인하세요. 이 패널은 발생량 또는 보존 메타데이터이며 로그 본문 검색이 아닙니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -241,7 +285,7 @@
       },
       "gridPos": {
         "x": 6,
-        "y": 3,
+        "y": 5,
         "w": 6,
         "h": 4
       },
@@ -301,6 +345,7 @@
     {
       "id": 4,
       "title": "보존 일수",
+      "description": "API 오류 시각과 맞춰 파일·journal 원문을 확인하세요. 이 패널은 발생량 또는 보존 메타데이터이며 로그 본문 검색이 아닙니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -308,7 +353,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 3,
+        "y": 5,
         "w": 6,
         "h": 4
       },
@@ -368,6 +413,7 @@
     {
       "id": 5,
       "title": "압축 파일",
+      "description": "API 오류 시각과 맞춰 파일·journal 원문을 확인하세요. 이 패널은 발생량 또는 보존 메타데이터이며 로그 본문 검색이 아닙니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -375,7 +421,7 @@
       },
       "gridPos": {
         "x": 18,
-        "y": 3,
+        "y": 5,
         "w": 6,
         "h": 4
       },
@@ -435,6 +481,7 @@
     {
       "id": 6,
       "title": "레벨별 로그 / 초",
+      "description": "API 오류 시각과 맞춰 파일·journal 원문을 확인하세요. 이 패널은 발생량 또는 보존 메타데이터이며 로그 본문 검색이 아닙니다.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -442,7 +489,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 7,
+        "y": 9,
         "w": 12,
         "h": 8
       },
@@ -509,6 +556,7 @@
     {
       "id": 7,
       "title": "WARN · ERROR 발생량",
+      "description": "API 오류 시각과 맞춰 파일·journal 원문을 확인하세요. 이 패널은 발생량 또는 보존 메타데이터이며 로그 본문 검색이 아닙니다.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -516,7 +564,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 7,
+        "y": 9,
         "w": 12,
         "h": 8
       },
@@ -583,6 +631,7 @@
     {
       "id": 8,
       "title": "로그 파일 크기",
+      "description": "API 오류 시각과 맞춰 파일·journal 원문을 확인하세요. 이 패널은 발생량 또는 보존 메타데이터이며 로그 본문 검색이 아닙니다.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -590,7 +639,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 15,
+        "y": 17,
         "w": 12,
         "h": 8
       },
@@ -657,6 +706,7 @@
     {
       "id": 9,
       "title": "보존 상태 수집 경과",
+      "description": "API 오류 시각과 맞춰 파일·journal 원문을 확인하세요. 이 패널은 발생량 또는 보존 메타데이터이며 로그 본문 검색이 아닙니다.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -664,7 +714,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 15,
+        "y": 17,
         "w": 12,
         "h": 8
       },
@@ -734,7 +784,7 @@
       "title": "애플리케이션 로그 조회",
       "gridPos": {
         "x": 0,
-        "y": 23,
+        "y": 25,
         "w": 24,
         "h": 7
       },
@@ -749,7 +799,7 @@
       "title": "HTTP · Nginx 로그",
       "gridPos": {
         "x": 0,
-        "y": 30,
+        "y": 32,
         "w": 24,
         "h": 6
       },

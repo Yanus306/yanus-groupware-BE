@@ -18,7 +18,14 @@ for (const uid of expected) {
   if (meta.folderUid !== 'yanus-prod' || !meta.provisioned || dashboard.links.length !== 5) {
     throw new Error(`Invalid provisioning: ${uid}`);
   }
-  results.push({ uid, title: dashboard.title, panels: dashboard.panels.length, provisioned: meta.provisioned });
+  const helpIndex = dashboard.panels.findIndex(panel => panel.id === 10000 && panel.type === 'row');
+  const guidance = dashboard.panels[helpIndex]?.panels?.find(panel => panel.type === 'text');
+  const separator = dashboard.panels[helpIndex + 1];
+  if (!guidance?.options?.content || separator?.type !== 'row' || separator.collapsed
+      || dashboard.panels.some(panel => panel.targets?.length && !panel.description)) {
+    throw new Error(`Missing guidance or hidden metrics: ${uid}`);
+  }
+  results.push({ uid, title: dashboard.title, panels: dashboard.panels.length, provisioned: meta.provisioned, help: true });
 }
 const health = await get('/api/datasources/uid/yanus-prometheus/health');
 if (health.status !== 'OK') throw new Error(`Datasource: ${health.status}`);

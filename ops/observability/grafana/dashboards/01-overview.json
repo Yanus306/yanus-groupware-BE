@@ -146,6 +146,35 @@
       }
     },
     {
+      "id": 10000,
+      "type": "row",
+      "title": "도움말 · 어떤 상황에서 보고 어떻게 점검하나요?",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 10001,
+          "type": "text",
+          "title": "증상 → 지표 → 다음 점검",
+          "gridPos": {
+            "x": 0,
+            "y": 4,
+            "w": 24,
+            "h": 11
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "### 서비스가 안 되거나 느릴 때 여기서 시작하세요\n| 증상 | 먼저 볼 지표 | 다음 점검 |\n| --- | --- | --- |\n| 화면·API가 응답하지 않음 | 백엔드 수집, DB 연결, 수집 대상 상태 | DOWN 대상의 service/exporter 상태와 연결을 확인합니다. UP이어도 업무 오류는 02에서 확인합니다. |\n| 서버 오류가 늘어남 | 5xx 비율, 요청량·상태 코드 | 02에서 문제가 생긴 URI·시간을 좁힌 뒤 03의 ERROR 로그를 같은 시간으로 조회합니다. |\n| 로그인·권한 요청 실패 | 4xx 비율 | 401·403인지 400·404인지 02에서 구분하고 요청·인증·권한을 확인합니다. 4xx만 보고 서버를 재시작하지 않습니다. |\n| 요청이 평소보다 느림 | P95, Hikari Pending, CPU·메모리 | 02의 JVM·Tomcat·Hikari → 05 PostgreSQL → 04 서버 I/O 순서로 좁힙니다. |\n| 숫자나 그래프가 비어 있음 | 시간·호스트 선택, 수집 UP | All·최근 30분으로 되돌립니다. 요청 없음은 무요청 구간이며, DOWN이나 수집 없음과 구분합니다. |\n\n**운영 순서:** 장애 시각과 영향 범위를 기록 → 아래 화면에서 근거 확인 → 원인을 확인한 뒤 조치 → 같은 지표와 실제 API로 회복 확인. 알림 조건 목록이 비어 있으면 현재 Pending·Firing이 없는 것입니다."
+          }
+        }
+      ]
+    },
+    {
       "id": 2,
       "type": "row",
       "title": "서비스 · 요청",
@@ -153,7 +182,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 3,
+        "y": 4,
         "w": 24,
         "h": 1
       }
@@ -161,6 +190,7 @@
     {
       "id": 3,
       "title": "백엔드 수집",
+      "description": "연결·수집 성공 여부입니다. DOWN이면 서비스 상태, exporter와 네트워크를 구분해 확인하세요. UP은 업무 기능 전체의 정상 보장이 아닙니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -168,7 +198,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 4,
+        "y": 5,
         "w": 4,
         "h": 4
       },
@@ -247,6 +277,7 @@
     {
       "id": 4,
       "title": "DB 연결",
+      "description": "연결·수집 성공 여부입니다. DOWN이면 서비스 상태, exporter와 네트워크를 구분해 확인하세요. UP은 업무 기능 전체의 정상 보장이 아닙니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -254,7 +285,7 @@
       },
       "gridPos": {
         "x": 4,
-        "y": 4,
+        "y": 5,
         "w": 4,
         "h": 4
       },
@@ -333,6 +364,7 @@
     {
       "id": 5,
       "title": "RPS",
+      "description": "초당 요청 수입니다. 평소 트래픽 및 오류·지연과 비교하세요. 0은 무요청일 수 있으며 수집 UP을 따로 확인합니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -340,7 +372,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 4,
+        "y": 5,
         "w": 4,
         "h": 4
       },
@@ -400,6 +432,7 @@
     {
       "id": 6,
       "title": "4xx 비율",
+      "description": "인증·권한·요청 값·경로 문제를 구분하세요. 상태 코드별 요청량과 URI를 확인하고 같은 시각의 로그를 조회합니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -407,7 +440,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 4,
+        "y": 5,
         "w": 4,
         "h": 4
       },
@@ -475,6 +508,7 @@
     {
       "id": 7,
       "title": "5xx 비율",
+      "description": "서버 오류가 늘면 영향 URI와 요청량을 함께 보고 ERROR 로그·DB·외부 서비스 연결을 확인하세요.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -482,7 +516,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 4,
+        "y": 5,
         "w": 4,
         "h": 4
       },
@@ -550,6 +584,7 @@
     {
       "id": 8,
       "title": "P95",
+      "description": "P95는 요청의 약 95%가 완료되는 시간입니다. 요청량·GC·Tomcat·Hikari와 함께 보고 무요청 구간은 계산하지 않습니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -557,7 +592,7 @@
       },
       "gridPos": {
         "x": 20,
-        "y": 4,
+        "y": 5,
         "w": 4,
         "h": 4
       },
@@ -637,6 +672,7 @@
     {
       "id": 9,
       "title": "요청량 · 상태 코드",
+      "description": "서버 오류가 늘면 영향 URI와 요청량을 함께 보고 ERROR 로그·DB·외부 서비스 연결을 확인하세요.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -644,7 +680,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 8,
+        "y": 9,
         "w": 12,
         "h": 8
       },
@@ -711,6 +747,7 @@
     {
       "id": 10,
       "title": "응답 지연 P50 · P95 · P99",
+      "description": "P95는 요청의 약 95%가 완료되는 시간입니다. 요청량·GC·Tomcat·Hikari와 함께 보고 무요청 구간은 계산하지 않습니다.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -718,7 +755,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 8,
+        "y": 9,
         "w": 12,
         "h": 8
       },
@@ -804,7 +841,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 16,
+        "y": 17,
         "w": 24,
         "h": 1
       }
@@ -812,6 +849,7 @@
     {
       "id": 12,
       "title": "JVM Heap",
+      "description": "Heap은 GC 후 회수되는지, Pause는 지연 시각과 겹치는지 확인하세요. 톱니 모양의 Heap 추세는 정상일 수 있습니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -819,7 +857,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 17,
+        "y": 18,
         "w": 6,
         "h": 4
       },
@@ -887,6 +925,7 @@
     {
       "id": 13,
       "title": "Tomcat Busy",
+      "description": "요청 처리 스레드·연결입니다. Busy가 Max에 접근하면서 지연이 늘면 긴 요청·DB 대기를 먼저 확인하세요.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -894,7 +933,7 @@
       },
       "gridPos": {
         "x": 6,
-        "y": 17,
+        "y": 18,
         "w": 6,
         "h": 4
       },
@@ -954,6 +993,7 @@
     {
       "id": 14,
       "title": "Hikari Active",
+      "description": "연결 대기·Timeout이 생기면 Active가 Max에 도달하는지 확인하고 PostgreSQL 처리·긴 트랜잭션을 조사하세요. 풀 크기부터 늘리지 않습니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -961,7 +1001,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 17,
+        "y": 18,
         "w": 6,
         "h": 4
       },
@@ -1021,6 +1061,7 @@
     {
       "id": 15,
       "title": "Hikari Pending",
+      "description": "연결 대기·Timeout이 생기면 Active가 Max에 도달하는지 확인하고 PostgreSQL 처리·긴 트랜잭션을 조사하세요. 풀 크기부터 늘리지 않습니다.",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -1028,7 +1069,7 @@
       },
       "gridPos": {
         "x": 18,
-        "y": 17,
+        "y": 18,
         "w": 6,
         "h": 4
       },
@@ -1092,6 +1133,7 @@
     {
       "id": 16,
       "title": "CPU",
+      "description": "지속 상승과 API·DB 지연을 함께 보세요. user/system과 iowait를 구분하고 Load는 CPU 개수와 비교합니다.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -1099,7 +1141,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 21,
+        "y": 22,
         "w": 8,
         "h": 8
       },
@@ -1166,6 +1208,7 @@
     {
       "id": 17,
       "title": "메모리",
+      "description": "가용 메모리 감소와 Swap 증가가 지속되는지 확인하세요. Cache 사용량 자체는 메모리 장애가 아닙니다.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -1173,7 +1216,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 21,
+        "y": 22,
         "w": 8,
         "h": 8
       },
@@ -1240,6 +1283,7 @@
     {
       "id": 18,
       "title": "디스크 /",
+      "description": "사용률·가용 용량·I/O 지연을 함께 확인하세요. 증가한 파일과 작업을 조사하고 DB·로그·TSDB를 임의 삭제하지 않습니다.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -1247,7 +1291,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 21,
+        "y": 22,
         "w": 8,
         "h": 8
       },
@@ -1319,7 +1363,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 29,
+        "y": 30,
         "w": 24,
         "h": 1
       }
@@ -1327,6 +1371,7 @@
     {
       "id": 20,
       "title": "수집 대상 상태",
+      "description": "연결·수집 성공 여부입니다. DOWN이면 서비스 상태, exporter와 네트워크를 구분해 확인하세요. UP은 업무 기능 전체의 정상 보장이 아닙니다.",
       "type": "table",
       "datasource": {
         "type": "prometheus",
@@ -1334,7 +1379,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 30,
+        "y": 31,
         "w": 24,
         "h": 7
       },
@@ -1418,7 +1463,7 @@
       "title": "알림 조건 확인",
       "gridPos": {
         "x": 0,
-        "y": 37,
+        "y": 38,
         "w": 24,
         "h": 2
       },
@@ -1430,6 +1475,7 @@
     {
       "id": 22,
       "title": "현재 Pending · Firing 조건",
+      "description": "연결 대기·Timeout이 생기면 Active가 Max에 도달하는지 확인하고 PostgreSQL 처리·긴 트랜잭션을 조사하세요. 풀 크기부터 늘리지 않습니다.",
       "type": "table",
       "datasource": {
         "type": "prometheus",
@@ -1437,7 +1483,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 39,
+        "y": 40,
         "w": 24,
         "h": 7
       },
