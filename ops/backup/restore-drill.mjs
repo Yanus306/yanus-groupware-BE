@@ -100,6 +100,16 @@ export async function restoreDrill(config) {
     const ownership = JSON.parse(await sql("SELECT coalesce(json_agg(json_build_object('schema',n.nspname,'name',c.relname,'kind',c.relkind,'owner',pg_get_userbyid(c.relowner),'acl',coalesce(c.relacl::text,'')) ORDER BY c.relname),'[]'::json) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p','S','v','m')"));
     if (!isDeepStrictEqual(ownership, verification.ownership)
         || await sql('SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname=current_database()') !== verification.database_owner) throw new Error('OWNER_ACL_MISMATCH');
+    const sequenceSql = (await run('exec', databaseContainer, 'bash', '-ceu',
+      'umask 077; trap "rm -f /tmp/drill-sequences.list" EXIT; pg_restore --list /backup-input/database.dump | sed -n "/ SEQUENCE SET /p" > /tmp/drill-sequences.list; pg_restore --data-only --use-list=/tmp/drill-sequences.list --file=- /backup-input/database.dump')).stdout;
+    let sequencesVerified = 0;
+    for (const line of sequenceSql.split('\n').filter(value => value.startsWith('SELECT pg_catalog.setval('))) {
+      const match = /^SELECT pg_catalog\.setval\('public\.([a-z_][a-z0-9_]*)', (-?\d+), (true|false)\);$/.exec(line);
+      if (!match) throw new Error('INVALID_SEQUENCE_VERIFICATION');
+      if (await sql(`SELECT last_value::text || ',' || is_called::text FROM public.${identifier(match[1])}`) !== `${match[2]},${match[3]}`) throw new Error('SEQUENCE_VALUE_MISMATCH');
+      sequencesVerified++;
+    }
+    if (sequencesVerified !== verification.ownership.filter(item => item.kind === 'S').length) throw new Error('SEQUENCE_INVENTORY_MISMATCH');
     const password = randomBytes(32).toString('hex');
     await sql(`CREATE ROLE yanus_restore_reader LOGIN PASSWORD '${password}'; GRANT CONNECT ON DATABASE ${identifier(manifest.database)} TO yanus_restore_reader; GRANT USAGE ON SCHEMA public TO yanus_restore_reader; GRANT SELECT ON ALL TABLES IN SCHEMA public TO yanus_restore_reader; ALTER ROLE yanus_restore_reader SET default_transaction_read_only=on;`);
     if (await sql('SHOW transaction_read_only', 'yanus_restore_reader') !== 'on') throw new Error('READER_NOT_READ_ONLY');
@@ -152,7 +162,7 @@ logging.level.com.yanus.attendance=ERROR
       data_age_at_start_seconds: Math.max(0, Math.floor(started / 1000) - metadata.snapshot_epoch),
       snapshot_clock_ahead_seconds: Math.max(0, metadata.snapshot_epoch - Math.floor(started / 1000)),
       tables_verified: verification.tables.length, flyway_verified: history.length,
-      ownership_verified: ownership.length, constraints_verified: constraints.length,
+      ownership_verified: ownership.length, constraints_verified: constraints.length, sequences_verified: sequencesVerified,
       api: 'GET /api/v1/teams 200·건수 일치 / 무인증 거절', reader_write: 'BLOCKED',
       jar_sha256: await sha256(jar), postgres_major: 16, steps, total_ms_before_cleanup: Date.now() - started };
   } catch (error) {

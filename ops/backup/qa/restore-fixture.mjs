@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { randomBytes } from 'node:crypto';
-import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import assert from 'node:assert/strict';
@@ -86,7 +86,9 @@ logging.level.root=ERROR
   containers.pop();
   const restored = await restoreDrill({ root, id: state.id, identity, jar });
   assert.equal(restored.status, 'SUCCESS');
-  assert.equal(restored.flyway_verified, 27);
+  const migrations = (await readdir('src/main/resources/db/migration')).filter(file => /^V\d+__.*\.sql$/.test(file));
+  assert.equal(restored.flyway_verified, migrations.length);
+  assert.ok(restored.sequences_verified > 0);
   const negative = await execute(process.execPath,
     ['ops/backup/qa/restore-negative.mjs', root, state.id, identity, jar], { timeout: 180_000, maxBuffer: 1024 * 1024, signal: controller.signal });
   outcome = { scope: '고객 데이터·운영 키·SSH 없는 CI fixture', restored, negative: JSON.parse(negative.stdout) };
