@@ -21,6 +21,7 @@ receivers:
         http_config:
           follow_redirects: false
         title: '{{ template "yanus.title" . }}'
+        title_link: 'https://grafana.yanus.bond/d/yanus-overview'
         text: '{{ template "yanus.text" . }}'
 inhibit_rules:
   - source_matchers: ['alertname="YanusDiskCritical"', 'severity="critical"', 'environment="prod"']

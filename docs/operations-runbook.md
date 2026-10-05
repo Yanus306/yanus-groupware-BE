@@ -24,4 +24,4 @@
 
 발생/감지/알림 도착/조치 시작/정상 확인의 UTC 시각, 영향, 관찰 지표·안전한 로그, 원인, 복구 명령과 결과, 후속 조치를 남긴다. 격리 실험인지 실제 장애인지 명시한다. 한 번의 실험을 장기 평균 MTTD/MTTR로 표시하지 않는다.
 
-현재 #204 코드·격리 검증과 실제 PROD 적용은 별도 상태다. 실제 Slack 웹훅 등록·Alertmanager 설치·Actions 활성화·수신 시각을 확인한 뒤 운영 연결 완료로 변경한다.
+2026-10-05: monitoring-server의 Alertmanager 0.28.1·Prometheus 전달·10개 규칙·5개 보드 도움말을 적용했다. yANUs/yanus-서버-알람에서 승인된 검증용 알림의 FIRING(09:33:49 UTC)·RESOLVED(09:35:29 UTC)를 확인했다. 실제 서비스 장애 실험은 아니다. GitHub Secret은 등록했으나 기본 브랜치 uptime workflow 활성화·실제 예약 run은 남아 있다. 전체 앱/DB 배포는 수행하지 않았다.

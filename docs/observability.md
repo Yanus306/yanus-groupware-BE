@@ -173,7 +173,17 @@ docker run --rm --entrypoint promtool -v "$PWD/ops/observability:/work" -w /work
 node ops/observability/public-probe.mjs --dry-run
 ```
 
-상황별 조치와 중단 조건은 [운영 대응 절차](operations-runbook.md)에 있다. 실제 설치·GitHub run ID·Slack 수신 시각은 확보한 뒤 추가한다.
+상황별 조치와 중단 조건은 [운영 대응 절차](operations-runbook.md)에 있다.
+
+### #204 운영 연결 (2026-10-05)
+
+monitoring-server에 checksum 검증한 Alertmanager 0.28.1을 설치했다. `127.0.0.1:9093`만 리스닝하며 Prometheus에서 active Alertmanager와 자체 scrape `up=1`을 확인했다. 기존 임계치는 유지하고 10개 규칙과 도움말이 있는 5개 보드를 적용했다. Grafana provisioning·Prometheus/Loki datasource health는 모두 정상이다.
+
+`Yanus Operations Alerts` 앱은 yANUs의 `yanus-서버-알람` 전용 Incoming Webhook 권한으로 설치했다. 서버 파일은 root:alertmanager 0640, GitHub Secret `SLACK_WEBHOOK_URL`도 등록했다. 값은 문서·로그·Git에 저장하지 않는다.
+
+실제 서비스 장애 없이 `YanusNotificationConnectionTest`를 Alertmanager API에 전송했다. FIRING은 09:33:49 UTC, RESOLVED는 09:35:29 UTC에 실제 채널에 도착했다. 제목 링크가 내부 Alertmanager 주소로 향하던 문제는 공개 Grafana로 수정하고 후속 RESOLVED 메시지에서 확인했다. 검증 도중 설정 reload가 있었으므로 이 전달 시간은 정상 운영의 group_interval 또는 MTTD/MTTR 측정값으로 사용하지 않는다. 전송 실패 counter는 0이었다.
+
+외부 점검은 Secret 등록까지 완료했다. `uptime.yml` 기본 브랜치 반영과 실제 Actions run/예약 실행 확인은 남아 있다. 전체 앱 교체·#203/V28·배포 복구 활성화는 수행하지 않았다.
 
 ## 검증
 
