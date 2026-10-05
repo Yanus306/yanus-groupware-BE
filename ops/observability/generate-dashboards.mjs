@@ -250,6 +250,9 @@ const dbHost = `${environment},instance="data-server"`;
 b.graphs([['DB 서버 가용 메모리', `node_memory_MemAvailable_bytes{${dbHost}}`, 'bytes'], ['DB 서버 디스크 /', `100 * (1 - node_filesystem_avail_bytes{${dbHost},mountpoint="/"} / node_filesystem_size_bytes{${dbHost},mountpoint="/"})`, 'percent']]);
 b.note('DB 지연 해석', '기본 PostgreSQL 통계만으로 SQL별 지연이나 RDS CloudWatch 지표를 만들지 않습니다. 지연이 늘면 API P95 → Hikari Pending → DB 연결·트랜잭션 → 서버 I/O 순서로 확인합니다. `pg_stat_statements`와 의도적인 부하 실험은 별도 작업입니다.', 3);
 
+for (const uid of Object.keys(help)) {
+  help[uid] += '\n\n**장애 알림·외부 점검**: [대응 절차와 실행 현황](https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d). Slack 증상/시각과 이 보드의 환경·호스트·시간 범위를 맞춰 확인하세요. Actions 예약 지연·누락과 내부 수집 DOWN을 구분합니다.';
+}
 fs.mkdirSync(directory, { recursive: true });
 for (const [index, board] of boards.entries()) {
   const y = board.panels[0].gridPos.h;

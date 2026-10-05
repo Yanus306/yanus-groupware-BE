@@ -141,7 +141,37 @@ API Nginx access log는 requestId·method·status·elapsedSeconds·upstreamSecon
 | HikariPending | 연결 대기 >0 | 2분 |
 | PostgresDown | pg_up=0 | 1분 |
 
-규칙은 Prometheus에서 평가하고 01 전체 상태에서 Pending·Firing을 조회한다. 목록이 비어 있으면 현재 조건이 없는 것이다. 팀 알림 수신지는 지정되지 않아 외부 전송은 연결하지 않았다. 실제 송신을 완료했다고 해석하지 않는다.
+규칙은 Prometheus에서 평가하고 01 전체 상태에서 Pending·Firing을 조회한다. 목록이 비어 있으면 현재 조건이 없는 것이다. #204에서 Alertmanager와 외부 점검 코드를 추가했다. 목적지는 `yANUs / yanus-서버-알람`이다. 실제 웹훅 등록·운영 설치·기본 브랜치 예약 실행은 아직 완료되지 않았다.
+
+### Slack 알림 구성
+
+`ops/observability/alertmanager/`는 Ubuntu systemd와 Alertmanager 0.28.1 고정 checksum을 사용한다. 관리 API는 loopback 9093, 최대 메모리는 256MiB다. 웹훅은 `/etc/alertmanager/slack-webhook`의 `root:alertmanager 0640` 파일만 참조한다. 코드·Notion·이슈에는 값을 기록하지 않는다. 채널이 고정된 Incoming Webhook을 사용하며 다른 채널 접근 권한을 부여하지 않는다.
+
+PROD 알림만 전달하며 environment/service/instance/alertname으로 묶는다. 첫 전송은 30초, 그룹 변화는 5분, 지속 장애 재통지는 1시간이다. 복구를 전송하고 같은 호스트의 DiskCritical은 DiskWarning을 억제한다. Alertmanager 자체 scrape DOWN 규칙도 추가했다. Prometheus와 Alertmanager가 함께 중단되면 이 경로로는 알림을 보내지 못한다.
+
+설치 전에 보호된 웹훅과 설정 검토를 마친다. `install-alertmanager.sh`는 기존 파일을 root 전용 백업에 보관하고 활성화 실패 시 복원한다. Prometheus 설정은 주소 자리표시자를 현재 호스트 값으로 채운 별도 후보를 `promtool check config`로 확인한 뒤 백업·교체·reload한다. 최초 설치용 `install-monitoring.sh` 전체를 다시 실행하지 않는다.
+
+### 외부 HTTPS 점검
+
+GitHub Actions `uptime.yml`은 매시 7·17·27·37·47·57분에 공개 API OpenAPI와 Grafana `/api/health`를 확인한다. API 제목과 OpenAPI 3.x, Grafana database=ok를 검사한다. 200 HTML·리다이렉트·잘못된 JSON·비정상 상태는 실패이며 timeout/DNS/TLS/연결 오류를 구분한다. 각 요청 10초·최대 2회·응답 1MiB로 제한한다. 실제 응답 본문은 출력하지 않는다.
+
+`SLACK_WEBHOOK_URL`은 GitHub Secret이다. 이전 예약 실행의 `probe-state-prod` artifact만 읽고, 30분보다 오래되거나 계약이 다른 상태는 UNKNOWN으로 취급한다. 장애 메시지가 실제 전송됐을 때만 복구를 전송한다. 전달 실패는 다음 점검에서 재시도하며 지속 장애는 1시간마다 다시 알린다. 수동 실행은 다른 concurrency 그룹과 artifact로 예약 상태를 변경하지 않는다.
+
+이 워크플로는 기본 브랜치에 반영된 뒤 작동한다. Actions schedule은 지연·누락될 수 있고 공개 저장소의 활동이 60일 없으면 비활성화될 수 있다. 10분은 설정 간격이며 감지 시간 보장이 아니다. 최근 실행 시각을 직접 확인하고 감시 공백이 반복되면 별도 외부 감시로 전환한다. [GitHub 예약 실행 제한](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+
+### #204 검증 근거 (2026-10-05)
+
+실제 HTTP fixture에서 JSON·HTML·redirect·timeout·본문 크기·Slack 429/500/잘못된 응답을 확인했다. 실제 격리 Alertmanager와 HTTP 수신기로 장애·복구·중복·PROD 라우팅·디스크 억제를 검증했다. 이 수신기는 Slack mock이며 실제 채널 전달 증거가 아니다. 공개 주소의 읽기 전용 점검은 API 3,167ms, Grafana 1,122ms에 정상으로 관찰됐다. 단일 시점의 표본으로 SLO를 주장하지 않는다.
+
+```bash
+node --test ops/observability/public-probe.test.mjs ops/observability/read-probe-state.test.mjs
+node ops/observability/verify-alert-routing.mjs
+docker run --rm --entrypoint promtool -v "$PWD/ops/observability:/work" -w /work prom/prometheus:v2.45.3 test rules yanus-rules.test.yml
+# dry-run도 실제 공개 HTTPS를 읽지만 Slack은 보내지 않는다.
+node ops/observability/public-probe.mjs --dry-run
+```
+
+상황별 조치와 중단 조건은 [운영 대응 절차](operations-runbook.md)에 있다. 실제 설치·GitHub run ID·Slack 수신 시각은 확보한 뒤 추가한다.
 
 ## 검증
 
