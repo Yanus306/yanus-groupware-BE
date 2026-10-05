@@ -13,7 +13,7 @@ const archives = join(root, 'archives');
 const logs = join(root, 'logs');
 for (const directory of [root, bin, archives, logs]) { await mkdir(directory, { recursive: true, mode: 0o700 }); await chmod(directory, 0o700); }
 const source = dirname(fileURLToPath(import.meta.url));
-for (const file of ['collect.mjs', 'lock.mjs', 'metadata.mjs', 'ssh-transport.mjs']) {
+for (const file of ['collect.mjs', 'lock.mjs', 'metadata.mjs', 'ssh-transport.mjs', 'key-recovery.mjs', 'windows-key-recovery.ps1']) {
   await copyFile(join(source, file), join(bin, file)); await chmod(join(bin, file), 0o600);
 }
 const label = 'kr.bond.yanus.db-backup.collector';

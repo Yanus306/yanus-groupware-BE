@@ -14,7 +14,20 @@ R2는 카드 등록이 필요해 사용하지 않는다. 사용자가 **Mac 사�
 | Mac `~/Library/Application Support/YanusBackup/archives` | 암호화 사본·검증 상태 | 사용자0700 / 파일0600 |
 | Mac `~/Library/Application Support/YanusBackup/keys/identity.txt` | 복호화 개인키 | 사용자0600 |
 
-개인키는 Mac에만 두고 서버에는 공개 recipient만 설치한다. **Mac과 키를 모두 잃으면 서버 archive도 복원할 수 없다.** 별도 보호된 키 복구 매체는 아직 확보하지 않았다. 암호화 파일·키·실제 데이터·접속 비밀번호를 GitHub나 Notion에 올리지 않는다.
+앱/DB VM에는 공개 recipient만 설치한다. Mac 개인키의 복구 사본은 별도 물리 장치인 Hyper-V Windows 호스트의 기존 로그인 계정에 **DPAPI CurrentUser**로 암호화 보관한다. 평문 개인키를 Windows 파일로 쓰지 않으며 해당 계정과 SYSTEM 전용 ACL을 적용한다. Mac 원본 키를 읽지 않는 복구 경로로 공개 recipient 일치와 실제 archive 복호화를 확인했다. 암호화 파일·키·실제 데이터·접속 비밀번호를 GitHub나 Notion에 올리지 않는다.
+
+Mac을 잃어도 Windows 계정·DPAPI 프로필이 살아 있으면 서버의 archive와 복구키로 복원할 수 있다. **Mac과 Windows 호스트/DPAPI 프로필을 함께 잃으면 복원할 수 없다.** 관리자에 의한 Windows 암호 강제 초기화·프로필 재설치도 복구에 영향을 줄 수 있다. 별도 오프라인 키 매체를 확보한 것과 같다고 주장하지 않는다. [Microsoft DPAPI 문서](https://learn.microsoft.com/en-us/windows/win32/seccrypto/example-c-program-using-cryptprotectdata)
+
+### 키 보관과 복구
+
+Windows 고정 경로는 `%LOCALAPPDATA%\YanusBackup\Recovery\identity.dpapi`다. SSH로 검증된 기존 `yanus-hyperv` alias를 사용한다. `store`는 기존의 다른 키를 덮어쓰지 않으며 `recover`는 기존 Mac 개인키를 덮어쓰지 않는다.
+
+```bash
+node ops/backup/key-recovery.mjs store "$HOME/Library/Application Support/YanusBackup" yanus-hyperv
+node ops/backup/key-recovery.mjs verify "$HOME/Library/Application Support/YanusBackup" yanus-hyperv "/path/to/BACKUP_ID.age"
+```
+
+Mac 교체 시 보호된 새 root(0700)에 공개 recipient만 `recovery-recipient.txt`로 옮기고 `recover ROOT yanus-hyperv`를 실행한다. 공개 recipient는 기존 서버 설정과 대조한다. 자동 신뢰 변경을 하지 않는다. 복구된 키는 ROOT/keys/identity.txt(0600)에 배타 생성된다. 검증 작업의 임시 키는 정상·실패·SIGTERM/SIGINT 종료 시 삭제한다. SIGKILL·OS 장애 시 임시 폴더가 남을 수 있어 `yanus-key-recovery-*`를 점검한다. DPAPI 파일 단독 복사만으로 다른 Windows 계정에서 복구할 수 있다고 가정하지 않는다.
 
 ## 백업에 포함되는 것
 

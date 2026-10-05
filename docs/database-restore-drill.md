@@ -113,4 +113,4 @@ node ops/backup/verify-slack.mjs resolve PRIVATE_RECEIPT_FILE restore
 
 단계별 시간과 해당 실행 시작 시 데이터 경과는 JSON 결과로 남긴다. Mac에 이미 있는 사본을 사용하므로 **SSH 다운로드 시간을 포함하지 않는다**. 이미지가 준비된 소규모 DB 단일 관찰값은 보장 RTO·장기 평균이 아니다. 하루1회 백업과 Mac 잠자기/오프라인의 전달 지연 때문에 고정 RPO도 보장하지 않는다. 복구 가능한 시점은 ACK 시각이 아닌 **snapshot 시각**이다.
 
-도구의 현재 범위는 PostgreSQL16, public 스키마, 복호화 tar128MiB·metadata 파일당4MiB 이하이다. DB가 커지거나 다른 schema/extension을 사용하면 용량·권한·검증 범위를 먼저 확장한다. WAL/PITR·첨부 파일·서버 전체 설정·운영 비밀번호·운영 서버 교체는 이 훈련 범위에 포함되지 않는다. Mac과 유일한 개인키를 동시에 잃는 문제는 별도 키 복구 매체가 필요하다.
+도구의 현재 범위는 PostgreSQL16, public 스키마, 복호화 tar128MiB·metadata 파일당4MiB 이하이다. DB가 커지거나 다른 schema/extension을 사용하면 용량·권한·검증 범위를 먼저 확장한다. WAL/PITR·첨부 파일·서버 전체 설정·운영 비밀번호·운영 서버 교체는 이 훈련 범위에 포함되지 않는다. #216에서 Windows DPAPI로 보호한 별도 키 사본과 Mac 원본 없이 복구·실제 archive 복호화를 검증했다. [키 복구 절차](database-backup.md#키-보관과-복구)를 따른다. Mac과 Windows 계정/DPAPI 프로필을 함께 잃는 상황은 여전히 복구할 수 없다.
