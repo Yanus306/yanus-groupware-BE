@@ -10,11 +10,11 @@ Grafana·Prometheus·Loki는 실제 운영되지만 알림 수신지와 외부 �
 
 | 범위 | 증거 | 현재 한계 |
 | --- | --- | --- |
-| 내부 알림 | 실제 격리 Alertmanager0.28.1에서 장애·복구·중복/그룹·PROD 라우팅·disk inhibition | HTTP 수신기는 mock, 실제 Slack 웹훅·운영 설치 전 |
+| 내부 알림 | 격리 Alertmanager0.28.1의 그룹·중복·PROD·disk inhibition 검증과 실제 native 설치/Slack FIRING·RESOLVED 수신 | 합의한 synthetic 알림 전달이며 실제 고객 장애나 장기 MTTD 증거가 아님 |
 | 외부 점검 | 실제 HTTP/상태/전달/artifact/TLS 테스트9개, 공개 API3167ms·Grafana1122ms UP 읽기 관찰 | 기본 브랜치 예약 실행/run ID·실제 전달 전. 감지 시간 보장 없음 |
 | 대시보드·규칙 | promtool2.45.3 SUCCESS, 실제 PROD Prometheus100 PromQL 오류0 | 현재 트래픽이 없으면 latency NaN, 빈 ALERTS 정상 |
 | 준비 상태 | 실제 Postgres 중단에서 readiness503/liveness200, 실제 HTTP 관리/메인 분리·공개403 | 테스트 전용 DB/환경. 운영 설치 증거와 분리 |
-| 배포·복구 | 실제 격리 Ubuntu24.04 systemd/PG16/Boot JAR의 원자 교체·새 PID·계약 성공 및 실패 훈련 | 현재 운영 source/전체 앱 호환성 확인과 승인 후보 적용 전 |
+| 배포·복구 | 실제 격리 Ubuntu24.04 systemd/PG16/Boot JAR의 원자 교체·새 PID·계약 성공 및 실패 훈련 | 운영 source는 재현 확인. 전체 후보의 업무/API 호환성 검토와 실제 적용 전 |
 
 ## 실험과 개선
 
@@ -26,7 +26,9 @@ checksum 오류와 미검토 schema 정책은 교체 전에 거절하고 기존 
 
 실제 Actuator가 vendor JSON content type을 반환해 처음에는 정상 준비 상태를 거절했다. application/*+json을 처리하도록 고치고 실제 서비스와 HTTP 회귀로 확인했다. 잘못된 webhook URL 처리와 오래된 artifact 상태도 테스트 실패를 통해 수정했다.
 
-source commit metadata가 없는 기존 JAR의 실제 hash와 migration inventory를 조사했다. migration27개 일치는 전체 API/업무 호환성의 증거가 아니다. 미확인 source·schema 변경은 자동 활성화 전에 차단한다. #203/V28 배포는 별도 범위다.
+source commit metadata가 없는 기존 JAR의 실제 hash와 migration inventory를 조사했다. 마지막 성공 CD의 e8ea205를 격리 재빌드하여 JAR 내부 파일441개 전체 일치로 재현 가능한 운영 소스 기준을 확보했다. ZIP 포장 hash는 달라 동일 artifact라고 주장하지 않는다. 후보에는 이미 main에 병합된 #200 DTO 정리가 포함된다. migration27개 일치가 전체 API/업무 호환성의 증거를 대신하지 않으며, 후보 활성화 전 별도 검토를 유지한다. #203/V28 배포는 별도 범위다.
+
+monitoring-server의 실제 Alertmanager0.28.1은 loopback9093에서 동작한다. Prometheus7개 scrape와10규칙,5개 Grafana 보드 도움말·datasource를 확인했다. channel-only Incoming Webhook 앱을 설치한 뒤 검증용 알림의 FIRING09:33:49UTC/RESOLVED09:35:29UTC 수신을 확인했다. 제목이 내부 URL을 가리키던 문제는 공개 Grafana 링크로 수정했다. 검증 도중 reload가 있어 전달 시간을 정상 group_interval·MTTD/MTTR로 쓰지 않는다. GitHub Secret은 등록했으며 default-branch Actions run은 남아 있다.
 
 실험별 UTC 시각과 elapsed time은 격리 `scenarios.json`, `legacy.json`, `overlay.json`에 남기고 build/ 바깥에도 보존했다. 최종 Gradle275 tests/0 failures/0 errors/0 skipped·bootJar PASS12s, Node 외부9개/배포3개 PASS를 확인했다. 아직 실제 고객 장애에서 측정한 MTTD/MTTR나 장기 SLO가 아니다. Persona report/finish 상태도 제품 테스트와 구분해 기록한다.
 

@@ -16,7 +16,9 @@ root 전용 `/etc/yanus-deploy/baseline.json`(0600)에 현재 JAR SHA256, 실제
 
 후보 JAR의 migration script/버전/SHA256/Flyway CRC32는 이전 JAR와 같아야 하고, 현재 SQL history의 성공 여부·체크섬과 맞아야 한다. history fingerprint 변경도 차단한다. 이번 자동 앱 복구는 **schema unchanged만 지원**한다. 새로운 additive migration도 별도 검토·검증 절차로 확장하기 전에는 차단한다. DB downgrade·Flyway disable/repair는 실행하지 않는다.
 
-2026-10-05 운영 읽기 관찰: 기존 JAR SHA256 `460b6e4733f196628d089280fd727d8af2a6a1015b61d3fddd921d6df0e2778a`, commit metadata 없음, migration27개가 후보와 일치. 정확한 source와 전체 앱 호환성 승인 완료를 의미하지 않는다.
+2026-10-05 운영 읽기 관찰: 기존 JAR SHA256 `460b6e4733f196628d089280fd727d8af2a6a1015b61d3fddd921d6df0e2778a`, commit metadata 없음, migration27개가 후보와 일치. 마지막 성공 CD의 `e8ea2055fa8da6b17f846bf6a79cea8cbb3c7371`을 격리 재빌드하여 운영 JAR의 내부 파일441개(클래스·리소스231개, 라이브러리107개 포함)가 모두 같음을 확인했다. 재현 가능한 source 기준이며 signed provenance 또는 외부 ZIP 해시 동일성의 증거는 아니다. 정렬된 내부 파일 내용의 canonical SHA256는 양쪽 모두 `97b37fc1570af868f609c5b6b7a94079bb45ab37f2999de2b9cbb1d1f8374ae9`이다. 전체 후보의 업무/API 호환성 검토와 운영 활성화는 별도다.
+
+후보에는 현재 main에 병합된 #200 DTO 정리와 #201/#202 관측 기능, #205 버전/readiness·배포 복구를 포함한다. main 대비 추가 Java/resources/build 변경은 관측·배포 계약 범위이며 #203/V28은 제외한다. main과 후보의 Git 조상 관계가 같다고 표현하지 않는다. 원래 JAR·PropertiesLauncher·외부 라이브러리8개의 복구 증거는 격리 환경의 `overlay.json`으로 연결한다.
 
 ## 서버 준비와 전달
 
