@@ -1,0 +1,62 @@
+rule_files: [yanus-backup-rules.yml]
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'yanus_backup_last_run_success{environment="prod",instance="data-server"}'
+        values: '0+0x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: YanusBackupFailed
+        exp_alerts:
+          - exp_labels: {severity: warning, environment: prod, service: database, instance: data-server}
+            exp_annotations:
+              summary: 'PROD DB 최근 백업 실패'
+              description: 'data-server의 yanus-db-backup.service journal과 /var/lib/yanus-backup/local.json 실패 단계를 확인하세요. 기존 유효 백업은 보존하고 원인을 해결한 뒤 재실행합니다.'
+              dashboard_url: 'https://grafana.yanus.bond/d/yanus-postgres'
+              runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
+  - interval: 1m
+    input_series:
+      - series: 'yanus_backup_last_run_success{environment="prod",instance="data-server"}'
+        values: '1+0x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: YanusBackupFailed
+        exp_alerts: []
+  - interval: 1m
+    input_series:
+      - series: 'yanus_backup_local_snapshot_timestamp_seconds{environment="prod",instance="data-server"}'
+        values: '1+0x2880'
+      - series: 'yanus_backup_offsite_snapshot_timestamp_seconds{environment="prod",instance="data-server"}'
+        values: '1+0x2880'
+    alert_rule_test:
+      - eval_time: 48h
+        alertname: YanusBackupLocalStale
+        exp_alerts:
+          - exp_labels: {severity: warning, environment: prod, service: database, instance: data-server}
+            exp_annotations:
+              summary: 'PROD DB 마지막 서버 백업이 26시간을 넘었습니다'
+              description: '매일 03:20 KST timer와 최근 service 결과·디스크 용량을 확인하세요. 과거 백업 재전송은 새 snapshot 생성이 아닙니다.'
+              dashboard_url: 'https://grafana.yanus.bond/d/yanus-postgres'
+              runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
+      - eval_time: 48h
+        alertname: YanusBackupMacStale
+        exp_alerts:
+          - exp_labels: {severity: warning, environment: prod, service: database, instance: data-server}
+            exp_annotations:
+              summary: 'PROD DB Mac 사본의 복구 시점이 30시간을 넘었습니다'
+              description: 'Mac 잠자기·오프라인과 SSH를 확인하고 collector를 실행하세요. 새 백업이 생성됐는지도 확인합니다. ACK는 당시 보관 확인이며 이후 Mac 손실을 보장하지 않습니다.'
+              dashboard_url: 'https://grafana.yanus.bond/d/yanus-postgres'
+              runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
+  - interval: 1m
+    input_series: []
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: YanusBackupMetricsMissing
+        exp_alerts:
+          - exp_labels: {severity: warning, environment: prod, service: database, instance: data-server}
+            exp_annotations:
+              summary: 'PROD DB 백업 지표가 없거나 갱신되지 않습니다'
+              description: 'node exporter UP과 textfile 경로·권한·timer를 확인하세요. 지표 수집 불능을 백업 성공으로 해석하지 않습니다.'
+              dashboard_url: 'https://grafana.yanus.bond/d/yanus-postgres'
+              runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
