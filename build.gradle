@@ -7,6 +7,25 @@ plugins {
 group = 'com.yanus'
 version = '0.0.1-SNAPSHOT'
 
+def releaseBuild = providers.environmentVariable('YANUS_RELEASE_BUILD').orElse('false')
+def candidateCommit = providers.environmentVariable('GITHUB_SHA').orElse(providers.provider {
+	def output = new ByteArrayOutputStream()
+	exec { commandLine 'git', 'rev-parse', 'HEAD'; standardOutput = output }
+	output.toString().trim()
+})
+springBoot {
+	buildInfo {
+		properties { additional = ['commit': candidateCommit.get()] }
+	}
+}
+tasks.named('bootBuildInfo') {
+	doFirst {
+		if (releaseBuild.get() == 'true' && !(System.getenv('GITHUB_SHA') ==~ /[a-f0-9]{40}/)) {
+			throw new GradleException('Release build requires full GITHUB_SHA')
+		}
+	}
+}
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)

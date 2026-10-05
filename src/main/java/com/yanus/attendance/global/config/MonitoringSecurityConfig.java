@@ -19,7 +19,7 @@ public class MonitoringSecurityConfig {
     @Order(0)
     public SecurityFilterChain monitoringFilterChain(HttpSecurity http, Environment environment)
             throws Exception {
-        var endpoints = EndpointRequest.to("health", "prometheus");
+        var endpoints = EndpointRequest.to("health", "info", "prometheus");
         return http
                 .securityMatcher(request -> {
                     int configuredPort = environment.getRequiredProperty("management.server.port", Integer.class);
