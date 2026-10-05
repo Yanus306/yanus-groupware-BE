@@ -86,8 +86,24 @@ export async function sendSlack(webhook, result, kind, now, request = fetch) {
   let url;
   try { url = new URL(webhook); } catch { return 'invalid-secret'; }
   if (url.protocol !== 'https:' || url.hostname !== 'hooks.slack.com' || url.username || url.password || url.search || url.hash || !url.pathname.startsWith('/services/')) return 'invalid-secret';
+  const event = {
+    __proto__: null,
+    DOWN: '장애 발생', RECOVERED: '복구 완료', REMINDER: '장애 지속',
+    SUCCESS: '배포 성공', ROLLED_BACK: '배포 실패 · 이전 버전 복구 완료',
+    ROLLBACK_FAILED: '배포 실패 · 자동 복구 실패',
+  }[kind] ?? '상태 확인 필요';
+  const target = { __proto__: null, api: '백엔드 API', grafana: 'Grafana', deployment: '백엔드 배포' }[result.id] ?? '운영 서비스';
+  const reason = {
+    __proto__: null,
+    OK: '정상 응답 확인', TIMEOUT: '응답 시간 초과', DNS: '도메인 주소 조회 실패',
+    TLS: 'TLS 인증서 또는 연결 검증 실패', CONNECT: '서버 연결 실패',
+    HTTP_STATUS: '정상 HTTP 상태 코드가 아님', CONTENT_TYPE: 'JSON 대신 다른 형식의 응답 수신',
+    BODY_LIMIT: '응답 크기 제한 초과', JSON_CONTRACT: '정상 JSON 응답 구조와 불일치',
+  }[result.reason] ?? '상세 상태 확인 필요';
+  const detail = result.id === 'deployment' && /^[a-f0-9]{40}$/.test(result.commit ?? '')
+    ? `버전: ${result.commit}` : `원인: ${reason}`;
   const message = {
-    text: `[yANUs PROD] ${kind} · ${result.id} · ${result.reason}\n확인: ${now.toISOString()}\nGrafana: https://grafana.yanus.bond/\n대응: https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d`,
+    text: `[yANUs 운영] ${event} · ${target}\n${detail}\n확인: ${now.toISOString()}\nGrafana: https://grafana.yanus.bond/\n대응: https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d`,
   };
   try {
     const response = await request(webhook, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10000), headers: { 'content-type': 'application/json' }, body: JSON.stringify(message) });
