@@ -31,7 +31,7 @@ node ops/backup/restore-drill.mjs \
 | 복호화 | age 인증, 네 파일만 허용하는 tar 검사, 경로 조작·링크·중복·불완전 tar 거절, 내부 SHA256 |
 | 역할·DB | 비밀번호가 제외된 역할 정의 복원, 원래 DB 소유자 지정, 오류 즉시 중단 |
 | 데이터 | pg_restore 실제 실행, 같은 snapshot의 모든 public 업무 테이블 건수와 Flyway 전체 이력 비교 |
-| 제약·권한 | public 제약 정의·관계/sequence 소유자/ACL·DB 소유자 비교 |
+| 제약·권한·sequence | public 제약 정의·관계/sequence 소유자/ACL·DB 소유자 비교. dump의 SEQUENCE SET만 읽어 last_value·is_called를 복원 DB와 대조 |
 | 앱 | Flyway 재실행 없이 Hibernate validate, 읽기 전용 훈련 역할 연결, readiness 정상 |
 | API | 격리용 임시 JWT로 GET /api/v1/teams의 SUCCESS·건수 일치, 무인증401/403 |
 | 쓰기 거절 | 읽기 전용 transaction 확인, DELETE의 실제 read-only/permission 오류 확인 |
@@ -84,23 +84,30 @@ node ops/backup/qa/restore-negative.mjs \
 ## 실제 Mac 사본 복원 관찰 · 2026-10-05 KST
 
 - 대상: `20261005T131138Z-65fb8f2213613b45`, snapshot **22:11:39 KST**, age **184552 bytes**.
-- 실제 복원: public 테이블 **20개**, 성공 Flyway **27개**, 관계 소유권/ACL **38개**, 제약조건 **51개** 대조 일치. 조회 API200·건수 일치, 무인증 거절, 훈련 계정 쓰기 거절.
+- 실제 복원: public 테이블 **20개**, 성공 Flyway **27개**, 관계 소유권/ACL **38개**, 제약조건 **51개**, sequence 값/호출 상태 **18개** 대조 일치. 조회 API200·건수 일치, 무인증 거절, 훈련 계정 쓰기 거절.
 - 재빌드 JAR SHA256: `71ae7244d713fae52a696524d85059153f44bcfbdd9dd7ae798ba695e28e850f`. 운영 소스 main `218f522`과 업무 Java/스키마는 동일하다. ZIP/빌드 메타데이터가 다른 운영 artifact와 같은 파일이라고 주장하지 않는다. #203/V28은 포함하지 않는다.
 - 실제 사본 실패 시험 **6개 통과**. 성공·실패·취소 후 자체 훈련 컨테이너와 평문 제거를 확인했다. 운영 DB 변경/중단 없이 수행했다.
 - CI용 새 데이터 fixture에서도 실제 Flyway·백업·복원·조회와 실패6개를 로컬 실행해 통과했다. 이는 GitHub runner의 실행 결과와 별도로 기록한다.
 
-최종 실제 사본 실행의 데이터 경과는 시작 시 **1847초(30분47초)**였다. 당시 선택한 snapshot으로부터의 경과이며 시스템이 보장한 RPO가 아니다.
+sequence 검증까지 포함한 최종 실제 사본 실행의 데이터 경과는 시작 시 **2999초(49분59초)**였다. 당시 선택한 snapshot으로부터의 경과이며 시스템이 보장한 RPO가 아니다. 해당 실행 중 다른 격리 QA도 실행 중이었다.
 
 | 단계 | 단일 실행 관찰 |
 | --- | --- |
 | 입력 크기·hash 검사 | 3ms |
 | 복호화·압축/내부 hash 검사 | 16ms |
-| 이미지 확인·DB/역할 준비 | 1332ms |
-| pg_restore | 77ms |
-| DB 데이터·권한·쓰기 거절 검증 | 1736ms |
-| 앱 준비·조회 API·인증 거절 | 3969ms |
-| 전체 정리 전 | 7186ms |
-| 정리 | 105ms |
+| 이미지 확인·DB/역할 준비 | 3635ms |
+| pg_restore | 107ms |
+| DB 데이터·권한·sequence·쓰기 거절 검증 | 2916ms |
+| 앱 준비·조회 API·인증 거절 | 4971ms |
+| 전체 정리 전 | 11698ms |
+| 정리 | 118ms |
+
+복원 실패·재검증의 Slack 전달은 실제 격리 실패/후속 성공을 확인한 뒤 `[검증용]` 안내 알림으로 별도 시험한다. 실제 고객 장애나 복원 시간 알림 자동화의 증거로 사용하지 않는다.
+
+```bash
+node ops/backup/verify-slack.mjs fire PRIVATE_RECEIPT_FILE restore
+node ops/backup/verify-slack.mjs resolve PRIVATE_RECEIPT_FILE restore
+```
 
 단계별 시간과 해당 실행 시작 시 데이터 경과는 JSON 결과로 남긴다. Mac에 이미 있는 사본을 사용하므로 **SSH 다운로드 시간을 포함하지 않는다**. 이미지가 준비된 소규모 DB 단일 관찰값은 보장 RTO·장기 평균이 아니다. 하루1회 백업과 Mac 잠자기/오프라인의 전달 지연 때문에 고정 RPO도 보장하지 않는다. 복구 가능한 시점은 ACK 시각이 아닌 **snapshot 시각**이다.
 
