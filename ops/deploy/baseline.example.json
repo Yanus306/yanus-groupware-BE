@@ -1,0 +1,8 @@
+{
+  "environment": "prod",
+  "sha256": "REVIEW_CURRENT_JAR_SHA256",
+  "sourceCommit": "VERIFY_ACTUAL_SOURCE_COMMIT",
+  "runningCommit": null,
+  "schemaSha256": "SHA256_OF_ORDERED_HISTORY_JSON",
+  "compatibilityApproved": false
+}

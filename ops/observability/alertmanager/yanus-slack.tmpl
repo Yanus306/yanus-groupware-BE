@@ -1,0 +1,9 @@
+{{ define "yanus.title" }}[yANUs PROD] {{ .Status | toUpper }} · {{ .CommonLabels.alertname }}{{ end }}
+{{ define "yanus.text" }}
+{{ range .Alerts }}*{{ .Annotations.summary }}*
+대상: {{ .Labels.instance }} / {{ .Labels.service }} / {{ .Labels.severity }}
+{{ .Annotations.description }}
+발생: {{ .StartsAt }}{{ if eq .Status "resolved" }} / 복구: {{ .EndsAt }}{{ end }}
+<{{ .Annotations.dashboard_url }}|Grafana> · <{{ .Annotations.runbook_url }}|대응 도움말>
+{{ end }}
+{{ end }}

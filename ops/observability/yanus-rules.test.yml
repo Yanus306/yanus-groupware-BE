@@ -1,0 +1,75 @@
+rule_files:
+  - yanus-rules.yml
+evaluation_interval: 1m
+tests:
+  - name: target-down-after-one-minute
+    interval: 1m
+    input_series:
+      - series: 'up{environment="prod",job="yanus-backend",instance="app-server",service="backend"}'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: YanusTargetDown
+        exp_alerts:
+          - exp_labels: {severity: critical, environment: prod, job: yanus-backend, instance: app-server, service: backend}
+            exp_annotations:
+              summary: PROD app-server yanus-backend 수집 중단
+              description: 서비스 상태와 exporter/scrape 연결을 함께 확인하세요.
+              dashboard_url: https://grafana.yanus.bond/d/yanus-overview
+              runbook_url: https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d
+  - name: low-traffic-does-not-page
+    interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{environment="prod",uri="/api/v1/example",status="500"}'
+        values: '0+1x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: YanusHigh5xxRate
+        exp_alerts: []
+  - name: sustained-five-percent-with-enough-traffic
+    interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{environment="prod",uri="/api/v1/example",status="500"}'
+        values: '0+60x20'
+      - series: 'http_server_requests_seconds_count{environment="prod",uri="/api/v1/example",status="200"}'
+        values: '0+240x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: YanusHigh5xxRate
+        exp_alerts:
+          - exp_labels: {severity: critical, environment: prod, service: backend, instance: app-server}
+            exp_annotations:
+              summary: PROD API 5xx 비율 5% 초과
+              description: 02 오류 URI·요청량 → 03 같은 시각 requestId → DB/외부 서비스 원인을 확인하세요.
+              dashboard_url: https://grafana.yanus.bond/d/yanus-api
+              runbook_url: https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d
+  - name: transient-scrape-failure-recovers-before-for
+    interval: 15s
+    input_series:
+      - series: 'up{environment="prod",job="yanus-backend",instance="app-server",service="backend"}'
+        values: '1 0 0 1 1 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: YanusTargetDown
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: YanusTargetDown
+        exp_alerts: []
+  - name: alertmanager-down-and-recovered
+    interval: 1m
+    input_series:
+      - series: 'up{environment="prod",job="yanus-alertmanager",instance="monitoring-server",service="monitoring"}'
+        values: '0 0 0 1 1'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: YanusAlertmanagerDown
+        exp_alerts:
+          - exp_labels: {severity: critical, environment: prod, service: monitoring, instance: monitoring-server, job: yanus-alertmanager}
+            exp_annotations:
+              summary: PROD Alertmanager 수집 중단
+              description: 알림 전달 경로가 끊길 수 있습니다. loopback 9093·서비스와 외부 Actions 실행 기록을 확인하세요.
+              dashboard_url: https://grafana.yanus.bond/d/yanus-overview
+              runbook_url: https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d
+      - eval_time: 4m
+        alertname: YanusAlertmanagerDown
+        exp_alerts: []

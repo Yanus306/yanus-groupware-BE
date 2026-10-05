@@ -1,0 +1,41 @@
+import fs from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import assert from 'node:assert/strict';
+import { jarMetadata, digest } from '../jar-metadata.mjs';
+import { verifyRelease } from '../verify-release.mjs';
+
+const execute = promisify(execFile);
+const config = '/etc/yanus-deploy/baseline.json';
+const baseline = JSON.parse(await fs.readFile(config, 'utf8'));
+assert.equal(baseline.environment, 'qa');
+const commit = baseline.sourceCommit;
+const incoming = `/home/yanus/incoming/${commit}`;
+await execute('systemctl', ['stop', 'yanus']);
+await fs.copyFile('/source/build/libs/attendance-0.0.1-SNAPSHOT.jar', '/home/yanus/app/legacy.jar');
+await execute('zip', ['-dq', '/home/yanus/app/legacy.jar', 'META-INF/build-info.properties']);
+await fs.unlink('/home/yanus/app/app.jar'); await fs.rename('/home/yanus/app/legacy.jar', '/home/yanus/app/app.jar');
+await fs.copyFile('/source/ops/observability/application-observability.properties', '/opt/yanus-observability/application-observability.properties');
+await fs.appendFile('/opt/yanus-observability/application-observability.properties', '\nmanagement.health.mail.enabled=false\n');
+const old = await jarMetadata('/home/yanus/app/app.jar'); assert.equal(old.commit, null);
+await fs.writeFile(config, JSON.stringify({ ...baseline, sha256: old.sha256, runningCommit: null }), { mode: 0o600 });
+await execute('systemctl', ['start', 'yanus']);
+assert.equal((await verifyRelease({ legacy: true, management: 'http://127.0.0.1:9091', main: 'http://127.0.0.1:8080' })).ok, true);
+await fs.copyFile('/source/build/libs/attendance-0.0.1-SNAPSHOT.jar', `${incoming}/app.jar`);
+const temporary = await fs.mkdtemp('/tmp/yanus-legacy-bad-'); await fs.mkdir(`${temporary}/META-INF`);
+const { stdout: manifest } = await execute('unzip', ['-p', `${incoming}/app.jar`, 'META-INF/MANIFEST.MF']);
+await fs.writeFile(`${temporary}/META-INF/MANIFEST.MF`, manifest.replace(/Start-Class: [^\r\n]+/, 'Start-Class: fixture.missing.Main'));
+await execute('zip', ['-q', `${incoming}/app.jar`, 'META-INF/MANIFEST.MF'], { cwd: temporary });
+await execute('node', ['/source/ops/deploy/create-manifest.mjs', `${incoming}/app.jar`, `${incoming}/manifest.json`], { env: { ...process.env, GITHUB_SHA: commit } });
+const startedAt = new Date().toISOString(); const began = performance.now();
+let result;
+try { await execute('bash', ['/usr/local/lib/yanus-deploy/deploy/deploy.sh', incoming], { timeout: 360000 }); throw new Error('Invalid JAR unexpectedly succeeded'); }
+catch (error) { result = error; }
+assert.equal(result.code, 1); assert.match(result.stdout, /"status":"ROLLED_BACK"/);
+assert.equal((await jarMetadata('/home/yanus/app/app.jar')).sha256, old.sha256);
+assert.equal((await fs.lstat('/home/yanus/app/app.jar')).isFile(), true, 'original legacy regular file restored atomically');
+assert.equal((await fs.stat(/"snapshot":"([^"]+)"/.exec(result.stdout)[1])).mode & 0o777, 0o700, 'snapshot stays root-only');
+assert.equal((await verifyRelease({ legacy: true, management: 'http://127.0.0.1:9091', main: 'http://127.0.0.1:8080' })).ok, true);
+const evidence = { scenario: 'legacy regular JAR without build-info restores after invalid candidate', environment: 'isolated systemd', production: false, startedAt, finishedAt: new Date().toISOString(), elapsedMs: Math.round(performance.now() - began), outcome: 'ROLLED_BACK', previousHash: old.sha256, originalFileRestored: true, protectedSnapshot: true };
+await fs.writeFile('/source-evidence/legacy.json', JSON.stringify(evidence, null, 2)); console.log(JSON.stringify(evidence));
+await fs.rm(temporary, { recursive: true });
