@@ -7,6 +7,23 @@ on:
     branches: [ dev, main ]
 
 jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 백업 사본 검증·실패·잠금·보존 테스트
+        run: node --test ops/backup/*.test.mjs
+      - name: PostgreSQL16 격리 백업·암호화·실패 복구 검증
+        run: node ops/backup/qa/scenarios.mjs
+      - name: 백업 실패·지연·지표 누락 알림 규칙 검증
+        run: docker run --rm --entrypoint promtool -v "$PWD/ops/backup:/work:ro" -w /work prom/prometheus:v2.45.3 test rules yanus-backup-rules.test.yml
+
   observability:
     runs-on: ubuntu-latest
     timeout-minutes: 5
