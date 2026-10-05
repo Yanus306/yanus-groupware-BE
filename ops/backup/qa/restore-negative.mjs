@@ -36,6 +36,10 @@ try {
   results.push('운영 대상 입력 거절 PASS');
 
   await run('age-keygen', ['-o', join(fixture, 'wrong-key.txt')]);
+  await chmod(join(fixture, 'wrong-key.txt'), 0o644);
+  await expectFailure(restoreDrill({ ...config, identity: join(fixture, 'wrong-key.txt') }), /UNPROTECTED_IDENTITY/);
+  results.push('그룹/다른 사용자에게 열린 개인키 권한 거절 PASS');
+  await chmod(join(fixture, 'wrong-key.txt'), 0o600);
   await expectFailure(restoreDrill({ ...config, identity: join(fixture, 'wrong-key.txt') }), /DECRYPT_FAILED/);
   results.push('잘못된 복호화키 거절·평문 정리 PASS');
   await writeFile(join(fixture, `${id}.age`), 'damaged fixture archive');

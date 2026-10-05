@@ -69,7 +69,7 @@ node --test ops/backup/*.test.mjs
 node ops/backup/qa/restore-fixture.mjs build/libs/attendance-0.0.1-SNAPSHOT.jar
 ```
 
-CI는 새 DB에 실제 백엔드의 Flyway V1~V27을 적용하고 임시 팀 두 건을 만든 뒤, 같은 백업 스크립트로 암호화·복원한다. 운영 DB·SSH·고객 사본·운영 복호화키를 사용하지 않는다. 임시 키와 사본도 종료 시 삭제한다. 잘못된 키·암호화 손상·hash는 맞지만 유효하지 않은 dump·소유자 역할 누락·운영 대상 옵션·SIGTERM 정리를 검증한다. CI `test` job은 기존 테스트와 빌드가 통과한 같은 JAR로 실행한다.
+CI는 새 DB에 실제 백엔드의 현재 versioned Flyway inventory(관찰 시 V1~V27)를 적용하고 임시 팀 두 건을 만든 뒤, 같은 백업 스크립트로 암호화·복원한다. 기대하는 이력 개수도 현재 migration 파일 목록을 기준으로 계산한다. 운영 DB·SSH·고객 사본·운영 복호화키를 사용하지 않는다. 임시 키와 사본도 종료 시 삭제한다. 열린 키 권한·잘못된 키·암호화 손상·hash는 맞지만 유효하지 않은 dump·소유자 역할 누락·운영 대상 옵션·SIGTERM 정리를 검증한다. CI `test` job은 기존 테스트와 빌드가 통과한 같은 JAR로 실행한다.
 
 로컬 실제 사본의 실패 주입은 다음 명령으로 수행하며 변경은 별도 임시 사본에만 적용한다.
 
@@ -86,8 +86,8 @@ node ops/backup/qa/restore-negative.mjs \
 - 대상: `20261005T131138Z-65fb8f2213613b45`, snapshot **22:11:39 KST**, age **184552 bytes**.
 - 실제 복원: public 테이블 **20개**, 성공 Flyway **27개**, 관계 소유권/ACL **38개**, 제약조건 **51개**, sequence 값/호출 상태 **18개** 대조 일치. 조회 API200·건수 일치, 무인증 거절, 훈련 계정 쓰기 거절.
 - 재빌드 JAR SHA256: `71ae7244d713fae52a696524d85059153f44bcfbdd9dd7ae798ba695e28e850f`. 운영 소스 main `218f522`과 업무 Java/스키마는 동일하다. ZIP/빌드 메타데이터가 다른 운영 artifact와 같은 파일이라고 주장하지 않는다. #203/V28은 포함하지 않는다.
-- 실제 사본 실패 시험 **6개 통과**. 성공·실패·취소 후 자체 훈련 컨테이너와 평문 제거를 확인했다. 운영 DB 변경/중단 없이 수행했다.
-- CI용 새 데이터 fixture에서도 실제 Flyway·백업·복원·조회와 실패6개를 로컬 실행해 통과했다. 이는 GitHub runner의 실행 결과와 별도로 기록한다.
+- 실제 사본 실패 시험 **6개 통과**. 추가 열린 개인키 권한 거절을 포함한 **7개**는 고객 데이터 없는 실제 CI fixture로 검증한다. 성공·실패·취소 후 자체 훈련 컨테이너와 평문 제거를 확인했다. 운영 DB 변경/중단 없이 수행했다.
+- CI용 새 데이터 fixture에서도 실제 Flyway·백업·복원·조회와 실패7개를 로컬 실행해 통과했다. 이는 GitHub runner의 실행 결과와 별도로 기록한다.
 
 sequence 검증까지 포함한 최종 실제 사본 실행의 데이터 경과는 시작 시 **2999초(49분59초)**였다. 당시 선택한 snapshot으로부터의 경과이며 시스템이 보장한 RPO가 아니다. 해당 실행 중 다른 격리 QA도 실행 중이었다.
 
@@ -108,6 +108,8 @@ sequence 검증까지 포함한 최종 실제 사본 실행의 데이터 경과�
 node ops/backup/verify-slack.mjs fire PRIVATE_RECEIPT_FILE restore
 node ops/backup/verify-slack.mjs resolve PRIVATE_RECEIPT_FILE restore
 ```
+
+실제 검증용 한국어 [장애22:58:10KST](https://yanushq.slack.com/archives/C0C6N4CJHRC/p1791208690773889)·[복구23:03:10KST](https://yanushq.slack.com/archives/C0C6N4CJHRC/p1791208990792709) 수신 확인. Alertmanager 직접 입력 전달 시험이며 실제 DB 장애 감지·복원 자동 알림·MTTD/MTTR 측정값이 아니다.
 
 단계별 시간과 해당 실행 시작 시 데이터 경과는 JSON 결과로 남긴다. Mac에 이미 있는 사본을 사용하므로 **SSH 다운로드 시간을 포함하지 않는다**. 이미지가 준비된 소규모 DB 단일 관찰값은 보장 RTO·장기 평균이 아니다. 하루1회 백업과 Mac 잠자기/오프라인의 전달 지연 때문에 고정 RPO도 보장하지 않는다. 복구 가능한 시점은 ACK 시각이 아닌 **snapshot 시각**이다.
 
