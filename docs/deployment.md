@@ -1,6 +1,6 @@
 # yANUs 배포 검증과 앱 복구
 
-#205 구현 후 사용자가 검토한 후보 범위를 승인하여 2026-10-05 `4493049` 동일 JAR를 app-server에 적용했다. private 실행 commit·DB readiness/liveness·메인/공개 JSON·실제 Slack SUCCESS 수신을 확인했고 기존 JAR·설정은 root0700 snapshot에 보존했다. helper·보호된 baseline·이력 전용 DB 역할·고정 SSH host key를 준비한 뒤 `YANUS_DEPLOY_ENABLED=true`를 설정했다. 기본 브랜치 자동 CD run은 통합 후 확인한다. #203/V28은 제외하고 V27을 유지한다.
+#205 구현 후 사용자가 검토한 후보 범위를 승인하여 2026-10-05 `4493049` 동일 JAR를 app-server에 적용했다. 이후 #206/#207 → dev, #208 → main 통합과 [자동 CD 37299741382](https://github.com/Yanus306/yanus-groupware-BE/actions/runs/37299741382)의 성공을 확인했다. 실행 commit·DB readiness/liveness·메인/공개 JSON·실제 Slack 수신과 root0700 이전 릴리스 스냅샷이 배포 완료 근거다. 보호된 baseline·이력 전용 DB 역할·고정 SSH host key를 준비한 뒤 자동 배포를 활성화했다. #203/V28은 제외하고 V27을 유지한다.
 
 ## 동일 후보와 버전
 
@@ -26,7 +26,9 @@ Node22+, JDK21, systemd, flock, psql, unzip, jq, timeout이 필요하다. 검토
 
 GitHub에는 기존 서버 secret과 별도로 `SERVER_KNOWN_HOSTS`가 필요하다. 기존 신뢰된 SSH 연결에서 읽은 서버 Ed25519 공개 키를 고정하고 StrictHostKeyChecking=yes를 사용한다. 호스트명 패턴은 전용 known_hosts 파일에서 서버 Secret의 연결 이름/포트를 수용하지만 허용 키는 그 서버 키 하나다. 배포 시 ssh-keyscan 결과를 그대로 신뢰하거나 host key 검사를 끄지 않는다. `production` environment와 배포 활성화 변수는 서버 준비 후 적용했다. 기존 yanus 계정의 다른 sudo 허용은 보존되므로 helper용 규칙을 전체 계정의 최소 권한이라고 표현하지 않는다.
 
-운영 적용 JAR SHA256는 `50ec1c9c6f28f5cc389313cce2c8e038f01800deea24ed53dbf00245801b5066`, 실행 commit은 `4493049aebfe4b8dc0156aba0a777ff28359329d`이다. 2026-10-05T10:41:08Z 서비스 기동, 공개 API1303ms UP, 10:41:40.234119Z Slack SUCCESS 수신을 확인했다. 모두 단일 관찰이며 고객 장애 복구 시간이나 SLO를 의미하지 않는다.
+첫 수동 운영 적용은 `4493049`, SHA256 `50ec1c9c6f28f5cc389313cce2c8e038f01800deea24ed53dbf00245801b5066`이었다. 이어 자동 CD의 검증한 동일 후보 `a780a5236f067ed35fed68d9420b8462a3ff8654`, SHA256 `cd8958d98c46b7ebfd06133ddb49c1680c48216481e5851012d4c4cb8582175d`가 운영에서 일치했다. 후보 테스트275개 실패·오류·생략0, private readiness UP, 공개 API1188ms 정상, 11:05:58 UTC 실제 Slack 배포 성공 수신을 확인했다. 이는 해당 배포 시점 관찰이며 후속 배포의 현재 버전은 private info와 manifest로 확인한다.
+
+자동 CD 첫 전달은 SSH 연결 시간 초과로 교체 전에 실패했다. 기존 신뢰된 서버 키로 현재 공개 SSH2222 경로를 확인하고 SERVER_HOST/PORT를 갱신한 뒤 실패한 전달 작업만 다시 실행했다. 처음 검증한 artifact를 그대로 사용해 두 번째 시도에서 성공했다. 기존 Secret 값은 조회할 수 없으므로 어느 이전 값이 틀렸는지는 단정하지 않는다. 연결 문제를 운영 앱 장애나 앱 롤백으로 기록하지 않는다.
 
 ## 교체와 복구
 
