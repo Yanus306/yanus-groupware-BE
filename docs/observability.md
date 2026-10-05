@@ -161,10 +161,12 @@ GitHub Actions `uptime.yml`은 매시 7·17·27·37·47·57분에 공개 API Ope
 
 ### #204 검증 근거 (2026-10-05)
 
+외부 점검 테스트는 총9개 PASS이며, 실제 임시 HTTPS 서버의 신뢰되지 않는 인증서를 TLS 오류로 분류하는 검증도 포함한다. 인증서 검증을 비활성화하지 않는다.
+
 실제 HTTP fixture에서 JSON·HTML·redirect·timeout·본문 크기·Slack 429/500/잘못된 응답을 확인했다. 실제 격리 Alertmanager와 HTTP 수신기로 장애·복구·중복·PROD 라우팅·디스크 억제를 검증했다. 이 수신기는 Slack mock이며 실제 채널 전달 증거가 아니다. 공개 주소의 읽기 전용 점검은 API 3,167ms, Grafana 1,122ms에 정상으로 관찰됐다. 단일 시점의 표본으로 SLO를 주장하지 않는다.
 
 ```bash
-node --test ops/observability/public-probe.test.mjs ops/observability/read-probe-state.test.mjs
+node --test ops/observability/*.test.mjs
 node ops/observability/verify-alert-routing.mjs
 docker run --rm --entrypoint promtool -v "$PWD/ops/observability:/work" -w /work prom/prometheus:v2.45.3 test rules yanus-rules.test.yml
 # dry-run도 실제 공개 HTTPS를 읽지만 Slack은 보내지 않는다.
