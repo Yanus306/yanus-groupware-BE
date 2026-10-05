@@ -14,7 +14,7 @@ Grafana·Prometheus·Loki는 실제 운영되지만 알림 수신지와 외부 �
 | 외부 점검 | 실제 HTTP/상태/전달/artifact/TLS 테스트9개, 공개 API3167ms·Grafana1122ms UP 읽기 관찰 | 기본 브랜치 예약 실행/run ID·실제 전달 전. 감지 시간 보장 없음 |
 | 대시보드·규칙 | promtool2.45.3 SUCCESS, 실제 PROD Prometheus100 PromQL 오류0 | 현재 트래픽이 없으면 latency NaN, 빈 ALERTS 정상 |
 | 준비 상태 | 격리 Postgres 중단에서 readiness503/liveness200·공개403, 승인 후보의 운영 private commit/readiness/liveness UP | DB 장애 주입은 격리 환경에서만 수행 |
-| 배포·복구 | 실제 격리 native systemd 실패/복구 훈련, 승인한4493049 동일 JAR 운영 SUCCESS·실제 Slack 수신·root0700 원본 snapshot | 자동 CD의 기본 브랜치 run은 통합 검증 중. 운영 실패 주입을 복구 증거로 사용하지 않음 |
+| 배포·복구 | 실제 격리 native systemd 실패/복구 훈련, 승인 후보 수동 운영 적용과 기본 브랜치 자동 CD37299741382 성공·실제 Slack 수신·root0700 원본 snapshot | 운영 실패 주입을 복구 증거로 사용하지 않음. 복구 시간은 격리 실험 단일 표본 |
 
 ## 실험과 개선
 
@@ -28,7 +28,7 @@ checksum 오류와 미검토 schema 정책은 교체 전에 거절하고 기존 
 
 source commit metadata가 없는 기존 JAR의 실제 hash와 migration inventory를 조사했다. 마지막 성공 CD의 e8ea205를 격리 재빌드하여 JAR 내부 파일441개 전체 일치로 재현 가능한 운영 소스 기준을 확보했다. ZIP 포장 hash는 달라 동일 artifact라고 주장하지 않는다. 후보에는 이미 main에 병합된 #200 DTO 정리가 포함된다. migration27개 일치가 전체 API/업무 호환성의 증거를 대신하지 않으며, 후보 활성화 전 별도 검토를 유지한다. #203/V28 배포는 별도 범위다.
 
-monitoring-server의 실제 Alertmanager0.28.1은 loopback9093에서 동작한다. Prometheus7개 scrape와10규칙,5개 Grafana 보드 도움말·datasource를 확인했다. channel-only Incoming Webhook 앱을 설치한 뒤 검증용 알림의 FIRING09:33:49UTC/RESOLVED09:35:29UTC 수신을 확인했다. 제목이 내부 URL을 가리키던 문제는 공개 Grafana 링크로 수정했다. 검증 도중 reload가 있어 전달 시간을 정상 group_interval·MTTD/MTTR로 쓰지 않는다. GitHub Secret은 등록했으며 default-branch Actions run은 남아 있다.
+monitoring-server의 실제 Alertmanager0.28.1은 loopback9093에서 동작한다. Prometheus7개 scrape와10규칙,5개 Grafana 보드 도움말·datasource를 확인했다. 채널 전용 웹훅 앱을 연결한 뒤 검증용 장애·복구 수신을 확인했다. 제목의 내부 URL은 공개 Grafana 링크로 수정했다. reload가 포함된 검증이므로 도착 시간을 정상 group_interval·MTTD/MTTR로 쓰지 않는다. 기본 브랜치 외부 점검37299742453에서 API1262ms·Grafana794ms 정상, 결과 artifact 보관을 확인했다. 정상 첫 점검에는 장애·복구 알림을 만들지 않는다. 10분 cron의 지연·누락 가능성은 유지한다.
 
 실험별 UTC 시각과 elapsed time은 격리 `scenarios.json`, `legacy.json`, `overlay.json`에 남기고 build/ 바깥에도 보존했다. 최종 Gradle275 tests/0 failures/0 errors/0 skipped·bootJar PASS12s, Node 외부9개/배포3개 PASS를 확인했다. 아직 실제 고객 장애에서 측정한 MTTD/MTTR나 장기 SLO가 아니다. Persona report/finish 상태도 제품 테스트와 구분해 기록한다.
 

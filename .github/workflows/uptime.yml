@@ -1,4 +1,4 @@
-name: PROD public availability
+name: 운영 외부 접속 점검
 on:
   schedule:
     - cron: '7,17,27,37,47,57 * * * *'
@@ -18,16 +18,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Load last scheduled observation
+      - name: 최근 예약 점검 결과 불러오기
         if: github.event_name == 'schedule'
         env:
           GH_TOKEN: ${{ github.token }}
         run: node ops/observability/read-probe-state.mjs
-      - name: Read-only public JSON checks and notifications
+      - name: 공개 접속 상태 확인 및 장애·복구 알림
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: node ops/observability/public-probe.mjs
-      - name: Save observation including failed probe or delivery
+      - name: 점검·알림 실패를 포함한 결과 보관
         if: always()
         uses: actions/upload-artifact@v4
         with:

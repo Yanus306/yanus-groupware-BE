@@ -54,12 +54,37 @@ test('Slack delivery requires HTTP 200 and ok; rejection/redirect/body limits re
       req.on('data', chunk => { payload += chunk; });
       req.on('end', () => {
         assert.ok(!payload.includes('secret-canary'));
+        assert.match(JSON.parse(payload).text, /장애 발생 · 백엔드 API/);
+        assert.match(JSON.parse(payload).text, /원인: 응답 시간 초과/);
         assert.match(JSON.parse(payload).text, /대응:/);
         res.writeHead(status, { 'content-type': 'text/plain', ...(status === 302 ? { location: url } : {}) }); res.end(body);
       });
     });
     const forwarded = (_, options) => fetch(url, options);
     assert.equal(await sendSlack('https://hooks.slack.com/services/secret-canary', down, 'DOWN', when, forwarded), expected);
+  }
+});
+test('recovery and deployment messages explain the outcome in Korean without reflecting untrusted text', async () => {
+  const commit = 'a'.repeat(40);
+  for (const [kind, result, expected] of [
+    ['RECOVERED', up, '복구 완료'],
+    ['REMINDER', down, '장애 지속'],
+    ['SUCCESS', { id: 'deployment', commit }, '배포 성공'],
+    ['ROLLED_BACK', { id: 'deployment', commit }, '이전 버전 복구 완료'],
+    ['ROLLBACK_FAILED', { id: 'deployment', commit }, '자동 복구 실패'],
+    ['untrusted-canary', { id: 'untrusted-canary', reason: 'untrusted-canary' }, '상태 확인 필요'],
+    ['toString', { id: 'constructor', reason: '__proto__' }, '상태 확인 필요'],
+  ]) {
+    let text;
+    const receiver = async (_, options) => {
+      text = JSON.parse(options.body).text;
+      return new Response('ok', { status: 200 });
+    };
+    assert.equal(await sendSlack('https://hooks.slack.com/services/fixture', result, kind, when, receiver), 'sent');
+    assert.ok(text.includes(expected));
+    assert.ok(!text.includes('untrusted-canary'));
+    assert.ok(!text.includes('function'));
+    if (result.id === 'deployment') assert.ok(text.includes(`버전: ${commit}`));
   }
 });
 test('initial failure, delivered recovery and hourly reminder; no invented recovery', () => {

@@ -54,8 +54,9 @@ try {
   await post(future); await post(future);
   await waitFor(() => messages.length >= 1);
   assert.equal(messages.length, 1, 'identical alert must group/deduplicate');
+  assert.match(messages[0].attachments[0].title, /장애 발생/);
   await post(new Date().toISOString());
-  await waitFor(() => messages.some(message => JSON.stringify(message).includes('RESOLVED')));
+  await waitFor(() => messages.some(message => JSON.stringify(message).includes('복구 완료')));
   const prodCount = messages.length;
   await post(future, { environment: 'dev' });
   await delay(2500);
@@ -68,6 +69,9 @@ try {
   assert.ok(JSON.stringify(messages).includes('대응 도움말'));
   await fs.writeFile(path.join(directory, 'evidence.json'), JSON.stringify({ observedAt: new Date().toISOString(), runtime: 'isolated Alertmanager 0.28.1 + real HTTP mock', duplicatePosts: 2, messages, productionSlack: false }, null, 2));
   console.log(JSON.stringify({ status: 'PASS', firingAndResolved: true, deduplication: true, prodOnly: true, diskInhibition: true, evidence: path.join(directory, 'evidence.json') }));
+} catch (error) {
+  await fs.writeFile(path.join(directory, 'failure.json'), JSON.stringify({ observedAt: new Date().toISOString(), messages, error: error.message }, null, 2));
+  throw error;
 } finally {
   await execute('docker', ['rm', '-f', name]).catch(() => {});
   mock.closeAllConnections(); await new Promise(resolve => mock.close(resolve));
