@@ -1,0 +1,65 @@
+import fs from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import assert from 'node:assert/strict';
+import { jarMetadata, digest } from '../jar-metadata.mjs';
+import { verifyRelease } from '../verify-release.mjs';
+
+const execute = promisify(execFile);
+const config = '/etc/yanus-deploy/baseline.json';
+const baseline = JSON.parse(await fs.readFile(config, 'utf8'));
+assert.equal(baseline.environment, 'qa');
+const candidate = await jarMetadata('/source/build/libs/attendance-0.0.1-SNAPSHOT.jar');
+assert.match(candidate.commit, /^[a-f0-9]{40}$/);
+const incoming = `/home/yanus/incoming/${candidate.commit}`;
+const old = await jarMetadata('/source/build/baseline/production.jar');
+assert.equal(old.sha256, '460b6e4733f196628d089280fd727d8af2a6a1015b61d3fddd921d6df0e2778a');
+assert.equal(old.commit, null);
+await execute('systemctl', ['stop', 'yanus']);
+await fs.rm('/etc/systemd/system/yanus.service.d', { recursive: true, force: true });
+await fs.rm('/home/yanus/app/app.jar', { force: true });
+await fs.copyFile('/source/build/baseline/production.jar', '/home/yanus/app/app.jar');
+await fs.rm('/opt/yanus-observability/lib', { recursive: true, force: true });
+await fs.cp('/source/build/baseline/lib', '/opt/yanus-observability/lib', { recursive: true });
+const properties = '/opt/yanus-observability/application-observability.properties';
+await fs.copyFile('/source/ops/observability/application-observability.properties', properties);
+await fs.appendFile(properties, '\nmanagement.health.mail.enabled=false\n');
+const unit = '/etc/systemd/system/yanus.service';
+await fs.writeFile(unit, '[Unit]\nAfter=postgresql.service\n[Service]\nUser=yanus\nEnvironmentFile=/home/yanus/app/.env\nExecStart=/usr/bin/java -Dloader.path=/opt/yanus-observability/lib -cp /home/yanus/app/app.jar org.springframework.boot.loader.launch.PropertiesLauncher\nRestart=no\n[Install]\nWantedBy=multi-user.target\n');
+async function libraryInventory() {
+  const names = (await fs.readdir('/opt/yanus-observability/lib')).sort();
+  assert.ok(names.length > 0);
+  return Promise.all(names.map(async name => ({ name, sha256: digest(await fs.readFile(`/opt/yanus-observability/lib/${name}`)) })));
+}
+const libraries = await libraryInventory();
+const unitHash = digest(await fs.readFile(unit));
+const propertiesHash = digest(await fs.readFile(properties));
+await fs.writeFile(config, JSON.stringify({ ...baseline, sha256: old.sha256, runningCommit: null }), { mode: 0o600 });
+await execute('systemctl', ['daemon-reload']);
+await execute('systemctl', ['start', 'yanus']);
+assert.equal((await verifyRelease({ legacy: true, management: 'http://127.0.0.1:9091', main: 'http://127.0.0.1:8080' })).ok, true, 'actual legacy JAR and overlay start with isolated DB');
+await fs.mkdir(incoming, { recursive: true });
+await fs.copyFile('/source/build/libs/attendance-0.0.1-SNAPSHOT.jar', `${incoming}/app.jar`);
+const temporary = await fs.mkdtemp('/tmp/yanus-overlay-bad-');
+await fs.mkdir(`${temporary}/META-INF`);
+const { stdout: manifest } = await execute('unzip', ['-p', `${incoming}/app.jar`, 'META-INF/MANIFEST.MF']);
+await fs.writeFile(`${temporary}/META-INF/MANIFEST.MF`, manifest.replace(/Start-Class: [^\r\n]+/, 'Start-Class: fixture.missing.Main'));
+await execute('zip', ['-q', `${incoming}/app.jar`, 'META-INF/MANIFEST.MF'], { cwd: temporary });
+await execute('node', ['/source/ops/deploy/create-manifest.mjs', `${incoming}/app.jar`, `${incoming}/manifest.json`], { env: { ...process.env, GITHUB_SHA: candidate.commit } });
+const startedAt = new Date().toISOString();
+const began = performance.now();
+let result;
+try { await execute('bash', ['/usr/local/lib/yanus-deploy/deploy/deploy.sh', incoming], { timeout: 360000 }); throw new Error('Invalid JAR unexpectedly succeeded'); }
+catch (error) { result = error; }
+assert.equal(result.code, 1); assert.match(result.stdout, /"status":"ROLLED_BACK"/);
+assert.equal((await jarMetadata('/home/yanus/app/app.jar')).sha256, old.sha256);
+assert.deepEqual(await libraryInventory(), libraries);
+assert.equal(digest(await fs.readFile(unit)), unitHash);
+assert.equal(digest(await fs.readFile(properties)), propertiesHash);
+assert.equal((await fs.stat(/"snapshot":"([^"]+)"/.exec(result.stdout)[1])).mode & 0o777, 0o700);
+assert.equal((await verifyRelease({ legacy: true, management: 'http://127.0.0.1:9091', main: 'http://127.0.0.1:8080' })).ok, true);
+const evidence = { scenario: 'actual baseline JAR and PropertiesLauncher/lib overlay restore after invalid candidate', environment: 'isolated systemd/Postgres16 with synthetic configuration/data', production: false, actualJarAndLibraries: true, productionConfigurationOrData: false, startedAt, finishedAt: new Date().toISOString(), elapsedMs: Math.round(performance.now() - began), outcome: 'ROLLED_BACK', previousHash: old.sha256, libraries, unitRestored: true, propertiesRestored: true, protectedSnapshot: true };
+await fs.mkdir('/source-evidence', { recursive: true });
+await fs.writeFile('/source-evidence/overlay.json', JSON.stringify(evidence, null, 2));
+console.log(JSON.stringify(evidence));
+await fs.rm(temporary, { recursive: true });
