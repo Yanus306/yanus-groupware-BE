@@ -11,6 +11,13 @@ alerting:
     - static_configs:
         - targets: ['127.0.0.1:9093']
 scrape_configs:
+  - job_name: yanus-tempo
+    static_configs:
+      - targets: ['127.0.0.1:3200']
+        labels:
+          environment: prod
+          service: tracing
+          instance: monitoring-server
   - job_name: yanus-alertmanager
     static_configs:
       - targets: ['127.0.0.1:9093']

@@ -56,6 +56,19 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
       - name: 빌드
-        run: ./gradlew build -x test
+        run: ./gradlew build -x test tracingJar
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 검증된 Java Agent 준비
+        run: |
+          mkdir -p .omo/downloads
+          curl --fail --silent --show-error --location --max-time 120 https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.32.0/opentelemetry-javaagent.jar -o .omo/downloads/opentelemetry-javaagent.jar
+          printf 'f787eb6c7f3d18e69a431e108a15278d25ee37f83d68b678f621e063f3988f82  .omo/downloads/opentelemetry-javaagent.jar\n' | sha256sum -c -
+      - name: 실제 HTTP·JDBC 추적과 민감 정보 제거·수집기 실패 격리 검증
+        run: |
+          docker build -t yanus-tracing-qa:217 -f ops/tracing/qa/Dockerfile .
+          node ops/tracing/qa/scenarios.mjs
