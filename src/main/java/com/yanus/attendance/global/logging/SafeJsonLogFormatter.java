@@ -18,6 +18,9 @@ public final class SafeJsonLogFormatter implements StructuredLogFormatter<ILoggi
     private static final Pattern CREDENTIAL = Pattern.compile(
             "(?i)(password|passwd|secret|access[-_]?token|refresh[-_]?token|verification[-_]?token|authorization|cookie)(\\s*[=:]\\s*)[^\\s,;]+|Bearer\\s+[^\\s,;]+|eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+");
     private static final Pattern EMAIL = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
+    private static final Pattern TRACE_ID = Pattern.compile("[0-9a-f]{32}");
+    private static final Pattern SPAN_ID = Pattern.compile("[0-9a-f]{16}");
+    private static final Pattern TRACE_FLAGS = Pattern.compile("[0-9a-f]{2}");
 
     @Override
     public String format(ILoggingEvent event) {
@@ -32,6 +35,16 @@ public final class SafeJsonLogFormatter implements StructuredLogFormatter<ILoggi
         String requestId = event.getMDCPropertyMap().get("requestId");
         if (requestId != null) {
             fields.put("requestId", requestId);
+        }
+        String traceId = event.getMDCPropertyMap().get("trace_id");
+        String spanId = event.getMDCPropertyMap().get("span_id");
+        if (validId(traceId, TRACE_ID) && validId(spanId, SPAN_ID)) {
+            fields.put("traceId", traceId);
+            fields.put("spanId", spanId);
+            String flags = event.getMDCPropertyMap().get("trace_flags");
+            if (flags != null && TRACE_FLAGS.matcher(flags).matches()) {
+                fields.put("traceFlags", flags);
+            }
         }
         if (event.getKeyValuePairs() != null) {
             event.getKeyValuePairs().stream().filter(pair -> FIELDS.contains(pair.key))
@@ -50,6 +63,10 @@ public final class SafeJsonLogFormatter implements StructuredLogFormatter<ILoggi
         } catch (JsonProcessingException e) {
             return "{\"level\":\"ERROR\",\"event\":\"logging.serialization.failed\"}\n";
         }
+    }
+
+    private static boolean validId(String value, Pattern pattern) {
+        return value != null && pattern.matcher(value).matches() && value.chars().anyMatch(c -> c != '0');
     }
 
     private static String redact(String value) {
