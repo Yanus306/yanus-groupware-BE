@@ -112,5 +112,6 @@ Grafana datasource provisioning에서는 링크 매크로의 `$`를 `$$`로 이�
 - 실제 Grafana6개 UID·한국어 도움말·기존 requestId 필터 보존과 Prometheus/Loki/Tempo 데이터소스 health OK 확인.
 - 실제 운영 읽기 요청40개 로그 중5개가 샘플링됐고 해당 HTTP200 traceId 조회·URL 쿼리 제거·JDBC 검색5건을 확인했다. 실제 수집/조회 증거이며 장기 샘플링 비율 측정값은 아니다. datasource를 거친 보드 TraceQL도200/traceID열을 확인했고100ms 이상0행은 정상 빈 결과다.
 - 기존 PROD05의 백업 패널을 덮어쓰지 않고6번 이동 링크만 추가했다. 노션 운영 문서에도 실제 검증과 남은 한계를 구분해 기록한다.
+- 실제 Grafana 화면에서 API 문서 읽기 요청의 TraceID 링크가 HTTP200·30.71ms span을 열고, 관련 로그 링크가 동일 traceId·requestId의 로그 한 건을 반환하는 것을 확인했다.
 
 다음 작업은 별도 격리 부하 테스트와 병목 개선이다. 실제 외부 업무 연동을 호출하는 훈련과 장기 자원 영향 측정은 이번 완료 증거에 포함하지 않는다.
