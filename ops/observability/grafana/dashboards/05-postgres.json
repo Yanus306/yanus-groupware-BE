@@ -1,0 +1,1173 @@
+{
+  "id": null,
+  "uid": "yanus-postgres",
+  "title": "05 PostgreSQL",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": [
+    "yanus",
+    "prod"
+  ],
+  "editable": false,
+  "graphTooltip": 1,
+  "timezone": "Asia/Seoul",
+  "refresh": "30s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "15s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "배포 · 운영 기록",
+        "type": "dashboard",
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "#5794F2",
+        "builtIn": 1
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "01 전체 상태",
+      "type": "link",
+      "url": "/d/yanus-overview",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "02 API 요청·오류",
+      "type": "link",
+      "url": "/d/yanus-api",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "03 로그",
+      "type": "link",
+      "url": "/d/yanus-logs",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "04 서버 자원",
+      "type": "link",
+      "url": "/d/yanus-hosts",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "05 PostgreSQL",
+      "type": "link",
+      "url": "/d/yanus-postgres",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "label": "환경",
+        "type": "custom",
+        "query": "prod",
+        "current": {
+          "text": "prod",
+          "value": "prod"
+        },
+        "options": [
+          {
+            "text": "prod",
+            "value": "prod",
+            "selected": true
+          }
+        ],
+        "hide": 0
+      },
+      {
+        "name": "instance",
+        "label": "호스트",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "yanus-prometheus"
+        },
+        "query": {
+          "query": "label_values(up{environment=\"$environment\",job=\"yanus-node\"}, instance)",
+          "refId": "variable"
+        },
+        "definition": "label_values(up{environment=\"$environment\",job=\"yanus-node\"}, instance)",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [],
+        "sort": 1,
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "PostgreSQL · 운영 DB",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "현재 DB는 자체 운영 PostgreSQL입니다. DB 서버 자원과 PostgreSQL 내부 통계를 함께 확인합니다. Hikari 연결 풀 지표는 02 API 요청·오류에서 확인하세요."
+      }
+    },
+    {
+      "id": 10000,
+      "type": "row",
+      "title": "도움말 · 어떤 상황에서 보고 어떻게 점검하나요?",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 10001,
+          "type": "text",
+          "title": "증상 → 지표 → 다음 점검",
+          "gridPos": {
+            "x": 0,
+            "y": 4,
+            "w": 24,
+            "h": 11
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "### DB 문제인지 연결 풀 문제인지 구분하세요\n| 상황 | 확인 순서 | 다음 점검 |\n| --- | --- | --- |\n| DB 연결 DOWN | pg_up → postgres/exporter 상태 | DB 자체 중단과 exporter 인증·socket 문제를 구분합니다. 지표만 보고 DB를 재시작하지 않습니다. |\n| Hikari Pending·Timeout 증가 | 02 Active·Max → DB별 연결 → DB CPU·I/O | 긴 트랜잭션·DB 연결 한도·느린 처리를 확인합니다. 풀만 늘리지 않습니다. |\n| API가 느리고 DB 처리량 변화 | Commit·Rollback, Cache Hit, Tuple·Temp Bytes | 작업량 증가, 롤백 반복, 디스크 읽기·임시 파일 증가를 함께 확인합니다. |\n| Deadlock 증가 | Deadlocks 추세 + 같은 시각의 예외 | 충돌한 트랜잭션과 잠금 순서를 조사합니다. PostgreSQL 로그와 요청 정보를 연결합니다. |\n| DB 크기·디스크 증가 | DB 크기, Temp Bytes, data-server 디스크 | 데이터 증가와 일시적 작업을 구분하고 보존·용량 계획을 확인합니다. |\n\n**해석 범위:** 자체 운영 PostgreSQL의 기본 통계입니다. Cache Hit는 DB 활동이 있는 구간에서 해석하며, 이 화면만으로 SQL별 지연이나 잠금 원인을 확정할 수 없습니다. 쿼리별 분석은 별도 DB 조사로 진행합니다.\n\n**장애 알림·외부 점검**: [대응 절차와 실행 현황](https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d). Slack 증상/시각과 이 보드의 환경·호스트·시간 범위를 맞춰 확인하세요. Actions 예약 지연·누락과 내부 수집 DOWN을 구분합니다."
+          }
+        }
+      ]
+    },
+    {
+      "id": 10002,
+      "type": "row",
+      "title": "운영 지표",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 2,
+      "title": "DB 연결",
+      "description": "연결·수집 성공 여부입니다. DOWN이면 서비스 상태, exporter와 네트워크를 구분해 확인하세요. UP은 업무 기능 전체의 정상 보장이 아닙니다.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "pg_up{environment=\"$environment\"}",
+          "legendFormat": "{{instance}}",
+          "range": false,
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "연결 수",
+      "description": "DB 처리·연결 추세를 Hikari 대기 및 API 지연과 비교하세요. Deadlock은 같은 시각의 DB·애플리케이션 로그로 원인을 조사합니다.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(pg_stat_database_numbackends{environment=\"$environment\",datname!~\"template.*\"})",
+          "legendFormat": "{{instance}}",
+          "range": false,
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "DB 크기",
+      "description": "사용률·가용 용량·I/O 지연을 함께 확인하세요. 증가한 파일과 작업을 조사하고 DB·로그·TSDB를 임의 삭제하지 않습니다.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "pg_database_size_bytes{environment=\"$environment\",datname=\"yanus\"}",
+          "legendFormat": "{{instance}}",
+          "range": false,
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "title": "DB 서버 CPU",
+      "description": "지속 상승과 API·DB 지연을 함께 보세요. user/system과 iowait를 구분하고 Load는 CPU 개수와 비교합니다.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{environment=\"$environment\",instance=\"data-server\",mode=\"idle\"}[$__rate_interval])))",
+          "legendFormat": "{{instance}}",
+          "range": false,
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "type": "row",
+      "title": "DB 연결 · 처리",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 7,
+      "title": "DB별 연결 수",
+      "description": "DB 처리·연결 추세를 Hikari 대기 및 API 지연과 비교하세요. Deadlock은 같은 시각의 DB·애플리케이션 로그로 원인을 조사합니다.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "pg_stat_database_numbackends{environment=\"$environment\",datname!~\"template.*\"}",
+          "legendFormat": "{{datname}}",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Transaction Commit · Rollback",
+      "description": "DB 처리·연결 추세를 Hikari 대기 및 API 지연과 비교하세요. Deadlock은 같은 시각의 DB·애플리케이션 로그로 원인을 조사합니다.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 10,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(pg_stat_database_xact_commit{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "commit",
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "expr": "rate(pg_stat_database_xact_rollback{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "rollback",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Cache Hit Ratio",
+      "description": "DB 활동이 있는 구간에서 해석하세요. 낮은 비율과 디스크 읽기·API 지연이 함께 증가하는지 확인합니다.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * rate(pg_stat_database_blks_hit{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval]) / clamp_min(rate(pg_stat_database_blks_hit{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval]) + rate(pg_stat_database_blks_read{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval]),0.000001)",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Deadlocks · Conflicts",
+      "description": "DB 처리·연결 추세를 Hikari 대기 및 API 지연과 비교하세요. Deadlock은 같은 시각의 DB·애플리케이션 로그로 원인을 조사합니다.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(pg_stat_database_deadlocks{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "Deadlocks",
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "expr": "rate(pg_stat_database_conflicts{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "Conflicts",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Tuple 처리량",
+      "description": "DB 처리·연결 추세를 Hikari 대기 및 API 지연과 비교하세요. Deadlock은 같은 시각의 DB·애플리케이션 로그로 원인을 조사합니다.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(pg_stat_database_tup_returned{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "returned",
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "expr": "rate(pg_stat_database_tup_fetched{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "fetched",
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "C",
+          "expr": "rate(pg_stat_database_tup_inserted{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "inserted",
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "D",
+          "expr": "rate(pg_stat_database_tup_updated{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "updated",
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "E",
+          "expr": "rate(pg_stat_database_tup_deleted{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "deleted",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Temp Bytes",
+      "description": "사용률·가용 용량·I/O 지연을 함께 확인하세요. 증가한 파일과 작업을 조사하고 DB·로그·TSDB를 임의 삭제하지 않습니다.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 26,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(pg_stat_database_temp_bytes{environment=\"$environment\",datname=\"yanus\"}[$__rate_interval])",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "row",
+      "title": "DB 서버 · 자원",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 14,
+      "title": "DB 서버 가용 메모리",
+      "description": "가용 메모리 감소와 Swap 증가가 지속되는지 확인하세요. Cache 사용량 자체는 메모리 장애가 아닙니다.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_memory_MemAvailable_bytes{environment=\"$environment\",instance=\"data-server\"}",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "DB 서버 디스크 /",
+      "description": "사용률·가용 용량·I/O 지연을 함께 확인하세요. 증가한 파일과 작업을 조사하고 DB·로그·TSDB를 임의 삭제하지 않습니다.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "yanus-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 35,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - node_filesystem_avail_bytes{environment=\"$environment\",instance=\"data-server\",mountpoint=\"/\"} / node_filesystem_size_bytes{environment=\"$environment\",instance=\"data-server\",mountpoint=\"/\"})",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "수집 없음",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "text",
+      "title": "DB 지연 해석",
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "기본 PostgreSQL 통계만으로 SQL별 지연이나 RDS CloudWatch 지표를 만들지 않습니다. 지연이 늘면 API P95 → Hikari Pending → DB 연결·트랜잭션 → 서버 I/O 순서로 확인합니다. `pg_stat_statements`와 의도적인 부하 실험은 별도 작업입니다."
+      }
+    }
+  ]
+}

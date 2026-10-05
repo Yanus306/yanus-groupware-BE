@@ -25,6 +25,7 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -60,4 +61,29 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.register('observabilityJar', Jar) {
+	dependsOn classes
+	archiveFileName = 'yanus-observability.jar'
+	from(sourceSets.main.output) {
+		include 'com/yanus/attendance/global/config/MonitoringSecurityConfig.class'
+		include 'com/yanus/attendance/global/config/SecurityConfig.class'
+		include 'com/yanus/attendance/global/logging/**'
+		include 'com/yanus/attendance/global/exception/GlobalExceptionHandler.class'
+		include 'com/yanus/attendance/global/exception/BusinessException.class'
+		include 'com/yanus/attendance/drive/infrastructure/MinioStorageService.class'
+		include 'com/yanus/attendance/auth/application/EmailService.class'
+		include 'com/yanus/attendance/auth/infrastructure/JwtTokenProvider.class'
+	}
+}
+
+tasks.register('observabilityBundle', Sync) {
+	dependsOn observabilityJar
+	into layout.buildDirectory.dir('observability')
+	from(tasks.named('observabilityJar'))
+	from(configurations.runtimeClasspath) {
+		include 'micrometer-registry-prometheus-*.jar'
+		include 'prometheus-metrics-*.jar'
+	}
 }

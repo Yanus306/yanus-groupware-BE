@@ -7,6 +7,23 @@ on:
     branches: [ dev, main ]
 
 jobs:
+  observability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 외부 점검 상태 및 전달 계약 검증
+        run: node --test ops/observability/*.test.mjs
+      - name: Prometheus 규칙 검증
+        run: docker run --rm --entrypoint promtool -v "$PWD/ops/observability:/work" -w /work prom/prometheus:v2.45.3 test rules yanus-rules.test.yml
+      - name: 실제 Alertmanager 격리 라우팅 검증
+        run: node ops/observability/verify-alert-routing.mjs
+
   test:
     runs-on: ubuntu-latest
 

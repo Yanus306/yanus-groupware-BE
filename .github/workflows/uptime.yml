@@ -1,0 +1,37 @@
+name: PROD public availability
+on:
+  schedule:
+    - cron: '7,17,27,37,47,57 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: yanus-public-probe-${{ github.event_name }}
+  cancel-in-progress: false
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Load last scheduled observation
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node ops/observability/read-probe-state.mjs
+      - name: Read-only public JSON checks and notifications
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: node ops/observability/public-probe.mjs
+      - name: Save observation including failed probe or delivery
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-state-${{ github.event_name == 'schedule' && 'prod' || 'manual' }}
+          path: probe-state.json
+          retention-days: 7
+          if-no-files-found: error

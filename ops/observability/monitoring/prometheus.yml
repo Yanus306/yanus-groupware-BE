@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: prod
+    project: yanus
+rule_files:
+  - /etc/prometheus/yanus-rules.yml
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['127.0.0.1:9093']
+scrape_configs:
+  - job_name: yanus-alertmanager
+    static_configs:
+      - targets: ['127.0.0.1:9093']
+        labels:
+          environment: prod
+          service: monitoring
+          instance: monitoring-server
+  - job_name: yanus-backend
+    metrics_path: /actuator/prometheus
+    file_sd_configs:
+      - files: ['/etc/prometheus/yanus-backend-targets.json']
+  - job_name: yanus-node
+    static_configs:
+      - targets: ['127.0.0.1:9100']
+        labels:
+          environment: prod
+          service: host
+          instance: monitoring-server
+    file_sd_configs:
+      - files: ['/etc/prometheus/yanus-host-targets.json']
+  - job_name: yanus-postgres
+    file_sd_configs:
+      - files: ['/etc/prometheus/yanus-postgres-targets.json']
+  - job_name: yanus-prometheus
+    static_configs:
+      - targets: ['127.0.0.1:9090']
+        labels:
+          environment: prod
+          service: monitoring
+          instance: monitoring-server

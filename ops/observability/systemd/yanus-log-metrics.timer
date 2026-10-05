@@ -1,0 +1,10 @@
+[Unit]
+Description=Collect Yanus log metadata every minute
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=1min
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target
