@@ -13,8 +13,8 @@ Grafana·Prometheus·Loki는 실제 운영되지만 알림 수신지와 외부 �
 | 내부 알림 | 격리 Alertmanager0.28.1의 그룹·중복·PROD·disk inhibition 검증과 실제 native 설치/Slack FIRING·RESOLVED 수신 | 합의한 synthetic 알림 전달이며 실제 고객 장애나 장기 MTTD 증거가 아님 |
 | 외부 점검 | 실제 HTTP/상태/전달/artifact/TLS 테스트9개, 공개 API3167ms·Grafana1122ms UP 읽기 관찰 | 기본 브랜치 예약 실행/run ID·실제 전달 전. 감지 시간 보장 없음 |
 | 대시보드·규칙 | promtool2.45.3 SUCCESS, 실제 PROD Prometheus100 PromQL 오류0 | 현재 트래픽이 없으면 latency NaN, 빈 ALERTS 정상 |
-| 준비 상태 | 실제 Postgres 중단에서 readiness503/liveness200, 실제 HTTP 관리/메인 분리·공개403 | 테스트 전용 DB/환경. 운영 설치 증거와 분리 |
-| 배포·복구 | 실제 격리 Ubuntu24.04 systemd/PG16/Boot JAR의 원자 교체·새 PID·계약 성공 및 실패 훈련 | 운영 source는 재현 확인. 전체 후보의 업무/API 호환성 검토와 실제 적용 전 |
+| 준비 상태 | 격리 Postgres 중단에서 readiness503/liveness200·공개403, 승인 후보의 운영 private commit/readiness/liveness UP | DB 장애 주입은 격리 환경에서만 수행 |
+| 배포·복구 | 실제 격리 native systemd 실패/복구 훈련, 승인한4493049 동일 JAR 운영 SUCCESS·실제 Slack 수신·root0700 원본 snapshot | 자동 CD의 기본 브랜치 run은 통합 검증 중. 운영 실패 주입을 복구 증거로 사용하지 않음 |
 
 ## 실험과 개선
 
@@ -33,5 +33,7 @@ monitoring-server의 실제 Alertmanager0.28.1은 loopback9093에서 동작한�
 실험별 UTC 시각과 elapsed time은 격리 `scenarios.json`, `legacy.json`, `overlay.json`에 남기고 build/ 바깥에도 보존했다. 최종 Gradle275 tests/0 failures/0 errors/0 skipped·bootJar PASS12s, Node 외부9개/배포3개 PASS를 확인했다. 아직 실제 고객 장애에서 측정한 MTTD/MTTR나 장기 SLO가 아니다. Persona report/finish 상태도 제품 테스트와 구분해 기록한다.
 
 ## 후속 작업
+
+2026-10-05 사용자가 #200 DTO와 관측/배포 범위의 후보를 승인하여 `4493049` 동일 JAR(SHA256 `50ec1c9c…b5066`)를 운영에 적용했다. 실제 commit·DB readiness/liveness·메인/공개 JSON·10:41:40UTC 배포 SUCCESS Slack 수신과 Prometheus7/7 UP을 확인했다. 기존 `.env`·V27 유지, 원본 JAR와 실행 설정 snapshot0700 보존, #203/V28 제외다. 서버의 실제 외부 설정 경로가 초기 QA 경로와 달라 `/etc/yanus` 백업·교체·복구를 보완하고, 해당 경로의 실제 격리 rollback125547ms 및 동일 후보 SUCCESS로 먼저 확인했다. 이력 조회 역할은 Flyway SELECT만 허용하고 다른 업무 테이블 SELECT 불가를 확인했다.
 
 다음은 PostgreSQL 백업의 별도 보관·암호화·격리 복원과 RPO/RTO 기록이다. 이후 OpenTelemetry+Tempo로 request/trace·DB/외부 span을 연결하고 샘플링·민감정보·수집 비용을 정한다. 마지막으로 별도 k6 환경에서 대표 API의 P95/처리량/쿼리·풀 병목을 측정해 한 가지 개선 전후를 같은 조건으로 비교한다. 아직 구현되지 않은 작업은 완료 역량으로 표시하지 않는다.

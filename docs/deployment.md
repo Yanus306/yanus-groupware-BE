@@ -1,6 +1,6 @@
 # yANUs 배포 검증과 앱 복구
 
-#205 로컬 구현이다. 실제 PROD의 JAR는 보존했고 배포 helper·보호된 baseline·고정 SSH host key·새 CD 활성화는 아직 적용 전이다. `YANUS_DEPLOY_ENABLED=true`는 검토한 서버 준비와 호환 후보가 확보된 뒤 설정한다. #203/V28은 이번 후보에 포함하지 않는다.
+#205 구현 후 사용자가 검토한 후보 범위를 승인하여 2026-10-05 `4493049` 동일 JAR를 app-server에 적용했다. private 실행 commit·DB readiness/liveness·메인/공개 JSON·실제 Slack SUCCESS 수신을 확인했고 기존 JAR·설정은 root0700 snapshot에 보존했다. helper·보호된 baseline·이력 전용 DB 역할·고정 SSH host key를 준비한 뒤 `YANUS_DEPLOY_ENABLED=true`를 설정했다. 기본 브랜치 자동 CD run은 통합 후 확인한다. #203/V28은 제외하고 V27을 유지한다.
 
 ## 동일 후보와 버전
 
@@ -18,13 +18,15 @@ root 전용 `/etc/yanus-deploy/baseline.json`(0600)에 현재 JAR SHA256, 실제
 
 2026-10-05 운영 읽기 관찰: 기존 JAR SHA256 `460b6e4733f196628d089280fd727d8af2a6a1015b61d3fddd921d6df0e2778a`, commit metadata 없음, migration27개가 후보와 일치. 마지막 성공 CD의 `e8ea2055fa8da6b17f846bf6a79cea8cbb3c7371`을 격리 재빌드하여 운영 JAR의 내부 파일441개(클래스·리소스231개, 라이브러리107개 포함)가 모두 같음을 확인했다. 재현 가능한 source 기준이며 signed provenance 또는 외부 ZIP 해시 동일성의 증거는 아니다. 정렬된 내부 파일 내용의 canonical SHA256는 양쪽 모두 `97b37fc1570af868f609c5b6b7a94079bb45ab37f2999de2b9cbb1d1f8374ae9`이다. 전체 후보의 업무/API 호환성 검토와 운영 활성화는 별도다.
 
-후보에는 현재 main에 병합된 #200 DTO 정리와 #201/#202 관측 기능, #205 버전/readiness·배포 복구를 포함한다. main 대비 추가 Java/resources/build 변경은 관측·배포 계약 범위이며 #203/V28은 제외한다. main과 후보의 Git 조상 관계가 같다고 표현하지 않는다. 원래 JAR·PropertiesLauncher·외부 라이브러리8개의 복구 증거는 격리 환경의 `overlay.json`으로 연결한다.
+후보에는 현재 main에 병합된 #200 DTO 정리와 #201/#202 관측 기능, #205 버전/readiness·배포 복구를 포함한다. main 대비 추가 Java/resources/build 변경은 관측·배포 계약 범위이며 #203/V28은 제외한다. main과 후보의 Git 조상 관계가 같다고 표현하지 않는다. 원래 JAR·PropertiesLauncher·외부 라이브러리8개의 복구 증거는 격리 환경의 `overlay.json`으로 연결한다. 실제 운영 외부 설정 경로를 확인한 후 `/etc/yanus` 경로에서도 격리 복구125547ms와 승인 후보의 정상 배포를 추가 검증했다.
 
 ## 서버 준비와 전달
 
 Node22+, JDK21, systemd, flock, psql, unzip, jq, timeout이 필요하다. 검토한 `ops/deploy/install-helper.sh`가 root 소유 도구를 `/usr/local/lib/yanus-deploy`에 설치하고 yanus 사용자에게 고정 helper 경로의 제한된 sudo만 부여한다. helper는 정확히 한 개의 `/home/yanus/incoming/<40자리 commit>` 인수만 받고 root 소유 baseline을 확인한다. 설치 스크립트는 후보를 활성화하거나 Actions를 켜지 않는다.
 
-GitHub에는 기존 서버 secret과 별도로 `SERVER_KNOWN_HOSTS`가 필요하다. 안전하게 확인한 host public key를 고정하고 StrictHostKeyChecking=yes를 사용한다. 배포 시 ssh-keyscan 결과를 그대로 신뢰하거나 host key 검사를 끄지 않는다. `production` environment 보호·배포 활성화 변수는 저장소 정책에 따라 운영 준비 후 적용한다.
+GitHub에는 기존 서버 secret과 별도로 `SERVER_KNOWN_HOSTS`가 필요하다. 기존 신뢰된 SSH 연결에서 읽은 서버 Ed25519 공개 키를 고정하고 StrictHostKeyChecking=yes를 사용한다. 호스트명 패턴은 전용 known_hosts 파일에서 서버 Secret의 연결 이름/포트를 수용하지만 허용 키는 그 서버 키 하나다. 배포 시 ssh-keyscan 결과를 그대로 신뢰하거나 host key 검사를 끄지 않는다. `production` environment와 배포 활성화 변수는 서버 준비 후 적용했다. 기존 yanus 계정의 다른 sudo 허용은 보존되므로 helper용 규칙을 전체 계정의 최소 권한이라고 표현하지 않는다.
+
+운영 적용 JAR SHA256는 `50ec1c9c6f28f5cc389313cce2c8e038f01800deea24ed53dbf00245801b5066`, 실행 commit은 `4493049aebfe4b8dc0156aba0a777ff28359329d`이다. 2026-10-05T10:41:08Z 서비스 기동, 공개 API1303ms UP, 10:41:40.234119Z Slack SUCCESS 수신을 확인했다. 모두 단일 관찰이며 고객 장애 복구 시간이나 SLO를 의미하지 않는다.
 
 ## 교체와 복구
 
