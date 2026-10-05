@@ -30,7 +30,7 @@ GitHub에는 기존 서버 secret과 별도로 `SERVER_KNOWN_HOSTS`가 필요하
 
 workflow concurrency와 서버 flock으로 겹치는 활성화를 막는다. GitHub 예약/큐의 실행 순서를 시간 보장으로 해석하지 않는다. 사용자 writable incoming 파일을 root 소유 릴리스에 복사한 뒤 digest/commit/schema를 다시 검사한다. 기존 프로세스와 HTTP도 정상이 아니면 교체하지 않는다.
 
-JAR·기존 포인터·unit/drop-in·.env·외부 properties·overlay·baseline은 root0700 snapshot에 보관한다. 기존 일반 app.jar도 보존하며 같은 filesystem의 임시 symlink rename으로 새 릴리스를 활성화한다. candidate는 native `java -jar`를 사용하고 호환 overlay는 이전 snapshot에 보존한다. 다른 설정은 유지한다.
+JAR·기존 포인터·unit/drop-in·.env·외부 properties·overlay·baseline은 root0700 snapshot에 보관한다. 운영의 `/etc/yanus/application-observability.properties`와 기존 QA 경로 `/opt/yanus-observability/application-observability.properties`를 모두 지원하며 존재하는 regular 파일만 교체한다. 실패 시 실제 운영 경로도 원본으로 복구한다. 기존 일반 app.jar도 보존하며 같은 filesystem의 임시 symlink rename으로 새 릴리스를 활성화한다. candidate는 native `java -jar`를 사용하고 호환 overlay는 이전 snapshot에 보존한다. 다른 설정은 유지한다.
 
 restart 명령은30초, private process/readiness/info/main 확인은 단조시계 기준120초, public 확인은60초로 제한한다. 실패하면 이전 포인터/설정을 복원하고 이전 hash와 HTTP를120초 안에 확인한다. legacy 이전 JAR는 build-info 대신 snapshot hash+설정+기존 health/main 계약을 확인한다.
 

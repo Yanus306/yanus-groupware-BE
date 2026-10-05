@@ -37,7 +37,7 @@ previous_mode=legacy
 node "$tools/deploy/verify-release.mjs" "$previous_commit" "$previous_mode"
 snapshot="/var/backups/yanus-deploy/$(date -u +%Y%m%dT%H%M%SZ)-$$"
 install -d -m 0700 "$snapshot"
-for file in "$app/app.jar" "$app/.env" /etc/systemd/system/yanus.service /etc/systemd/system/yanus.service.d /opt/yanus-observability /etc/yanus-deploy/baseline.json; do
+for file in "$app/app.jar" "$app/.env" /etc/systemd/system/yanus.service /etc/systemd/system/yanus.service.d /opt/yanus-observability /etc/yanus/application-observability.properties /etc/yanus-deploy/baseline.json; do
   [[ ! -e $file ]] || cp --parents -a "$file" "$snapshot"
 done
 cp -aL "$app/app.jar" "$snapshot/previous.jar"
@@ -53,7 +53,7 @@ restore() {
     [[ ! -e $snapshot$file ]] || cp -a "$snapshot$file" "$file"
   done
   cp -a "$snapshot/etc/yanus-deploy/baseline.json" "$baseline"
-  for file in "$app/.env" /etc/systemd/system/yanus.service; do
+  for file in "$app/.env" /etc/systemd/system/yanus.service /etc/yanus/application-observability.properties; do
     [[ ! -e $snapshot$file ]] || cp -a "$snapshot$file" "$file"
   done
   if [[ -L $snapshot$app/app.jar ]]; then
@@ -74,9 +74,12 @@ restore() {
 trap restore ERR INT TERM
 install -d -m 0755 /etc/systemd/system/yanus.service.d
 install -m 0644 "$tools/deploy/yanus-native.conf" /etc/systemd/system/yanus.service.d/zz-deployment.conf
-if [[ -f /opt/yanus-observability/application-observability.properties ]]; then
-  install -m 0644 "$tools/observability/application-observability.properties" /opt/yanus-observability/application-observability.properties
-fi
+for file in /opt/yanus-observability/application-observability.properties /etc/yanus/application-observability.properties; do
+  if [[ -f $file ]]; then
+    [[ ! -L $file ]] || { echo 'Regular observability properties required' >&2; false; }
+    install -m 0644 "$tools/observability/application-observability.properties" "$file"
+  fi
+done
 ln -s "$release/app.jar" "$app/.activate-$$"
 mv -Tf "$app/.activate-$$" "$app/app.jar"
 systemctl daemon-reload
