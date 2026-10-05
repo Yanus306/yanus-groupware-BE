@@ -38,6 +38,15 @@ const lokiHealth = await get('/api/datasources/uid/yanus-loki/health');
 if (lokiHealth.status !== 'OK') throw new Error(`Loki datasource: ${lokiHealth.status}`);
 const tempoHealth = await get('/api/datasources/uid/yanus-tempo/health');
 if (tempoHealth.status !== 'OK') throw new Error(`Tempo datasource: ${tempoHealth.status}`);
+const loki = await get('/api/datasources/uid/yanus-loki');
+const derivedTrace = loki.jsonData?.derivedFields?.find(field => field.name === 'TraceID');
+if (derivedTrace?.datasourceUid !== 'yanus-tempo' || derivedTrace.url !== '${__value.raw}') {
+  throw new Error('Loki trace link macro lost during provisioning');
+}
+const tempo = await get('/api/datasources/uid/yanus-tempo');
+if (!tempo.jsonData?.tracesToLogsV2?.query?.includes('${__trace.traceId}')) {
+  throw new Error('Tempo log link macro lost during provisioning');
+}
 const { dashboard: traceBoard } = await get('/api/dashboards/uid/yanus-traces');
 const search = traceBoard.panels.find(panel => panel.datasource?.uid === 'yanus-tempo').targets[0];
 const response = await fetch(`${base}/api/ds/query`, {

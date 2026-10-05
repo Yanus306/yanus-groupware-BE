@@ -94,6 +94,8 @@ GRAFANA_URL=https://grafana.yanus.bond GRAFANA_PASSWORD_FILE=/protected/path/gra
 
 Grafana의 비밀 없는 provisioning YAML은644로 두고 실제 native `192.168.0.36:3000/api/health`를 확인한다. 처음 root640으로 생성해 permission denied/502가 발생했고644로 수정 후 공개 화면 복구를 확인했다. Mac의 과거3300 터널 포트와 native3000 포트를 혼동하지 않는다.
 
+Grafana datasource provisioning에서는 링크 매크로의 `$`를 `$$`로 이스케이프한다. 초기 설정은 TraceID 링크를 빈 검색어로 만들었고 실제 화면과 API 검증이 실패했다. Loki의 `$${__value.raw}`와 Tempo 로그 쿼리의 `$${__trace.traceId}`로 수정 후 API에 매크로가 보존되는 것을 확인했다. 실제 datasource 응답을 검사하는 검증에도 이 조건을 추가했다. [Grafana 공식 설정 문서](https://grafana.com/docs/grafana/latest/datasources/loki/configure/)
+
 ## 복구 절차
 
 앱 설치 실패는 스크립트가 이전 Alloy·인증 파일·otel properties·drop-in·외부 formatter 디렉터리를 복구한 뒤 앱 준비 상태를 다시 확인하고 exit1로 종료한다. 전체 JAR와 DB를 되돌리는 절차가 아니다.

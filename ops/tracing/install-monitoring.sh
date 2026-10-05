@@ -88,7 +88,7 @@ datasources:
         spanStartTimeShift: '-5m'
         spanEndTimeShift: '5m'
         customQuery: true
-        query: '{environment="prod",service="backend",instance="app-server"} | json | traceId="${__trace.traceId}"'
+        query: '{environment="prod",service="backend",instance="app-server"} | json | traceId="$${__trace.traceId}"'
 EOF
 chmod 0644 /etc/grafana/provisioning/datasources/yanus-tracing.yml
 python3 - <<'PY'
@@ -100,7 +100,7 @@ loki=[s for s in config['datasources'] if s['uid']=='yanus-loki']
 if len(loki)!=1: raise SystemExit('Expected existing Loki datasource')
 data=loki[0].setdefault('jsonData',{})
 fields=[f for f in data.get('derivedFields',[]) if f.get('name')!='TraceID']
-fields.append({'name':'TraceID','matcherRegex':'"traceId"\\s*:\\s*"([0-9a-f]{32})"','datasourceUid':'yanus-tempo','url':'${__value.raw}','urlDisplayLabel':'요청 처리 구간 보기'})
+fields.append({'name':'TraceID','matcherRegex':'"traceId"\\s*:\\s*"([0-9a-f]{32})"','datasourceUid':'yanus-tempo','url':'$${__value.raw}','urlDisplayLabel':'요청 처리 구간 보기'})
 data['derivedFields']=fields
 p.write_text(yaml.safe_dump(config,sort_keys=False,allow_unicode=True))
 PY
