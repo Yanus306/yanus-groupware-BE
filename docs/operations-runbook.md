@@ -24,4 +24,8 @@
 
 발생/감지/알림 도착/조치 시작/정상 확인의 UTC 시각, 영향, 관찰 지표·안전한 로그, 원인, 복구 명령과 결과, 후속 조치를 남긴다. 격리 실험인지 실제 장애인지 명시한다. 한 번의 실험을 장기 평균 MTTD/MTTR로 표시하지 않는다.
 
-2026-10-05: monitoring-server의 Alertmanager 0.28.1·Prometheus 전달·10개 규칙·5개 보드 도움말을 적용했다. yANUs/yanus-서버-알람에서 승인된 검증용 알림의 FIRING(09:33:49 UTC)·RESOLVED(09:35:29 UTC)를 확인했다. 실제 서비스 장애 실험은 아니다. GitHub Secret은 등록했으나 기본 브랜치 uptime workflow 활성화·실제 예약 run은 남아 있다. 전체 앱/DB 배포는 수행하지 않았다.
+2026-10-05: monitoring-server의 Alertmanager 0.28.1·Prometheus 전달·10개 규칙·5개 보드 도움말을 적용하고 실제 검증용 장애·복구 알림 수신을 확인했다. 기본 브랜치 [외부 점검 37299742453](https://github.com/Yanus306/yanus-groupware-BE/actions/runs/37299742453)은 API·Grafana JSON 정상과 결과 artifact를 확인했다. 승인 후보 수동 적용과 [자동 CD 37299741382](https://github.com/Yanus306/yanus-groupware-BE/actions/runs/37299741382), 실제 배포 알림 수신도 검증했다. 운영 장애 주입과 DB schema 변경은 수행하지 않았다. 10분 예약 설정의 실행 공백은 별도 점검한다.
+
+## 한국어 알림 해석
+
+“장애 발생”은 점검 실패, “장애 지속”은 재알림, “복구 완료”는 이전 전달 장애 이후 정상 확인이다. “배포 성공”은 버전·준비 상태·HTTP 검증 통과, “이전 버전 복구 완료”는 배포 실패 후 앱과 설정 복원, “자동 복구 실패”는 수동 대응 필요를 뜻한다. API 공개 점검의 정상은 업무·DB 쓰기 성공을 보장하지 않는다. 알림의 버전과 시각, 원인, 대응 링크로 조사한다.
