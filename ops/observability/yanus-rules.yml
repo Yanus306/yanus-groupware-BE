@@ -8,43 +8,86 @@ groups:
         annotations:
           summary: 'PROD {{ $labels.instance }} {{ $labels.job }} 수집 중단'
           description: '서비스 상태와 exporter/scrape 연결을 함께 확인하세요.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-overview'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
       - alert: YanusHigh5xxRate
         expr: (sum(rate(http_server_requests_seconds_count{environment="prod",uri!~"/actuator.*",status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{environment="prod",uri!~"/actuator.*"}[5m])),0.001)) > 0.05 and sum(increase(http_server_requests_seconds_count{environment="prod",uri!~"/actuator.*"}[5m])) >= 20
         for: 5m
         labels: {severity: critical, environment: prod, service: backend, instance: app-server}
-        annotations: {summary: 'PROD API 5xx 비율 5% 초과', description: '최근 5분 요청 20건 이상일 때 평가합니다.'}
+        annotations:
+          summary: 'PROD API 5xx 비율 5% 초과'
+          description: '02 오류 URI·요청량 → 03 같은 시각 requestId → DB/외부 서비스 원인을 확인하세요.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-api'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
       - alert: YanusHighLatency
         expr: histogram_quantile(0.95,sum by(le)(rate(http_server_requests_seconds_bucket{environment="prod",uri!~"/actuator.*"}[5m]))) > 1 and sum(increase(http_server_requests_seconds_count{environment="prod",uri!~"/actuator.*"}[5m])) >= 20
         for: 5m
         labels: {severity: warning, environment: prod, service: backend, instance: app-server}
-        annotations: {summary: 'PROD API P95 1초 초과'}
+        annotations:
+          summary: 'PROD API P95 1초 초과'
+          description: '요청량 → JVM/GC → Hikari 대기 → DB → 호스트 I/O 순서로 확인하세요.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-api'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
       - alert: YanusHighCpu
         expr: 100 * (1 - avg by(instance)(rate(node_cpu_seconds_total{environment="prod",mode="idle"}[5m]))) > 85
         for: 10m
         labels: {severity: warning, environment: prod}
-        annotations: {summary: 'PROD {{ $labels.instance }} CPU 85% 초과'}
+        annotations:
+          summary: 'PROD {{ $labels.instance }} CPU 85% 초과'
+          description: '04에서 대상 호스트의 user/system/iowait와 API·DB 지연 시각을 비교하세요.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-hosts'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
       - alert: YanusLowMemory
         expr: node_memory_MemAvailable_bytes{environment="prod"} / node_memory_MemTotal_bytes{environment="prod"} < 0.1
         for: 5m
         labels: {severity: warning, environment: prod}
-        annotations: {summary: 'PROD {{ $labels.instance }} 가용 메모리 10% 미만'}
+        annotations:
+          summary: 'PROD {{ $labels.instance }} 가용 메모리 10% 미만'
+          description: 'Available·Swap·메모리 PSI·OOM을 확인하세요. Cache 사용만으로 장애를 단정하지 않습니다.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-hosts'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
       - alert: YanusDiskWarning
         expr: 100 * (1 - node_filesystem_avail_bytes{environment="prod",mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{environment="prod",mountpoint="/",fstype!~"tmpfs|overlay"}) > 85
         for: 5m
         labels: {severity: warning, environment: prod}
-        annotations: {summary: 'PROD {{ $labels.instance }} 디스크 85% 초과'}
+        annotations:
+          summary: 'PROD {{ $labels.instance }} 디스크 85% 초과'
+          description: '사용량·보존 정책·로그 회전을 확인하세요. DB·TSDB 파일을 임의 삭제하지 않습니다.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-hosts'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
       - alert: YanusDiskCritical
         expr: 100 * (1 - node_filesystem_avail_bytes{environment="prod",mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{environment="prod",mountpoint="/",fstype!~"tmpfs|overlay"}) > 95
         for: 2m
         labels: {severity: critical, environment: prod}
-        annotations: {summary: 'PROD {{ $labels.instance }} 디스크 95% 초과'}
+        annotations:
+          summary: 'PROD {{ $labels.instance }} 디스크 95% 초과'
+          description: '쓰기 실패·남은 용량·영향 범위를 확인하고 안전한 보존/정리 절차를 적용하세요.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-hosts'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
       - alert: YanusHikariPending
         expr: hikaricp_connections_pending{environment="prod"} > 0
         for: 2m
         labels: {severity: warning, environment: prod}
-        annotations: {summary: 'PROD Hikari 연결 대기 지속'}
+        annotations:
+          summary: 'PROD Hikari 연결 대기 지속'
+          description: 'Active/Max·Acquire·DB 연결·긴 트랜잭션을 함께 확인하세요. 풀 크기부터 늘리지 않습니다.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-api'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
       - alert: YanusPostgresDown
         expr: pg_up{environment="prod"} == 0
         for: 1m
         labels: {severity: critical, environment: prod}
-        annotations: {summary: 'PROD PostgreSQL 연결 실패'}
+        annotations:
+          summary: 'PROD PostgreSQL 연결 실패'
+          description: '05 pg_up → DB 서비스/소켓·exporter 자격 → 앱 DB 연결을 확인하세요.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-postgres'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'
+      - alert: YanusAlertmanagerDown
+        expr: up{environment="prod",job="yanus-alertmanager"} == 0
+        for: 1m
+        labels: {severity: critical, environment: prod, service: monitoring, instance: monitoring-server}
+        annotations:
+          summary: 'PROD Alertmanager 수집 중단'
+          description: '알림 전달 경로가 끊길 수 있습니다. loopback 9093·서비스와 외부 Actions 실행 기록을 확인하세요.'
+          dashboard_url: 'https://grafana.yanus.bond/d/yanus-overview'
+          runbook_url: 'https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d'

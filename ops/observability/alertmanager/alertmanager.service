@@ -1,0 +1,23 @@
+[Unit]
+Description=Yanus Alertmanager
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Service]
+User=alertmanager
+Group=alertmanager
+UMask=0027
+ExecStart=/usr/local/bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager --web.listen-address=127.0.0.1:9093 --cluster.listen-address=
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/alertmanager
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,28 @@
+global:
+  resolve_timeout: 5m
+templates:
+  - /etc/alertmanager/yanus-slack.tmpl
+route:
+  receiver: discard
+  group_by: [environment, service, instance, alertname]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 1h
+  routes:
+    - receiver: yanus-slack
+      matchers: ['environment="prod"']
+receivers:
+  - name: discard
+  - name: yanus-slack
+    slack_configs:
+      - api_url_file: /etc/alertmanager/slack-webhook
+        channel: '#yanus-서버-알람'
+        send_resolved: true
+        http_config:
+          follow_redirects: false
+        title: '{{ template "yanus.title" . }}'
+        text: '{{ template "yanus.text" . }}'
+inhibit_rules:
+  - source_matchers: ['alertname="YanusDiskCritical"', 'severity="critical"', 'environment="prod"']
+    target_matchers: ['alertname="YanusDiskWarning"', 'severity="warning"', 'environment="prod"']
+    equal: [environment, instance]
