@@ -108,7 +108,8 @@ function dashboard(uid, title) {
     timezone: 'Asia/Seoul', refresh: '30s', time: { from: 'now-30m', to: 'now' },
     timepicker: { refresh_intervals: ['15s', '30s', '1m', '5m'] },
     annotations: { list: [{ name: '배포 · 운영 기록', type: 'dashboard', datasource: { type: 'grafana', uid: '-- Grafana --' }, enable: true, hide: false, iconColor: '#5794F2', builtIn: 1 }] },
-    links: destinations.map(([target, name]) => ({ title: name, type: 'link', url: `/d/${target}`, includeVars: true, keepTime: true, targetBlank: false })),
+    links: [...destinations.map(([target, name]) => ({ title: name, type: 'link', url: `/d/${target}`, includeVars: true, keepTime: true, targetBlank: false })),
+      { title: '06 요청 추적', type: 'link', url: '/d/yanus-traces', includeVars: true, keepTime: true, targetBlank: false }],
     templating: { list: [
       { name: 'environment', label: '환경', type: 'custom', query: 'prod', current: { text: 'prod', value: 'prod' }, options: [{ text: 'prod', value: 'prod', selected: true }], hide: 0 },
       { name: 'instance', label: '호스트', type: 'query', datasource, query: { query: 'label_values(up{environment="$environment",job="yanus-node"}, instance)', refId: 'variable' }, definition: 'label_values(up{environment="$environment",job="yanus-node"}, instance)', refresh: 1, multi: true, includeAll: true, allValue: '.*', current: { text: 'All', value: '$__all' }, options: [], sort: 1, hide: 0 },

@@ -1,0 +1,24 @@
+[Unit]
+Description=Yanus 요청 추적 Tempo
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=tempo
+Group=tempo
+ExecStart=/usr/local/bin/tempo -config.file=/etc/tempo/config.yml -target=all
+WorkingDirectory=/var/tempo
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+MemoryMax=512M
+Environment=GOMEMLIMIT=384MiB
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/tempo
+
+[Install]
+WantedBy=multi-user.target

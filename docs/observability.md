@@ -187,6 +187,8 @@ monitoring-server에 checksum 검증한 Alertmanager 0.28.1을 설치했다. `12
 
 ## 검증
 
+요청 내부의 HTTP·DB 처리 구간은 [PROD 요청 추적 운영 절차](tracing.md)와 **06 요청 추적** 보드를 사용한다. 기존 메트릭·로그 보드 및 requestId 필터는 유지하며 Loki↔Tempo를 traceId로 연결한다.
+
 ```bash
 ssh -N -L 127.0.0.1:39090:127.0.0.1:9090 monitoring-server
 # 다른 터미널

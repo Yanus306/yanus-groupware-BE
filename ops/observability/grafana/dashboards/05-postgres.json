@@ -80,6 +80,14 @@
       "includeVars": true,
       "keepTime": true,
       "targetBlank": false
+    },
+    {
+      "title": "06 요청 추적",
+      "type": "link",
+      "url": "/d/yanus-traces",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
     }
   ],
   "templating": {
