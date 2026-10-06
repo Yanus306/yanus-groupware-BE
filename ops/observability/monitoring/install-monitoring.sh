@@ -27,6 +27,7 @@ install -d -o loki -g loki -m 0750 /var/lib/loki
 install -d -o grafana -g grafana /var/lib/grafana/yanus-dashboards
 install -m 0644 "$source_directory/monitoring/prometheus.yml" /etc/prometheus/prometheus.yml
 install -m 0644 "$source_directory/yanus-rules.yml" /etc/prometheus/yanus-rules.yml
+install -m 0644 "$source_directory/../backup/yanus-backup-rules.yml" /etc/prometheus/yanus-backup-rules.yml
 printf '[{"targets":["%s:9092"],"labels":{"environment":"prod","service":"backend","instance":"app-server"}}]\n' "$app" > /etc/prometheus/yanus-backend-targets.json
 printf '[{"targets":["%s:9100"],"labels":{"environment":"prod","service":"host","instance":"app-server"}},{"targets":["%s:9100"],"labels":{"environment":"prod","service":"host","instance":"data-server"}}]\n' "$app" "$data" > /etc/prometheus/yanus-host-targets.json
 printf '[{"targets":["%s:9187"],"labels":{"environment":"prod","service":"database","instance":"data-server"}}]\n' "$data" > /etc/prometheus/yanus-postgres-targets.json

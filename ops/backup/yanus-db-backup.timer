@@ -1,0 +1,11 @@
+[Unit]
+Description=Yanus DB 매일 03시 20분 백업
+
+[Timer]
+OnCalendar=*-*-* 03:20:00 Asia/Seoul
+Persistent=true
+RandomizedDelaySec=2min
+Unit=yanus-db-backup.service
+
+[Install]
+WantedBy=timers.target
