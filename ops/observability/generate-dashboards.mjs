@@ -250,6 +250,17 @@ b.row('DB 서버 · 자원');
 const dbHost = `${environment},instance="data-server"`;
 b.graphs([['DB 서버 가용 메모리', `node_memory_MemAvailable_bytes{${dbHost}}`, 'bytes'], ['DB 서버 디스크 /', `100 * (1 - node_filesystem_avail_bytes{${dbHost},mountpoint="/"} / node_filesystem_size_bytes{${dbHost},mountpoint="/"})`, 'percent']]);
 b.note('DB 지연 해석', '기본 PostgreSQL 통계만으로 SQL별 지연이나 RDS CloudWatch 지표를 만들지 않습니다. 지연이 늘면 API P95 → Hikari Pending → DB 연결·트랜잭션 → 서버 I/O 순서로 확인합니다. `pg_stat_statements`와 의도적인 부하 실험은 별도 작업입니다.', 3);
+b.row('DB 백업 · Mac 사본');
+const backupHost = `${environment},instance="data-server"`;
+b.note('백업 도움말', '**최근 실행 실패:** data-server의 `journalctl -u yanus-db-backup.service`와 timer·디스크를 확인하세요. **Mac 사본 지연:** Mac 잠자기·오프라인·SSH와 collector 상태 파일을 확인합니다. 서버는 매일 03:20 KST, Mac은 로그인 시와 실행 중 매시간 수집합니다.\n\n아래 시각은 **복구 가능한 snapshot 시점**입니다. 과거 파일을 다시 수집해도 시점은 갱신되지 않습니다. Mac ACK는 당시 checksum 확인이며, 실제 복원 가능 여부는 별도 격리 복원 훈련으로 검증합니다. 암호화 파일은 14일 기준으로 보존하되 최신 사본과 Mac 미전송 서버 백업은 남깁니다. 복호화 키는 Mac에만 있어 키까지 잃으면 복원할 수 없습니다.', 5);
+b.stats([['백업 최근 실행', `yanus_backup_last_run_success{${backupHost}}`, 'short', 'up'], ['서버 백업 시점', `(yanus_backup_local_snapshot_timestamp_seconds{${backupHost}} > 0) * 1000`, 'dateTimeAsIso'], ['Mac 사본 시점', `(yanus_backup_offsite_snapshot_timestamp_seconds{${backupHost}} > 0) * 1000`, 'dateTimeAsIso'], ['암호화 백업 크기', `yanus_backup_archive_bytes{${backupHost}}`, 'bytes']]);
+for (const panel of boards[4].panels.slice(-4)) {
+  panel.description = '서버 생성과 Mac 사본 확인을 구분합니다. 복구 시점은 snapshot 시각이며 ACK 수신 시각이 아닙니다. 실패·지연 시 위 도움말의 순서로 점검하세요.';
+  if (panel.title === '백업 최근 실행') panel.fieldConfig.defaults.mappings = [{ type: 'value', options: { '0': { text: '실패', color: 'red' }, '1': { text: '성공', color: 'green' } } }];
+  if (panel.title.endsWith('시점')) panel.fieldConfig.defaults.noValue = '유효 백업 시점 없음';
+}
+b.graphs([['서버 백업 경과', `time() - (yanus_backup_local_snapshot_timestamp_seconds{${backupHost}} > 0)`, 's'], ['Mac 복구 시점 경과', `time() - (yanus_backup_offsite_snapshot_timestamp_seconds{${backupHost}} > 0)`, 's']]);
+for (const panel of boards[4].panels.slice(-2)) panel.description = '서버 26시간·Mac 30시간 초과는 지연 경고입니다. Mac 오프라인으로 사본 전달이 늦어질 수 있습니다.';
 
 for (const uid of Object.keys(help)) {
   help[uid] += '\n\n**장애 알림·외부 점검**: [대응 절차와 실행 현황](https://app.notion.com/p/3f00691a0023813d9b26da18f566b92d). Slack 증상/시각과 이 보드의 환경·호스트·시간 범위를 맞춰 확인하세요. Actions 예약 지연·누락과 내부 수집 DOWN을 구분합니다.';

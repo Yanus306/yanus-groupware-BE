@@ -7,6 +7,23 @@ on:
     branches: [ dev, main ]
 
 jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 백업 사본 검증·실패·잠금·보존 테스트
+        run: node --test ops/backup/*.test.mjs
+      - name: PostgreSQL16 격리 백업·암호화·실패 복구 검증
+        run: node ops/backup/qa/scenarios.mjs
+      - name: 백업 실패·지연·지표 누락 알림 규칙 검증
+        run: docker run --rm --entrypoint promtool -v "$PWD/ops/backup:/work:ro" -w /work prom/prometheus:v2.45.3 test rules yanus-backup-rules.test.yml
+
   observability:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -72,3 +89,7 @@ jobs:
         run: |
           docker build -t yanus-tracing-qa:217 -f ops/tracing/qa/Dockerfile .
           node ops/tracing/qa/scenarios.mjs
+      - name: 격리 복원 도구 설치
+        run: sudo apt-get update && sudo apt-get install -y age
+      - name: 실제 백엔드·Flyway fixture 백업부터 읽기 API 복원·실패 정리까지 검증
+        run: node ops/backup/qa/restore-fixture.mjs build/libs/attendance-0.0.1-SNAPSHOT.jar

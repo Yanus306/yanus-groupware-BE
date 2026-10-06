@@ -1,0 +1,9 @@
+{
+  "database": "yanus",
+  "spool": "/var/backups/yanus-db",
+  "runtime": "/run/yanus-backup",
+  "state": "/var/lib/yanus-backup",
+  "metrics": "/var/lib/prometheus/node-exporter",
+  "recipient": "REPLACE_WITH_AGE_PUBLIC_RECIPIENT",
+  "retention_days": 14
+}
