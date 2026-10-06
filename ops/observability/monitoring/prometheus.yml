@@ -6,6 +6,7 @@ global:
     project: yanus
 rule_files:
   - /etc/prometheus/yanus-rules.yml
+  - /etc/prometheus/yanus-backup-rules.yml
 alerting:
   alertmanagers:
     - static_configs:

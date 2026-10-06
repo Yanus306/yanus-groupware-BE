@@ -1,0 +1,18 @@
+[Unit]
+Description=Yanus PostgreSQL 암호화 백업
+After=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/yanus-backup/backup.sh
+TimeoutStartSec=5min
+UMask=0077
+Nice=10
+IOSchedulingClass=idle
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/yanus-db /var/lib/yanus-backup /var/lib/prometheus/node-exporter /run/yanus-backup
+RuntimeDirectory=yanus-backup
+RuntimeDirectoryMode=0700
+ProtectHome=true
+NoNewPrivileges=true
