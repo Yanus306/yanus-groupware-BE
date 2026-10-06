@@ -76,3 +76,11 @@ jobs:
         run: ./gradlew build -x test
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 격리 복원 도구 설치
+        run: sudo apt-get update && sudo apt-get install -y age
+      - name: 실제 백엔드·Flyway fixture 백업부터 읽기 API 복원·실패 정리까지 검증
+        run: node ops/backup/qa/restore-fixture.mjs build/libs/attendance-0.0.1-SNAPSHOT.jar

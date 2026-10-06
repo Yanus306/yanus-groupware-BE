@@ -76,6 +76,6 @@ node ops/backup/qa/scenarios.mjs
 docker run --rm --entrypoint promtool -v "$PWD/ops/backup:/work:ro" -w /work prom/prometheus:v2.45.3 test rules yanus-backup-rules.test.yml
 ```
 
-실제 설치 관찰: 2026-10-05 KST, 첫 일회 systemd 예약-trigger에서 Flyway JSON 다중 줄 처리를 수정한 뒤 재예약으로 생성 성공. snapshot **21:58:42 KST**, 암호화 **184552 bytes**, Mac ACK **22:00:57 KST**. 생성 소요 **1초**는 단일 관찰값이다. 매일03:20 정규 예약과 hourly 수집의 첫 주기 실행은 아직 관찰하지 않았다. 실제 사본 복원 완료는 별도 [#213](https://github.com/Yanus306/yanus-groupware-BE/issues/213)에서 기록한다.
+실제 설치 관찰: 2026-10-05 KST, 첫 일회 systemd 예약-trigger에서 Flyway JSON 다중 줄 처리를 수정한 뒤 재예약으로 생성 성공. snapshot **21:58:42 KST**, 암호화 **184552 bytes**, Mac ACK **22:00:57 KST**. 생성 소요 **1초**는 단일 관찰값이다. 매일03:20 정규 예약과 hourly 수집의 첫 주기 실행은 아직 관찰하지 않았다. 후속 실제 Mac 사본의 격리 DB·조회 API 복원 결과는 [복원 훈련 문서](database-restore-drill.md)와 [#213](https://github.com/Yanus306/yanus-groupware-BE/issues/213)에 기록한다.
 
 검증용 Slack 전달: [장애 수신22:02:52 KST](https://yanushq.slack.com/archives/C0C6N4CJHRC/p1791205372533409), [복구 수신22:07:52 KST](https://yanushq.slack.com/archives/C0C6N4CJHRC/p1791205672560549). Alertmanager 직접 입력 시험이며 실제 DB 백업 장애의 감지 시간을 측정한 것이 아니다. 기존 5분 group_interval을 유지했다.
