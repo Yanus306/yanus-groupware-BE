@@ -13,6 +13,7 @@ import com.yanus.attendance.attendance.application.setting.AttendanceSettingServ
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
 import com.yanus.attendance.attendance.domain.exception.AttendanceException;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionInput;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatus;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WeekPattern;
@@ -34,6 +35,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -65,12 +67,28 @@ public class AttendanceExceptionServiceTest {
         service = new AttendanceExceptionService(
                 exceptionRepository,
                 exceptionRepository,
-                attendanceRepository,
+                this::findGenerationInputs,
                 workScheduleRepository,
                 workScheduleEventRepository,
-                memberRepository,
                 settingService
         );
+    }
+
+    private List<AttendanceExceptionInput> findGenerationInputs(LocalDate date, DayOfWeek dayOfWeek) {
+        List<AttendanceException> existing = exceptionRepository.findAllByWorkDate(date);
+        return memberRepository.findAll().stream().flatMap(member -> {
+            Long memberId = member.getId();
+            var weekly = workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, dayOfWeek).orElse(null);
+            var event = workScheduleEventRepository.findByMemberIdAndDate(memberId, date).orElse(null);
+            var attendance = attendanceRepository.findByMemberIdAndWorkDate(memberId, date).orElse(null);
+            var rows = existing.stream()
+                    .filter(exception -> memberId.equals(exception.getMember().getId()))
+                    .map(exception -> new AttendanceExceptionInput(member, weekly, event, attendance, exception.getType()))
+                    .toList();
+            return rows.isEmpty()
+                    ? Stream.of(new AttendanceExceptionInput(member, weekly, event, attendance, null))
+                    : rows.stream();
+        }).toList();
     }
 
     private Member createMember(String name, String email) {

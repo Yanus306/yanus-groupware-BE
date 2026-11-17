@@ -68,10 +68,12 @@ class AttendanceExceptionQueryIntegrationTest {
     }
 
     @Test
-    void readsTheSameNumberOfStatementsForTenAndOneHundredMembers() {
+    void readsTwoSelectsThroughHttpForTenAndOneHundredMembers() throws Exception {
         long team = team("Alpha");
+        long caller = member(team, "member-0");
+        schedule(caller);
         var selects = new ArrayList<Long>();
-        int existing = 0;
+        int existing = 1;
         for (int size : List.of(10, 100)) {
             for (int i = existing; i < size; i++) {
                 schedule(member(team, "member-" + i));
@@ -79,19 +81,53 @@ class AttendanceExceptionQueryIntegrationTest {
             existing = size;
             LocalDate date = size == 10 ? MONDAY : MONDAY.plusWeeks(1);
             jdbc.execute("select pg_stat_statements_reset()");
-            assertThat(service.getList(date, null, null, null).items()).hasSize(size);
+            assertThat(read(send(caller, date, "")).path("items").size()).isEqualTo(size);
             selects.add(statementCalls("select"));
             assertThat(exceptionCount(date)).isEqualTo(size);
             jdbc.execute("select pg_stat_statements_reset()");
-            assertThat(service.getList(date, null, null, null).items()).hasSize(size);
+            assertThat(read(send(caller, date, "")).path("items").size()).isEqualTo(size);
             selects.add(statementCalls("select"));
             assertThat(statementCalls("insert")).isZero();
             assertThat(exceptionCount(date)).isEqualTo(size);
         }
 
         assertThat(selects).as("SELECTs for first/repeat at 10 and 100 members")
-                .allSatisfy(reads -> assertThat(reads).isBetween(1L, 7L))
-                .allMatch(selects.getFirst()::equals);
+                .containsExactly(2L, 2L, 2L, 2L);
+    }
+
+    @Test
+    void joinedInputsKeepMultipleExistingTypesAndUseTheDateSpecificSchedule() throws Exception {
+        long team = team("Alpha");
+        long overridden = member(team, "overridden");
+        long dayOff = member(team, "day-off");
+        schedule(overridden);
+        schedule(dayOff);
+        jdbc.update("""
+                insert into work_schedule_event(member_id,date,start_time,end_time,event_type,ends_next_day,created_at)
+                values (?,?,'22:00','06:00','WORKING',true,now()),
+                       (?,?,'08:00','17:00','WORKING',false,now()),
+                       (?,?,null,null,'DAY_OFF',false,now())
+                """, overridden, MONDAY, overridden, MONDAY.plusWeeks(1), dayOff, MONDAY);
+        long attendanceId = attendance(overridden, "22:15");
+        jdbc.update("""
+                insert into attendance_exception(member_id,attendance_id,work_date,type,status,note)
+                values (?,?,?,'LATE','APPROVED','late kept'),
+                       (?,?,?,'MISSED_CHECK_OUT','REJECTED','checkout kept')
+                """, overridden, attendanceId, MONDAY, overridden, attendanceId, MONDAY);
+
+        jdbc.execute("select pg_stat_statements_reset()");
+        var response = read(send(overridden, MONDAY, ""));
+
+        assertThat(statementCalls("select")).isEqualTo(2);
+        assertThat(statementCalls("insert")).isZero();
+        assertThat(response.path("summary").path("totalCount").asInt()).isEqualTo(2);
+        assertThat(response.path("items")).allSatisfy(item -> {
+            assertThat(item.path("memberId").asLong()).isEqualTo(overridden);
+            assertThat(item.path("scheduledStartAt").asText()).isEqualTo("2026-10-05T22:00:00");
+            assertThat(item.path("scheduledEndAt").asText()).isEqualTo("2026-10-06T06:00:00");
+            assertThat(item.path("attendanceRecordId").asLong()).isEqualTo(attendanceId);
+        }).extracting(item -> item.path("type").asText() + ":" + item.path("status").asText())
+                .containsExactlyInAnyOrder("LATE:APPROVED", "MISSED_CHECK_OUT:REJECTED");
     }
 
     @Test

@@ -25,11 +25,6 @@ public class WorkScheduleJpaRepository implements WorkScheduleRepository {
     }
 
     @Override
-    public List<WorkSchedule> findAllByDayOfWeek(DayOfWeek dayOfWeek) {
-        return repository.findAllByDayOfWeek(dayOfWeek);
-    }
-
-    @Override
     public List<WorkSchedule> findAllByMemberId(Long memberId) {
         return repository.findAllByMemberId(memberId);
     }

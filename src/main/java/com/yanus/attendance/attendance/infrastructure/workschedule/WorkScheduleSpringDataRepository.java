@@ -12,8 +12,6 @@ public interface WorkScheduleSpringDataRepository extends JpaRepository<WorkSche
 
     Optional<WorkSchedule> findByMemberIdAndDayOfWeek(Long memberId, DayOfWeek dayOfWeek);
 
-    List<WorkSchedule> findAllByDayOfWeek(DayOfWeek dayOfWeek);
-
     List<WorkSchedule> findAllByMemberId(Long memberId);
 
     @Query("SELECT w FROM WorkSchedule w WHERE w.member.team.id = :teamId")

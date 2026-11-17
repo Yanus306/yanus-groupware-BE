@@ -6,9 +6,10 @@ import com.yanus.attendance.attendance.application.dto.exception.AttendanceExcep
 import com.yanus.attendance.attendance.application.dto.exception.AttendanceExceptionSummary;
 import com.yanus.attendance.attendance.application.dto.exception.BulkAutoCheckoutResponse;
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
-import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
 import com.yanus.attendance.attendance.domain.exception.AttendanceException;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionInput;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionInputRepository;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionInsertRepository;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionJudge;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionKey;
@@ -22,7 +23,6 @@ import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleRepositor
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
-import com.yanus.attendance.member.domain.MemberRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -34,8 +34,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -49,10 +47,9 @@ public class AttendanceExceptionService {
 
     private final AttendanceExceptionRepository exceptionRepository;
     private final AttendanceExceptionInsertRepository exceptionInsertRepository;
-    private final AttendanceRepository attendanceRepository;
+    private final AttendanceExceptionInputRepository exceptionInputRepository;
     private final WorkScheduleRepository workScheduleRepository;
     private final WorkScheduleEventRepository workScheduleEventRepository;
-    private final MemberRepository memberRepository;
     private final AttendanceSettingService settingService;
     private final AttendanceExceptionJudge judge = new AttendanceExceptionJudge();
 
@@ -209,25 +206,27 @@ public class AttendanceExceptionService {
     }
 
     private Map<Long, WorkScheduleWindow> generateMissingExceptions(LocalDate date) {
-        List<Member> members = memberRepository.findAll();
-        Map<Long, WorkSchedule> weeklySchedules = workScheduleRepository.findAllByDayOfWeek(date.getDayOfWeek())
-                .stream().collect(Collectors.toMap(schedule -> schedule.getMember().getId(), Function.identity()));
-        Map<Long, WorkScheduleEvent> scheduleEvents = workScheduleEventRepository.findAllByDateBetween(date, date)
-                .stream().collect(Collectors.toMap(event -> event.getMember().getId(), Function.identity()));
-        Map<Long, Attendance> attendances = attendanceRepository.findAllByWorkDate(date)
-                .stream().collect(Collectors.toMap(attendance -> attendance.getMember().getId(), Function.identity()));
-        Set<AttendanceExceptionKey> existing = new HashSet<>(exceptionRepository.findKeysByWorkDate(date));
+        Map<Long, AttendanceExceptionInput> inputsByMember = new HashMap<>();
+        Set<AttendanceExceptionKey> existing = new HashSet<>();
+        for (AttendanceExceptionInput input : exceptionInputRepository.findGenerationInputs(date, date.getDayOfWeek())) {
+            Long memberId = input.member().getId();
+            inputsByMember.putIfAbsent(memberId, input);
+            if (input.existingType() != null) {
+                existing.add(new AttendanceExceptionKey(memberId, input.existingType()));
+            }
+        }
         Map<Long, WorkScheduleWindow> schedules = new HashMap<>();
         List<AttendanceException> candidates = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now(KST);
 
-        for (Member member : members) {
+        for (AttendanceExceptionInput input : inputsByMember.values()) {
+            Member member = input.member();
             Long memberId = member.getId();
-            WorkScheduleWindow schedule = resolveSchedule(scheduleEvents.get(memberId), weeklySchedules.get(memberId));
+            WorkScheduleWindow schedule = resolveSchedule(input.scheduleEvent(), input.weeklySchedule());
             if (schedule != null) {
                 schedules.put(memberId, schedule);
             }
-            Attendance attendance = attendances.get(memberId);
+            Attendance attendance = input.attendance();
             List<AttendanceExceptionType> detected = judge.judgeByScheduledStart(
                     startOf(schedule), attendance, isThresholdPassed(date, schedule, now));
             for (AttendanceExceptionType type : detected) {
