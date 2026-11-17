@@ -1,6 +1,8 @@
 package com.yanus.attendance.attendance;
 
 import com.yanus.attendance.attendance.domain.exception.AttendanceException;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionInsertRepository;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionKey;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionRepository;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import java.time.LocalDate;
@@ -10,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.springframework.test.util.ReflectionTestUtils;
 
-public class FakeAttendanceExceptionRepository implements AttendanceExceptionRepository {
+public class FakeAttendanceExceptionRepository implements AttendanceExceptionRepository, AttendanceExceptionInsertRepository {
 
     private final Map<Long, AttendanceException> store = new HashMap<>();
     private Long sequence = 1L;
@@ -44,6 +46,28 @@ public class FakeAttendanceExceptionRepository implements AttendanceExceptionRep
         return store.values().stream()
                 .filter(e -> e.getWorkDate().equals(workDate))
                 .toList();
+    }
+
+    @Override
+    public List<AttendanceExceptionKey> findKeysByWorkDate(LocalDate workDate) {
+        return findAllByWorkDate(workDate).stream()
+                .map(exception -> new AttendanceExceptionKey(exception.getMember().getId(), exception.getType()))
+                .toList();
+    }
+
+    @Override
+    public List<AttendanceException> findAllByWorkDateWithDetails(LocalDate workDate) {
+        return findAllByWorkDate(workDate);
+    }
+
+    @Override
+    public void insertMissing(List<AttendanceException> candidates) {
+        for (AttendanceException candidate : candidates) {
+            if (findByMemberIdAndWorkDateAndType(
+                    candidate.getMember().getId(), candidate.getWorkDate(), candidate.getType()).isEmpty()) {
+                save(candidate);
+            }
+        }
     }
 
     @Override
