@@ -25,6 +25,13 @@ public class FakeAttendanceRepository implements AttendanceRepository {
     }
 
     @Override
+    public void insertIfAbsent(Attendance attendance) {
+        if (findByMemberIdAndWorkDate(attendance.getMember().getId(), attendance.getWorkDate()).isEmpty()) {
+            save(attendance);
+        }
+    }
+
+    @Override
     public Optional<Attendance> findByMemberIdAndWorkDate(Long memberId, LocalDate workDate) {
         return store.values().stream()
                 .filter(a -> a.getMember().getId().equals(memberId))
