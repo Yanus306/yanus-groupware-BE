@@ -8,7 +8,13 @@ import com.yanus.attendance.attendance.application.dto.exception.BulkAutoCheckou
 import com.yanus.attendance.attendance.domain.attendance.Attendance;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceRepository;
 import com.yanus.attendance.attendance.domain.attendance.AttendanceStatus;
-import com.yanus.attendance.attendance.domain.exception.*;
+import com.yanus.attendance.attendance.domain.exception.AttendanceException;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionInsertRepository;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionJudge;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionKey;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionRepository;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionStatus;
+import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import com.yanus.attendance.attendance.domain.workschedule.WorkSchedule;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEvent;
 import com.yanus.attendance.attendance.domain.workschedule.WorkScheduleEventRepository;
@@ -21,10 +27,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -34,6 +48,7 @@ public class AttendanceExceptionService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final AttendanceExceptionRepository exceptionRepository;
+    private final AttendanceExceptionInsertRepository exceptionInsertRepository;
     private final AttendanceRepository attendanceRepository;
     private final WorkScheduleRepository workScheduleRepository;
     private final WorkScheduleEventRepository workScheduleEventRepository;
@@ -48,7 +63,7 @@ public class AttendanceExceptionService {
             AttendanceExceptionStatus status,
             String teamName) {
         generateMissingExceptions(date);
-        return filterExceptions(exceptionRepository.findAllByWorkDate(date), type, status, teamName);
+        return filterExceptions(exceptionRepository.findAllByWorkDateWithDetails(date), type, status, teamName);
     }
 
     @Transactional(readOnly = true)
@@ -57,7 +72,7 @@ public class AttendanceExceptionService {
         return buildSummary(all, all);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public AttendanceExceptionListResponse getList(
             LocalDate date,
             String type,
@@ -75,12 +90,12 @@ public class AttendanceExceptionService {
             AttendanceExceptionType type,
             AttendanceExceptionStatus status,
             String teamName) {
-        generateMissingExceptions(date);
-        List<AttendanceException> all = exceptionRepository.findAllByWorkDate(date);
+        Map<Long, WorkScheduleWindow> schedules = generateMissingExceptions(date);
+        List<AttendanceException> all = exceptionRepository.findAllByWorkDateWithDetails(date);
         List<AttendanceException> filtered = filterExceptions(all, type, status, teamName);
         AttendanceExceptionSummary summary = buildSummary(all, filtered);
         List<AttendanceExceptionResponse> items = filtered.stream()
-                .map(this::toResponse)
+                .map(exception -> toResponse(exception, schedules.get(exception.getMember().getId())))
                 .toList();
         return new AttendanceExceptionListResponse(date, summary, items);
     }
@@ -147,6 +162,10 @@ public class AttendanceExceptionService {
 
     private AttendanceExceptionResponse toResponse(AttendanceException exception) {
         WorkScheduleWindow schedule = findSchedule(exception.getMember(), exception.getWorkDate());
+        return toResponse(exception, schedule);
+    }
+
+    private AttendanceExceptionResponse toResponse(AttendanceException exception, WorkScheduleWindow schedule) {
         return AttendanceExceptionResponse.from(
                 exception,
                 startOf(schedule),
@@ -189,70 +208,63 @@ public class AttendanceExceptionService {
         );
     }
 
-    private void generateMissingExceptions(LocalDate date) {
-        memberRepository.findAll()
-                .forEach(member -> generateFor(member, date));
-    }
+    private Map<Long, WorkScheduleWindow> generateMissingExceptions(LocalDate date) {
+        List<Member> members = memberRepository.findAll();
+        Map<Long, WorkSchedule> weeklySchedules = workScheduleRepository.findAllByDayOfWeek(date.getDayOfWeek())
+                .stream().collect(Collectors.toMap(schedule -> schedule.getMember().getId(), Function.identity()));
+        Map<Long, WorkScheduleEvent> scheduleEvents = workScheduleEventRepository.findAllByDateBetween(date, date)
+                .stream().collect(Collectors.toMap(event -> event.getMember().getId(), Function.identity()));
+        Map<Long, Attendance> attendances = attendanceRepository.findAllByWorkDate(date)
+                .stream().collect(Collectors.toMap(attendance -> attendance.getMember().getId(), Function.identity()));
+        Set<AttendanceExceptionKey> existing = new HashSet<>(exceptionRepository.findKeysByWorkDate(date));
+        Map<Long, WorkScheduleWindow> schedules = new HashMap<>();
+        List<AttendanceException> candidates = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now(KST);
 
-    private void generateFor(Member member, LocalDate date) {
-        WorkScheduleWindow schedule = findSchedule(member, date);
-        Attendance attendance = findAttendance(member, date);
-        boolean thresholdPassed = isThresholdPassed(date, schedule);
-        List<AttendanceExceptionType> detected = judge.judgeByScheduledStart(
-                startOf(schedule), attendance, thresholdPassed);
-        detected.forEach(type -> saveIfAbsent(member, attendance, date, type));
+        for (Member member : members) {
+            Long memberId = member.getId();
+            WorkScheduleWindow schedule = resolveSchedule(scheduleEvents.get(memberId), weeklySchedules.get(memberId));
+            if (schedule != null) {
+                schedules.put(memberId, schedule);
+            }
+            Attendance attendance = attendances.get(memberId);
+            List<AttendanceExceptionType> detected = judge.judgeByScheduledStart(
+                    startOf(schedule), attendance, isThresholdPassed(date, schedule, now));
+            for (AttendanceExceptionType type : detected) {
+                if (existing.add(new AttendanceExceptionKey(memberId, type))) {
+                    candidates.add(AttendanceException.open(member, attendance, date, type));
+                }
+            }
+        }
+        if (!candidates.isEmpty()) {
+            exceptionInsertRepository.insertMissing(candidates);
+        }
+        return schedules;
     }
 
     private WorkScheduleWindow findSchedule(Member member, LocalDate date) {
         WorkScheduleEvent event = workScheduleEventRepository
                 .findByMemberIdAndDate(member.getId(), date)
                 .orElse(null);
+        WorkSchedule weekly = event == null
+                ? workScheduleRepository.findByMemberIdAndDayOfWeek(member.getId(), date.getDayOfWeek()).orElse(null)
+                : null;
+        return resolveSchedule(event, weekly);
+    }
+
+    private WorkScheduleWindow resolveSchedule(WorkScheduleEvent event, WorkSchedule weekly) {
         if (event != null) {
-            if (event.isDayOff()) {
-                return null;
-            }
-            return WorkScheduleWindow.from(event);
+            return event.isDayOff() ? null : WorkScheduleWindow.from(event);
         }
-        return workScheduleRepository
-                .findByMemberIdAndDayOfWeek(member.getId(), date.getDayOfWeek())
-                .map(WorkScheduleWindow::from)
-                .orElse(null);
+        return weekly == null ? null : WorkScheduleWindow.from(weekly);
     }
 
-    private Attendance findAttendance(Member member, LocalDate date) {
-        return attendanceRepository
-                .findByMemberIdAndWorkDate(member.getId(), date)
-                .orElse(null);
-    }
-
-    private void saveIfAbsent(Member member, Attendance attendance,
-                              LocalDate date, AttendanceExceptionType type) {
-        if (alreadyExists(member, date, type)) {
-            return;
-        }
-        exceptionRepository.save(AttendanceException.open(member, attendance, date, type));
-    }
-
-    private boolean alreadyExists(Member member, LocalDate date, AttendanceExceptionType type) {
-        return exceptionRepository
-                .findByMemberIdAndWorkDateAndType(member.getId(), date, type)
-                .isPresent();
-    }
-
-    private boolean isThresholdPassed(LocalDate date, WorkScheduleWindow schedule) {
-        LocalDateTime now = LocalDateTime.now(KST);
-        LocalDateTime deadline = deadlineOf(date, schedule);
-        return !now.isBefore(deadline);
-    }
-
-    private LocalDateTime deadlineOf(LocalDate date, WorkScheduleWindow schedule) {
+    private boolean isThresholdPassed(LocalDate date, WorkScheduleWindow schedule, LocalDateTime now) {
         if (schedule == null) {
-            return date.atTime(settingService.getAutoCheckoutTimeValue());
+            return false;
         }
-        if (schedule.endsNextDay()) {
-            return date.plusDays(1).atTime(schedule.endTime());
-        }
-        return date.atTime(schedule.endTime());
+        LocalDate endDate = schedule.endsNextDay() ? date.plusDays(1) : date;
+        return !now.isBefore(endDate.atTime(schedule.endTime()));
     }
 
     private List<AttendanceException> filterExceptions(

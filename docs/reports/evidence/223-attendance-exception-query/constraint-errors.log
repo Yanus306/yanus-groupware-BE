@@ -1,0 +1,2 @@
+2026-11-17T13:15:59.495+09:00  WARN 24920 --- [attendance] [1-auto-1-exec-1] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 0, SQLState: 23505
+2026-11-17T13:15:59.495+09:00 ERROR 24920 --- [attendance] [1-auto-1-exec-1] o.h.engine.jdbc.spi.SqlExceptionHelper   : ERROR: duplicate key value violates unique constraint "uk_member_workdate_type"

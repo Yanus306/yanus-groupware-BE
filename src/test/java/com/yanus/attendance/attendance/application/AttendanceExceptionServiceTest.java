@@ -64,6 +64,7 @@ public class AttendanceExceptionServiceTest {
 
         service = new AttendanceExceptionService(
                 exceptionRepository,
+                exceptionRepository,
                 attendanceRepository,
                 workScheduleRepository,
                 workScheduleEventRepository,
