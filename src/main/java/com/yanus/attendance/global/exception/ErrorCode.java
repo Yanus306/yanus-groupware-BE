@@ -30,7 +30,6 @@ public enum ErrorCode {
     MEMBER_PENDING(HttpStatus.FORBIDDEN, "MEMBER_PENDING", "이메일 인증되지 않은 계정입니다."),
 
     // Attendance
-    ALREADY_CHECKED_IN(HttpStatus.BAD_REQUEST, "ALREADY_CHECKED_IN", "이미 출근 처리되었습니다."),
     NOT_CHECKED_IN(HttpStatus.BAD_REQUEST, "NOT_CHECKED_IN", "오늘 출근 기록이 없습니다."),
     ALREADY_CHECKED_OUT(HttpStatus.BAD_REQUEST, "ALREADY_CHECKED_OUT", "이미 퇴근 처리되었습니다."),
     INVALID_CHECKOUT_TIME(HttpStatus.BAD_REQUEST, "INVALID_CHECKOUT_TIME", "퇴근 시간은 출근 시간 이후여야 합니다."),

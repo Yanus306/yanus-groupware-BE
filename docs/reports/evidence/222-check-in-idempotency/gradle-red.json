@@ -1,0 +1,24 @@
+{
+  "returnsTheSameCheckInToBothConcurrentRequests()": [
+    "org.opentest4j.AssertionFailedError: [HTTP responses: {\"code\":\"SUCCESS\",\"message\":\"요청이 성공했습니다.\",\"data\":{\"id\":2,\"memberId\":1,\"memberName\":\"check-in test\",\"workDate\":\"2026-11-17\",\"checkInTime\":\"2026-11-17T12:29:03.035456\",\"checkOutTime\":null,\"status\":\"WORKING\"}} / {\"code\":\"INTERNAL_ERROR\",\"message\":\"서버 오류가 발생했습니다.\",\"data\":null}] ",
+    "Expecting actual:",
+    "  [200, 500]",
+    "to contain exactly (and in same order):",
+    "  [200, 200]",
+    "but some elements were not found:",
+    "  [200]",
+    "and others were not expected:",
+    "  [500]"
+  ],
+  "returnsThePersistedCheckInWhenTheClientRetries()": [
+    "org.opentest4j.AssertionFailedError: [HTTP responses: {\"code\":\"SUCCESS\",\"message\":\"요청이 성공했습니다.\",\"data\":{\"id\":3,\"memberId\":2,\"memberName\":\"check-in test\",\"workDate\":\"2026-11-17\",\"checkInTime\":\"2026-11-17T12:29:03.113555\",\"checkOutTime\":null,\"status\":\"WORKING\"}} / {\"code\":\"ALREADY_CHECKED_IN\",\"message\":\"이미 출근 처리되었습니다.\",\"data\":null}] ",
+    "Expecting actual:",
+    "  [200, 400]",
+    "to contain exactly (and in same order):",
+    "  [200, 200]",
+    "but some elements were not found:",
+    "  [200]",
+    "and others were not expected:",
+    "  [400]"
+  ]
+}

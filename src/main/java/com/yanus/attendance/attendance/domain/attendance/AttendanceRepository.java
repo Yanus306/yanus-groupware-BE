@@ -8,6 +8,8 @@ public interface AttendanceRepository {
 
     Attendance save(Attendance attendance);
 
+    void insertIfAbsent(Attendance attendance);
+
     Optional<Attendance> findByMemberIdAndWorkDate(Long memberId, LocalDate workDate);
 
     List<Attendance> findAllByMemberId(Long memberId);
