@@ -39,13 +39,6 @@ public class FakeWorkScheduleRepository implements WorkScheduleRepository {
     }
 
     @Override
-    public List<WorkSchedule> findAllByDayOfWeek(DayOfWeek dayOfWeek) {
-        return store.values().stream()
-                .filter(schedule -> schedule.getDayOfWeek() == dayOfWeek)
-                .toList();
-    }
-
-    @Override
     public void deleteByMemberIdAndDayOfWeek(Long memberId, DayOfWeek dayOfWeek) {
         store.values().removeIf(s ->
                 s.getMember().getId().equals(memberId) && s.getDayOfWeek() == dayOfWeek);

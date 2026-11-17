@@ -2,6 +2,8 @@
 
 2026-11-17에 기존 `dev` 커밋 `210b46324bef885350db6c8e64ee38ab3c1c581b`과 이 커밋 기반 `feat/#223` 로컬 구현을 비교했다. 두 버전의 JDK는 21.0.10이고, 각각 별도 PostgreSQL 16.15 Testcontainers에 같은 Flyway V27을 적용했다. 정확한 운영 소스·Gradle 설정 지문은 결과 JSON의 `production_source_fingerprint` 필드에 있다.
 
+이후 머지된 6회 버전과 2회 버전을 별도로 비교했다. [후속 검증 기록](select-2/verification.md)
+
 ## PostgreSQL SQL 호출
 
 | 활성 회원 | 시나리오 | 수정 전 SELECT + INSERT | 수정 후 SELECT + INSERT | 합계 변화 |

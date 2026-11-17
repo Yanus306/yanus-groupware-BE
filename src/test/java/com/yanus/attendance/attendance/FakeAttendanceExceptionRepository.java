@@ -2,7 +2,6 @@ package com.yanus.attendance.attendance;
 
 import com.yanus.attendance.attendance.domain.exception.AttendanceException;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionInsertRepository;
-import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionKey;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionRepository;
 import com.yanus.attendance.attendance.domain.exception.AttendanceExceptionType;
 import java.time.LocalDate;
@@ -45,13 +44,6 @@ public class FakeAttendanceExceptionRepository implements AttendanceExceptionRep
     public List<AttendanceException> findAllByWorkDate(LocalDate workDate) {
         return store.values().stream()
                 .filter(e -> e.getWorkDate().equals(workDate))
-                .toList();
-    }
-
-    @Override
-    public List<AttendanceExceptionKey> findKeysByWorkDate(LocalDate workDate) {
-        return findAllByWorkDate(workDate).stream()
-                .map(exception -> new AttendanceExceptionKey(exception.getMember().getId(), exception.getType()))
                 .toList();
     }
 
