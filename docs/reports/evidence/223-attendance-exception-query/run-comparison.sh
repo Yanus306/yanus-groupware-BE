@@ -3,10 +3,11 @@ set -eu
 
 evidence_dir="$(cd "$(dirname "$0")" && pwd)"
 candidate="$(git -C "$evidence_dir" rev-parse --show-toplevel)"
-output_dir="${1:?usage: bash run-comparison.sh /path/to/output}"
+output_dir="${1:?usage: bash run-comparison.sh /path/to/output [Gradle options]}"
 mkdir -p "$output_dir"
 output_dir="$(cd "$output_dir" && pwd)"
-baseline=210b46324bef885350db6c8e64ee38ab3c1c581b
+baseline="$(git -C "$candidate" rev-parse --verify "${YANUS_223_BASELINE_COMMIT:-210b46324bef885350db6c8e64ee38ab3c1c581b}^{commit}")"
+export YANUS_223_BASELINE_COMMIT="$baseline"
 
 scratch="$(mktemp -d "${TMPDIR:-/tmp}/yanus-223-comparison.XXXXXXXX")"
 trap 'python3 -c '"'"'from pathlib import Path; from shutil import rmtree; import sys; p=Path(sys.argv[1]); assert p.name.startswith("yanus-223-comparison.") and not p.is_symlink(); rmtree(p)'"'"' "$scratch"' EXIT

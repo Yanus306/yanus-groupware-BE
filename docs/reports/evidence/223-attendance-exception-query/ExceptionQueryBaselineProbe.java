@@ -37,7 +37,8 @@ public class ExceptionQueryBaselineProbe {
 
     public static void main(String[] args) throws Exception {
         var result = new LinkedHashMap<String, Object>();
-        result.put("baseline_commit", System.getenv("GITHUB_SHA"));
+        result.put("baseline_commit", System.getenv().getOrDefault("YANUS_223_BASELINE_COMMIT", System.getenv("GITHUB_SHA")));
+        result.put("source_tree_head", System.getenv("GITHUB_SHA"));
         result.put("variant", System.getenv().getOrDefault("YANUS_223_VARIANT", "baseline"));
         result.put("production_source_fingerprint", System.getenv().getOrDefault("YANUS_223_SOURCE_FINGERPRINT", ""));
         result.put("java_version", System.getProperty("java.version"));
@@ -114,7 +115,8 @@ public class ExceptionQueryBaselineProbe {
                 select
                   lower(split_part(ltrim(query), ' ', 1)) as verb,
                   regexp_replace(query, '[[:space:]]+', ' ', 'g') as sql,
-                  calls
+                  calls,
+                  rows
                 from pg_stat_statements
                 where ltrim(query) ~* '^(select|insert|update|delete)[[:space:]]'
                   and query not ilike '%pg_stat_statements%'
