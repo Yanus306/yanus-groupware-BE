@@ -1,0 +1,21 @@
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            def sourceDir = file(System.getenv('YANUS_222_PROBE_DIR'))
+            def probeClasses = layout.buildDirectory.dir('checkInBaselineProbe')
+            def probeClasspath = sourceSets.main.runtimeClasspath + configurations.testRuntimeClasspath
+            tasks.register('compileCheckInBaselineProbe', JavaCompile) {
+                dependsOn tasks.named('classes')
+                source = fileTree(sourceDir) { include 'CheckInBaselineProbe.java' }
+                classpath = probeClasspath
+                destinationDirectory = probeClasses
+                options.encoding = 'UTF-8'
+            }
+            tasks.register('checkInBaselineProbe', JavaExec) {
+                dependsOn tasks.named('compileCheckInBaselineProbe')
+                classpath = files(probeClasses) + probeClasspath
+                mainClass = 'CheckInBaselineProbe'
+            }
+        }
+    }
+}

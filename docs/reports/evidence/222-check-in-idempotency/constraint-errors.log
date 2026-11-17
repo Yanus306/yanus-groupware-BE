@@ -1,0 +1,6 @@
+2026-11-17T11:23:19.382+09:00  WARN 80592 --- [attendance] [1-auto-1-exec-6] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 0, SQLState: 23505
+2026-11-17T11:23:19.382+09:00 ERROR 80592 --- [attendance] [1-auto-1-exec-6] o.h.engine.jdbc.spi.SqlExceptionHelper   : ERROR: duplicate key value violates unique constraint "attendance_member_id_work_date_key"
+2026-11-17T11:23:19.424+09:00  WARN 80592 --- [attendance] [1-auto-1-exec-7] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 0, SQLState: 23505
+2026-11-17T11:23:19.424+09:00 ERROR 80592 --- [attendance] [1-auto-1-exec-7] o.h.engine.jdbc.spi.SqlExceptionHelper   : ERROR: duplicate key value violates unique constraint "attendance_member_id_work_date_key"
+2026-11-17T11:23:19.462+09:00  WARN 80592 --- [attendance] [-auto-1-exec-10] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 0, SQLState: 23505
+2026-11-17T11:23:19.462+09:00 ERROR 80592 --- [attendance] [-auto-1-exec-10] o.h.engine.jdbc.spi.SqlExceptionHelper   : ERROR: duplicate key value violates unique constraint "attendance_member_id_work_date_key"
