@@ -1,0 +1,21 @@
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            def sourceDir = file(System.getenv('YANUS_223_PROBE_DIR'))
+            def probeClasses = layout.buildDirectory.dir('exceptionQueryBaselineProbe')
+            def probeClasspath = sourceSets.main.runtimeClasspath + configurations.testRuntimeClasspath
+            tasks.register('compileExceptionQueryBaselineProbe', JavaCompile) {
+                dependsOn tasks.named('classes')
+                source = fileTree(sourceDir) { include 'ExceptionQueryBaselineProbe.java' }
+                classpath = probeClasspath
+                destinationDirectory = probeClasses
+                options.encoding = 'UTF-8'
+            }
+            tasks.register('exceptionQueryBaselineProbe', JavaExec) {
+                dependsOn tasks.named('compileExceptionQueryBaselineProbe')
+                classpath = files(probeClasses) + probeClasspath
+                mainClass = 'ExceptionQueryBaselineProbe'
+            }
+        }
+    }
+}

@@ -1,0 +1,209 @@
+{
+  "baseline_commit" : "210b46324bef885350db6c8e64ee38ab3c1c581b",
+  "variant" : "optimized",
+  "production_source_fingerprint" : "90a69ae6dc139ff6535d9232cadb2a012d8fd986536a61392ce91d56bc6a4f41",
+  "java_version" : "21.0.10",
+  "database_version" : "16.15 (Debian 16.15-1.pgdg13+2)",
+  "isolation" : "read committed",
+  "flyway_latest" : "27",
+  "statement_counts" : [ {
+    "first" : {
+      "hibernate_prepared_statements" : 6,
+      "postgres_statements" : [ {
+        "verb" : "insert",
+        "sql" : "INSERT INTO attendance_exception (member_id, attendance_id, work_date, type, status, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (member_id, work_date, type) DO NOTHING",
+        "calls" : 10
+      }, {
+        "verb" : "select",
+        "sql" : "select a1_0.attendance_id,a1_0.check_in_time,a1_0.check_out_time,a1_0.member_id,a1_0.status,a1_0.work_date from attendance a1_0 where a1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ae1_0.id,ae1_0.approved_at,ae1_0.approved_by,a1_0.attendance_id,a1_0.check_in_time,a1_0.check_out_time,a1_0.member_id,a1_0.status,a1_0.work_date,ae1_0.created_at,m1_0.member_id,m1_0.created_at,m1_0.email,m1_0.locked_until,m1_0.login_fail_count,m1_0.name,m1_0.password,m1_0.role,m1_0.status,m1_0.team_id,t1_0.team_id,t1_0.created_at,t1_0.name,ae1_0.note,ae1_0.reason,ae1_0.resolved_at,ae1_0.resolved_by,ae1_0.status,ae1_0.type,ae1_0.work_date from attendance_exception ae1_0 join member m1_0 on m1_0.member_id=ae1_0.member_id join team t1_0 on t1_0.team_id=m1_0.team_id left join attendance a1_0 on a1_0.attendance_id=ae1_0.attendance_id where ae1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ae1_0.member_id,ae1_0.type from attendance_exception ae1_0 where ae1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select m1_0.member_id,m1_0.created_at,m1_0.email,m1_0.locked_until,m1_0.login_fail_count,m1_0.name,m1_0.password,m1_0.role,m1_0.status,m1_0.team_id from member m1_0",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ws1_0.work_schedule_id,ws1_0.day_of_week,ws1_0.end_time,ws1_0.ends_next_day,ws1_0.member_id,ws1_0.start_time,ws1_0.week_pattern from work_schedule ws1_0 where ws1_0.day_of_week=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select wse1_0.work_schedule_event_id,wse1_0.created_at,wse1_0.date,wse1_0.end_time,wse1_0.ends_next_day,wse1_0.event_type,wse1_0.member_id,wse1_0.reason,wse1_0.start_time from work_schedule_event wse1_0 where wse1_0.date between $1 and $2",
+        "calls" : 1
+      } ],
+      "items" : 10,
+      "persisted_exceptions" : 10,
+      "postgres_calls_by_verb" : {
+        "insert" : 10,
+        "select" : 6
+      }
+    },
+    "members" : 10,
+    "repeat" : {
+      "hibernate_prepared_statements" : 6,
+      "postgres_statements" : [ {
+        "verb" : "select",
+        "sql" : "select a1_0.attendance_id,a1_0.check_in_time,a1_0.check_out_time,a1_0.member_id,a1_0.status,a1_0.work_date from attendance a1_0 where a1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ae1_0.id,ae1_0.approved_at,ae1_0.approved_by,a1_0.attendance_id,a1_0.check_in_time,a1_0.check_out_time,a1_0.member_id,a1_0.status,a1_0.work_date,ae1_0.created_at,m1_0.member_id,m1_0.created_at,m1_0.email,m1_0.locked_until,m1_0.login_fail_count,m1_0.name,m1_0.password,m1_0.role,m1_0.status,m1_0.team_id,t1_0.team_id,t1_0.created_at,t1_0.name,ae1_0.note,ae1_0.reason,ae1_0.resolved_at,ae1_0.resolved_by,ae1_0.status,ae1_0.type,ae1_0.work_date from attendance_exception ae1_0 join member m1_0 on m1_0.member_id=ae1_0.member_id join team t1_0 on t1_0.team_id=m1_0.team_id left join attendance a1_0 on a1_0.attendance_id=ae1_0.attendance_id where ae1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ae1_0.member_id,ae1_0.type from attendance_exception ae1_0 where ae1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select m1_0.member_id,m1_0.created_at,m1_0.email,m1_0.locked_until,m1_0.login_fail_count,m1_0.name,m1_0.password,m1_0.role,m1_0.status,m1_0.team_id from member m1_0",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ws1_0.work_schedule_id,ws1_0.day_of_week,ws1_0.end_time,ws1_0.ends_next_day,ws1_0.member_id,ws1_0.start_time,ws1_0.week_pattern from work_schedule ws1_0 where ws1_0.day_of_week=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select wse1_0.work_schedule_event_id,wse1_0.created_at,wse1_0.date,wse1_0.end_time,wse1_0.ends_next_day,wse1_0.event_type,wse1_0.member_id,wse1_0.reason,wse1_0.start_time from work_schedule_event wse1_0 where wse1_0.date between $1 and $2",
+        "calls" : 1
+      } ],
+      "items" : 10,
+      "persisted_exceptions" : 10,
+      "postgres_calls_by_verb" : {
+        "select" : 6
+      }
+    },
+    "date" : "2026-10-05"
+  }, {
+    "first" : {
+      "hibernate_prepared_statements" : 6,
+      "postgres_statements" : [ {
+        "verb" : "insert",
+        "sql" : "INSERT INTO attendance_exception (member_id, attendance_id, work_date, type, status, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (member_id, work_date, type) DO NOTHING",
+        "calls" : 100
+      }, {
+        "verb" : "select",
+        "sql" : "select a1_0.attendance_id,a1_0.check_in_time,a1_0.check_out_time,a1_0.member_id,a1_0.status,a1_0.work_date from attendance a1_0 where a1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ae1_0.id,ae1_0.approved_at,ae1_0.approved_by,a1_0.attendance_id,a1_0.check_in_time,a1_0.check_out_time,a1_0.member_id,a1_0.status,a1_0.work_date,ae1_0.created_at,m1_0.member_id,m1_0.created_at,m1_0.email,m1_0.locked_until,m1_0.login_fail_count,m1_0.name,m1_0.password,m1_0.role,m1_0.status,m1_0.team_id,t1_0.team_id,t1_0.created_at,t1_0.name,ae1_0.note,ae1_0.reason,ae1_0.resolved_at,ae1_0.resolved_by,ae1_0.status,ae1_0.type,ae1_0.work_date from attendance_exception ae1_0 join member m1_0 on m1_0.member_id=ae1_0.member_id join team t1_0 on t1_0.team_id=m1_0.team_id left join attendance a1_0 on a1_0.attendance_id=ae1_0.attendance_id where ae1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ae1_0.member_id,ae1_0.type from attendance_exception ae1_0 where ae1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select m1_0.member_id,m1_0.created_at,m1_0.email,m1_0.locked_until,m1_0.login_fail_count,m1_0.name,m1_0.password,m1_0.role,m1_0.status,m1_0.team_id from member m1_0",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ws1_0.work_schedule_id,ws1_0.day_of_week,ws1_0.end_time,ws1_0.ends_next_day,ws1_0.member_id,ws1_0.start_time,ws1_0.week_pattern from work_schedule ws1_0 where ws1_0.day_of_week=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select wse1_0.work_schedule_event_id,wse1_0.created_at,wse1_0.date,wse1_0.end_time,wse1_0.ends_next_day,wse1_0.event_type,wse1_0.member_id,wse1_0.reason,wse1_0.start_time from work_schedule_event wse1_0 where wse1_0.date between $1 and $2",
+        "calls" : 1
+      } ],
+      "items" : 100,
+      "persisted_exceptions" : 100,
+      "postgres_calls_by_verb" : {
+        "insert" : 100,
+        "select" : 6
+      }
+    },
+    "members" : 100,
+    "repeat" : {
+      "hibernate_prepared_statements" : 6,
+      "postgres_statements" : [ {
+        "verb" : "select",
+        "sql" : "select a1_0.attendance_id,a1_0.check_in_time,a1_0.check_out_time,a1_0.member_id,a1_0.status,a1_0.work_date from attendance a1_0 where a1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ae1_0.id,ae1_0.approved_at,ae1_0.approved_by,a1_0.attendance_id,a1_0.check_in_time,a1_0.check_out_time,a1_0.member_id,a1_0.status,a1_0.work_date,ae1_0.created_at,m1_0.member_id,m1_0.created_at,m1_0.email,m1_0.locked_until,m1_0.login_fail_count,m1_0.name,m1_0.password,m1_0.role,m1_0.status,m1_0.team_id,t1_0.team_id,t1_0.created_at,t1_0.name,ae1_0.note,ae1_0.reason,ae1_0.resolved_at,ae1_0.resolved_by,ae1_0.status,ae1_0.type,ae1_0.work_date from attendance_exception ae1_0 join member m1_0 on m1_0.member_id=ae1_0.member_id join team t1_0 on t1_0.team_id=m1_0.team_id left join attendance a1_0 on a1_0.attendance_id=ae1_0.attendance_id where ae1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ae1_0.member_id,ae1_0.type from attendance_exception ae1_0 where ae1_0.work_date=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select m1_0.member_id,m1_0.created_at,m1_0.email,m1_0.locked_until,m1_0.login_fail_count,m1_0.name,m1_0.password,m1_0.role,m1_0.status,m1_0.team_id from member m1_0",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select ws1_0.work_schedule_id,ws1_0.day_of_week,ws1_0.end_time,ws1_0.ends_next_day,ws1_0.member_id,ws1_0.start_time,ws1_0.week_pattern from work_schedule ws1_0 where ws1_0.day_of_week=$1",
+        "calls" : 1
+      }, {
+        "verb" : "select",
+        "sql" : "select wse1_0.work_schedule_event_id,wse1_0.created_at,wse1_0.date,wse1_0.end_time,wse1_0.ends_next_day,wse1_0.event_type,wse1_0.member_id,wse1_0.reason,wse1_0.start_time from work_schedule_event wse1_0 where wse1_0.date between $1 and $2",
+        "calls" : 1
+      } ],
+      "items" : 100,
+      "persisted_exceptions" : 100,
+      "postgres_calls_by_verb" : {
+        "select" : 6
+      }
+    },
+    "date" : "2026-10-12"
+  } ],
+  "concurrent_first_http" : {
+    "persisted_exceptions" : 100,
+    "blocked_inserts" : [ {
+      "pid" : 69,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation"
+    }, {
+      "pid" : 70,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation"
+    } ],
+    "same_summary" : true,
+    "date" : "2026-10-19",
+    "same_items" : true,
+    "responses" : [ {
+      "items" : 100,
+      "http_status" : 200,
+      "code" : ""
+    }, {
+      "items" : 100,
+      "http_status" : 200,
+      "code" : ""
+    } ]
+  },
+  "http_benchmark" : {
+    "warmups_per_scenario" : 20,
+    "date" : "2026-10-26",
+    "concurrency" : 1,
+    "samples_per_scenario" : 100,
+    "members" : 100,
+    "repeat" : {
+      "errors" : 0,
+      "successful_response_samples_ms" : [ 5.264166, 5.849375, 5.606167, 14.717083, 12.555, 6.880792, 5.769833, 5.316167, 5.207458, 6.199625, 5.746792, 5.240084, 4.876166, 4.90975, 5.222417, 5.527666, 5.649167, 4.957334, 4.745958, 5.214792, 5.448666, 5.503208, 6.712, 6.088375, 5.355208, 5.911583, 5.500625, 6.594042, 6.556541, 6.805166, 6.222792, 6.566959, 5.966875, 5.973333, 6.434708, 6.112917, 5.4465, 7.222458, 6.8715, 6.724875, 7.341042, 5.943833, 5.832041, 7.051833, 6.222959, 6.502125, 5.556458, 7.307833, 5.846875, 5.627792, 5.158208, 5.03075, 5.12275, 5.152083, 6.540708, 5.802875, 5.976459, 6.309541, 5.916167, 5.745541, 6.160959, 6.212666, 5.795083, 5.494208, 6.652292, 6.255542, 6.03125, 6.052125, 5.356667, 4.960708, 6.263667, 6.523, 5.20625, 5.946333, 5.005875, 5.035667, 4.761084, 5.403084, 4.950792, 4.752625, 4.461084, 4.477, 6.294666, 5.306542, 4.736375, 5.007542, 4.771041, 5.243375, 5.173417, 5.09375, 4.704875, 4.836917, 6.803916, 4.338125, 4.325917, 4.347458, 4.516333, 4.731291, 4.912459, 4.541291 ],
+      "http_status_counts" : {
+        "200" : 100
+      },
+      "p50_ms" : 5.606167,
+      "error_rate" : 0.0,
+      "p95_ms" : 7.051833
+    },
+    "first" : {
+      "errors" : 0,
+      "successful_response_samples_ms" : [ 14.947916, 13.936709, 21.516125, 15.903083, 12.488875, 13.099875, 17.932666, 17.344709, 13.990334, 14.16125, 12.174292, 11.379, 12.638541, 11.450125, 12.820291, 12.65125, 12.167708, 12.920375, 12.106875, 13.518042, 13.435042, 12.796084, 12.6155, 11.936792, 12.742958, 14.024291, 12.374125, 12.658875, 11.991125, 12.762667, 11.687958, 12.302125, 11.61875, 11.193708, 11.406625, 11.812375, 10.891166, 9.360791, 8.583917, 8.533709, 8.544584, 10.681334, 8.101667, 7.7325, 8.942917, 10.604875, 7.983042, 8.501708, 9.5805, 8.75075, 9.488667, 8.435416, 7.253625, 7.757083, 7.502542, 10.185084, 8.570125, 9.184833, 8.900291, 8.670125, 7.647625, 7.770541, 9.161542, 9.2335, 11.270167, 8.336167, 8.423833, 12.864792, 13.89325, 13.802459, 12.724667, 12.917625, 10.666875, 12.610167, 13.147208, 10.458708, 10.968792, 9.126458, 12.655459, 10.181708, 10.32075, 12.62575, 17.371208, 23.139084, 8.143458, 8.837, 7.517917, 7.218292, 7.087125, 7.459167, 7.281333, 6.783375, 7.052416, 7.210708, 7.204208, 8.021, 7.509208, 7.473167, 8.502125, 7.887083 ],
+      "http_status_counts" : {
+        "200" : 100
+      },
+      "p50_ms" : 10.681334,
+      "error_rate" : 0.0,
+      "p95_ms" : 15.903083
+    }
+  }
+}

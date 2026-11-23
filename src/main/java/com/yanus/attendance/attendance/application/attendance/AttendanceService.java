@@ -13,17 +13,19 @@ import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.domain.Member;
 import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class AttendanceService {
 
@@ -34,13 +36,22 @@ public class AttendanceService {
     private final AttendanceQueryRepository attendanceQueryRepository;
     private final AttendanceSettingService attendanceSettingService;
     private final AttendanceExceptionRepository attendanceExceptionRepository;
+    private final Clock attendanceClock;
 
-    public AttendanceResponse checkIn(Long memberId) {
-        Member member = findMember(memberId);
-        validateNotAlreadyCheckedIn(memberId);
-        Attendance attendance = Attendance.checkIn(member, LocalDateTime.now(KST));
-        attendanceRepository.save(attendance);
-        return AttendanceResponse.from(attendance);
+    public AttendanceService(
+            AttendanceRepository attendanceRepository,
+            MemberRepository memberRepository,
+            AttendanceQueryRepository attendanceQueryRepository,
+            AttendanceSettingService attendanceSettingService,
+            AttendanceExceptionRepository attendanceExceptionRepository,
+            @Qualifier("attendanceClock") Clock attendanceClock
+    ) {
+        this.attendanceRepository = attendanceRepository;
+        this.memberRepository = memberRepository;
+        this.attendanceQueryRepository = attendanceQueryRepository;
+        this.attendanceSettingService = attendanceSettingService;
+        this.attendanceExceptionRepository = attendanceExceptionRepository;
+        this.attendanceClock = attendanceClock;
     }
 
     public AttendanceResponse checkOut(Long memberId) {
@@ -82,13 +93,17 @@ public class AttendanceService {
         workingAttendances.forEach(attendance -> attendance.checkOut(checkOutTime));
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public AttendanceResponse checkIn(Long memberId, String clientIp) {
         validateAttendanceIp(clientIp);
         Member member = findMember(memberId);
-        validateNotAlreadyCheckedIn(memberId);
-        Attendance attendance = Attendance.checkIn(member, LocalDateTime.now(KST));
-        attendanceRepository.save(attendance);
-        return AttendanceResponse.from(attendance);
+        LocalDateTime checkInTime = LocalDateTime.ofInstant(attendanceClock.instant(), KST)
+                .truncatedTo(ChronoUnit.MICROS);
+        Attendance candidate = Attendance.checkIn(member, checkInTime);
+        attendanceRepository.insertIfAbsent(candidate);
+        return attendanceRepository.findByMemberIdAndWorkDate(memberId, candidate.getWorkDate())
+                .map(AttendanceResponse::from)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
     }
 
     public void resetAttendance(Long memberId, LocalDate today) {
@@ -153,13 +168,6 @@ public class AttendanceService {
         if (!clientIp.startsWith("220.69")) {
             throw new BusinessException(ErrorCode.INVALID_ATTENDANCE_IP);
         }
-    }
-
-    private void validateNotAlreadyCheckedIn(Long memberId) {
-        attendanceRepository.findByMemberIdAndWorkDate(memberId, LocalDate.now(KST))
-                .ifPresent(attendance -> {
-                    throw new BusinessException(ErrorCode.ALREADY_CHECKED_IN);
-                });
     }
 
     private void validateSameTeam(Member requester, Member target) {

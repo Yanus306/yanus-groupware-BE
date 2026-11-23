@@ -1,0 +1,141 @@
+{
+  "commit" : "7759f26de489449ca114d808ae91362a9b88f6ac",
+  "java_version" : "21.0.10",
+  "endpoint" : "POST /api/v1/attendances/check-in",
+  "postgresql_version" : "16.15 (Debian 16.15-1.pgdg13+2)",
+  "isolation" : "read committed",
+  "flyway_latest" : "27",
+  "sequential" : {
+    "first" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 1,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T11:23:19.307594",
+      "status" : "WORKING"
+    },
+    "retry" : {
+      "http" : 400,
+      "code" : "ALREADY_CHECKED_IN"
+    },
+    "rows" : [ {
+      "attendance_id" : 1,
+      "member_id" : 1,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17 11:23:19.307594",
+      "status" : "WORKING"
+    } ]
+  },
+  "security_controls" : {
+    "no_jwt" : {
+      "http" : 403
+    },
+    "outside_ip_after_check_in" : {
+      "http" : 403,
+      "code" : "INVALID_ATTENDANCE_IP"
+    }
+  },
+  "races" : [ {
+    "rows" : [ {
+      "attendance_id" : 2,
+      "member_id" : 2,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17 11:23:19.35402",
+      "status" : "WORKING"
+    } ],
+    "blocked_inserts" : [ {
+      "pid" : 69,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "insert into attendance (check_in_time,check_out_time,member_id,status,work_date) values ($1,$2,$3,$4,$5)\nRETURNING *"
+    }, {
+      "pid" : 70,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "insert into attendance (check_in_time,check_out_time,member_id,status,work_date) values ($1,$2,$3,$4,$5)\nRETURNING *"
+    } ],
+    "persisted_rows" : 1,
+    "sorted_statuses" : [ 200, 500 ],
+    "response_a" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 2,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T11:23:19.35402",
+      "status" : "WORKING"
+    },
+    "round" : 1,
+    "response_b" : {
+      "http" : 500,
+      "code" : "INTERNAL_ERROR"
+    }
+  }, {
+    "rows" : [ {
+      "attendance_id" : 4,
+      "member_id" : 3,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17 11:23:19.405692",
+      "status" : "WORKING"
+    } ],
+    "blocked_inserts" : [ {
+      "pid" : 68,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "insert into attendance (check_in_time,check_out_time,member_id,status,work_date) values ($1,$2,$3,$4,$5)\nRETURNING *"
+    }, {
+      "pid" : 69,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "insert into attendance (check_in_time,check_out_time,member_id,status,work_date) values ($1,$2,$3,$4,$5)\nRETURNING *"
+    } ],
+    "persisted_rows" : 1,
+    "sorted_statuses" : [ 200, 500 ],
+    "response_a" : {
+      "http" : 500,
+      "code" : "INTERNAL_ERROR"
+    },
+    "round" : 2,
+    "response_b" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 4,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T11:23:19.405692",
+      "status" : "WORKING"
+    }
+  }, {
+    "rows" : [ {
+      "attendance_id" : 6,
+      "member_id" : 4,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17 11:23:19.440027",
+      "status" : "WORKING"
+    } ],
+    "blocked_inserts" : [ {
+      "pid" : 68,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "insert into attendance (check_in_time,check_out_time,member_id,status,work_date) values ($1,$2,$3,$4,$5)\nRETURNING *"
+    }, {
+      "pid" : 69,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "insert into attendance (check_in_time,check_out_time,member_id,status,work_date) values ($1,$2,$3,$4,$5)\nRETURNING *"
+    } ],
+    "persisted_rows" : 1,
+    "sorted_statuses" : [ 200, 500 ],
+    "response_a" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 6,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T11:23:19.440027",
+      "status" : "WORKING"
+    },
+    "round" : 3,
+    "response_b" : {
+      "http" : 500,
+      "code" : "INTERNAL_ERROR"
+    }
+  } ]
+}

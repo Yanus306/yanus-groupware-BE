@@ -1,0 +1,158 @@
+{
+  "commit" : "7759f26de489449ca114d808ae91362a9b88f6ac",
+  "source" : "local implementation based on commit",
+  "java_version" : "21.0.10",
+  "endpoint" : "POST /api/v1/attendances/check-in",
+  "postgresql_version" : "16.15 (Debian 16.15-1.pgdg13+2)",
+  "isolation" : "read committed",
+  "flyway_latest" : "27",
+  "sequential" : {
+    "first" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 1,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T12:34:00.188948",
+      "status" : "WORKING"
+    },
+    "retry" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 1,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T12:34:00.188948",
+      "status" : "WORKING"
+    },
+    "rows" : [ {
+      "attendance_id" : 1,
+      "member_id" : 1,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17 12:34:00.188948",
+      "status" : "WORKING"
+    } ]
+  },
+  "security_controls" : {
+    "no_jwt" : {
+      "http" : 403
+    },
+    "outside_ip_after_check_in" : {
+      "http" : 403,
+      "code" : "INVALID_ATTENDANCE_IP"
+    }
+  },
+  "races" : [ {
+    "round" : 1,
+    "response_b" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 3,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T12:34:00.252054",
+      "status" : "WORKING"
+    },
+    "rows" : [ {
+      "attendance_id" : 3,
+      "member_id" : 2,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17 12:34:00.252054",
+      "status" : "WORKING"
+    } ],
+    "blocked_inserts" : [ {
+      "pid" : 68,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "INSERT INTO attendance (member_id, work_date, check_in_time, status)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (member_id, work_date) DO NOTHING\n"
+    }, {
+      "pid" : 69,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "INSERT INTO attendance (member_id, work_date, check_in_time, status)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (member_id, work_date) DO NOTHING\n"
+    } ],
+    "persisted_rows" : 1,
+    "sorted_statuses" : [ 200, 200 ],
+    "response_a" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 3,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T12:34:00.252054",
+      "status" : "WORKING"
+    }
+  }, {
+    "round" : 2,
+    "response_b" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 5,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T12:34:00.296113",
+      "status" : "WORKING"
+    },
+    "rows" : [ {
+      "attendance_id" : 5,
+      "member_id" : 3,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17 12:34:00.296113",
+      "status" : "WORKING"
+    } ],
+    "blocked_inserts" : [ {
+      "pid" : 68,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "INSERT INTO attendance (member_id, work_date, check_in_time, status)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (member_id, work_date) DO NOTHING\n"
+    }, {
+      "pid" : 69,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "INSERT INTO attendance (member_id, work_date, check_in_time, status)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (member_id, work_date) DO NOTHING\n"
+    } ],
+    "persisted_rows" : 1,
+    "sorted_statuses" : [ 200, 200 ],
+    "response_a" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 5,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T12:34:00.296113",
+      "status" : "WORKING"
+    }
+  }, {
+    "round" : 3,
+    "response_b" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 7,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T12:34:00.337158",
+      "status" : "WORKING"
+    },
+    "rows" : [ {
+      "attendance_id" : 7,
+      "member_id" : 4,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17 12:34:00.337158",
+      "status" : "WORKING"
+    } ],
+    "blocked_inserts" : [ {
+      "pid" : 68,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "INSERT INTO attendance (member_id, work_date, check_in_time, status)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (member_id, work_date) DO NOTHING\n"
+    }, {
+      "pid" : 69,
+      "wait_event_type" : "Lock",
+      "wait_event" : "relation",
+      "query" : "INSERT INTO attendance (member_id, work_date, check_in_time, status)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (member_id, work_date) DO NOTHING\n"
+    } ],
+    "persisted_rows" : 1,
+    "sorted_statuses" : [ 200, 200 ],
+    "response_a" : {
+      "http" : 200,
+      "code" : "SUCCESS",
+      "id" : 7,
+      "work_date" : "2026-11-17",
+      "check_in_time" : "2026-11-17T12:34:00.337158",
+      "status" : "WORKING"
+    }
+  } ]
+}

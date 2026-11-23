@@ -26,6 +26,7 @@ import com.yanus.attendance.member.domain.MemberRepository;
 import com.yanus.attendance.member.domain.MemberRole;
 import com.yanus.attendance.member.domain.MemberStatus;
 import com.yanus.attendance.team.domain.Team;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -63,7 +64,8 @@ public class AttendanceServiceTest {
                 memberRepository,
                 attendanceQueryRepository,
                 settingService,
-                exceptionRepository
+                exceptionRepository,
+                Clock.systemUTC()
         );
         memberEmailSeq.set(1);
         teamIdSeq.set(1);
@@ -101,7 +103,7 @@ public class AttendanceServiceTest {
         Member member = createMember();
 
         // when
-        AttendanceResponse response = attendanceService.checkIn(member.getId());
+        AttendanceResponse response = attendanceService.checkIn(member.getId(), "220.69.1.1");
 
         // then
         assertThat(response.status()).isEqualTo(AttendanceStatus.WORKING);
@@ -110,16 +112,14 @@ public class AttendanceServiceTest {
     }
 
     @Test
-    @DisplayName("오늘 이미 출근한 경우 예외 발생")
-    void already_checked_in_error() {
+    @DisplayName("오늘 이미 출근한 경우 기존 기록 반환")
+    void already_checked_in_returns_existing_record() {
         // given
         Member member = createMember();
-        attendanceService.checkIn(member.getId());
+        AttendanceResponse first = attendanceService.checkIn(member.getId(), "220.69.1.1");
 
         // when & then
-        assertThatThrownBy(() -> attendanceService.checkIn(member.getId()))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("이미 출근");
+        assertThat(attendanceService.checkIn(member.getId(), "220.69.1.1")).isEqualTo(first);
     }
 
     @Test
@@ -138,7 +138,7 @@ public class AttendanceServiceTest {
     void get_my_attendances() {
         // given
         Member member = createMember();
-        attendanceService.checkIn(member.getId());
+        attendanceService.checkIn(member.getId(), "220.69.1.1");
 
         // when
         List<AttendanceResponse> responses = attendanceService.getMyAttendances(member.getId());
@@ -153,7 +153,7 @@ public class AttendanceServiceTest {
         // given
         Member member = createMember();
         LocalDate date = LocalDate.now(KST);
-        attendanceService.checkIn(member.getId());
+        attendanceService.checkIn(member.getId(), "220.69.1.1");
 
         // when
         List<AttendanceResponse> responses = attendanceService.getAttendancesByDate(date);
@@ -168,7 +168,7 @@ public class AttendanceServiceTest {
         // given
         Member member = createMember();
         LocalDate date = LocalDate.now(KST);
-        attendanceService.checkIn(member.getId());
+        attendanceService.checkIn(member.getId(), "220.69.1.1");
 
         // when
         List<AttendanceResponse> responses = attendanceService.getAttendancesByFilter(date, "1팀");
@@ -183,7 +183,7 @@ public class AttendanceServiceTest {
         // given
         Member member = createMember();
         LocalDate date = LocalDate.now(KST);
-        attendanceService.checkIn(member.getId());
+        attendanceService.checkIn(member.getId(), "220.69.1.1");
 
         // when
         List<AttendanceResponse> responses = attendanceService.getAttendancesByFilter(date, null);
@@ -198,7 +198,7 @@ public class AttendanceServiceTest {
         // given
         Member member = createMember();
         LocalDate date = LocalDate.now(KST);
-        attendanceService.checkIn(member.getId());
+        attendanceService.checkIn(member.getId(), "220.69.1.1");
 
         // when
         attendanceService.autoCheckOut(date, LocalTime.of(23, 59, 59));
