@@ -22,6 +22,7 @@ import com.yanus.attendance.team.domain.Team;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +39,7 @@ public class WorkScheduleServiceTest {
     void setUp() {
         workScheduleRepository = new FakeWorkScheduleRepository();
         memberRepository = new FakeMemberRepository();
-        workScheduleService = new WorkScheduleService(workScheduleRepository, memberRepository);
+        workScheduleService = new WorkScheduleService(workScheduleRepository, memberRepository, Optional.empty());
     }
 
     private Member create() {
