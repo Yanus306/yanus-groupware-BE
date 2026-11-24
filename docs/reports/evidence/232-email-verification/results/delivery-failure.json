@@ -1,0 +1,10 @@
+{
+  "retry": "1|PENDING|1|SMTP_451",
+  "recovered": "1|SENT|2|",
+  "permanent": "2|FAILED|1|SMTP_550",
+  "crashed": "3|PROCESSING|1|",
+  "crashRecovered": "3|SENT|2|",
+  "acceptedAfterCrash": 2,
+  "leaseExpiredByFixture": true,
+  "member": "ACTIVE"
+}
