@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class FakeEmailVerificationTokenRepository implements EmailVerificationTokenRepository {
 
@@ -15,10 +16,20 @@ public class FakeEmailVerificationTokenRepository implements EmailVerificationTo
 
     @Override
     public EmailVerificationToken save(EmailVerificationToken token) {
+        ReflectionTestUtils.setField(token, "id", sequence);
         store.put(sequence++, token);
         return token;
     }
 
+    @Override
+    public Optional<EmailVerificationToken> findById(Long id) {
+        return Optional.ofNullable(store.get(id));
+    }
+
+    @Override
+    public Optional<Long> findMemberIdByToken(String token) {
+        return findByToken(token).map(EmailVerificationToken::getMemberId);
+    }
     @Override
     public Optional<EmailVerificationToken> findByToken(String token) {
         return store.values().stream()
