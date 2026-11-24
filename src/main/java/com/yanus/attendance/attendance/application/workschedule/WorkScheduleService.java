@@ -20,12 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class WorkScheduleService {
 
     private final WorkScheduleRepository workScheduleRepository;
     private final MemberRepository memberRepository;
+    private final Optional<AdminWorkScheduleCache> adminWorkScheduleCache;
 
+    @Transactional
     public WorkScheduleResponse setWorkSchedule(Long memberId, WorkScheduleRequest request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
@@ -60,12 +61,20 @@ public class WorkScheduleService {
         return groupByMember(workScheduleRepository.findAllByMemberTeamId(teamId));
     }
 
-    @Transactional(readOnly = true)
     public List<MemberWorkScheduleResponse> getAllWorkSchedules(Long actorId) {
+        if (adminWorkScheduleCache.isPresent()) {
+            // Keep the JDBC revision lookup and Redis I/O outside a shared transaction.
+            return adminWorkScheduleCache.get().getForAdmin(actorId, this::loadAllWorkSchedules);
+        }
         validateAdmin(actorId);
+        return loadAllWorkSchedules();
+    }
+
+    private List<MemberWorkScheduleResponse> loadAllWorkSchedules() {
         return groupByMember(workScheduleRepository.findAll());
     }
 
+    @Transactional
     public void deleteWorkSchedule(Long memberId, DayOfWeek dayOfWeek) {
         workScheduleRepository.findByMemberIdAndDayOfWeek(memberId, dayOfWeek)
                 .orElseThrow(() -> new BusinessException(ErrorCode.WORK_SCHEDULE_NOT_FOUND));
