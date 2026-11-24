@@ -1,0 +1,21 @@
+{
+  "beforeRestart": {
+    "apiMs": 94.12,
+    "member": "PENDING",
+    "job": "PENDING"
+  },
+  "duringSmtp": {
+    "hikari": {
+      "hikaricp_connections_acquire_seconds_count": 7,
+      "hikaricp_connections_acquire_seconds_sum": 0.001,
+      "hikaricp_connections_active": 0,
+      "hikaricp_connections_pending": 0
+    },
+    "committedStatus": "PENDING"
+  },
+  "afterRestart": {
+    "delivered": 1,
+    "verifyStatus": 200,
+    "member": "ACTIVE"
+  }
+}

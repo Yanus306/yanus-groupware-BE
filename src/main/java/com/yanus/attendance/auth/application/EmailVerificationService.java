@@ -1,6 +1,7 @@
 package com.yanus.attendance.auth.application;
 
 import com.yanus.attendance.auth.domain.EmailVerificationToken;
+import com.yanus.attendance.auth.domain.EmailVerificationJobRepository;
 import com.yanus.attendance.auth.domain.EmailVerificationTokenRepository;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
@@ -19,33 +20,36 @@ public class EmailVerificationService {
 
     private final EmailVerificationTokenRepository tokenRepository;
     private final MemberRepository memberRepository;
-    private final EmailService emailService;
+    private final EmailVerificationJobRepository jobs;
 
-    public void sendVerification(Long memberId, String email) {
+    public void enqueueVerification(Long memberId) {
         tokenRepository.deleteByMemberId(memberId);
-        String token = UUID.randomUUID().toString();
-        tokenRepository.save(EmailVerificationToken.create(token, memberId, LocalDateTime.now().plusMinutes(30)));
-        emailService.sendVerificationEmail(email, token);
+        var token = EmailVerificationToken.create(UUID.randomUUID().toString(), memberId,
+                LocalDateTime.now().plusMinutes(30));
+        jobs.enqueue(tokenRepository.save(token).getId());
     }
 
     public void verify(String token) {
+        Long memberId = tokenRepository.findMemberIdByToken(token)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_VERIFICATION_TOKEN));
+        Member member = memberRepository.findByIdForUpdate(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         EmailVerificationToken verificationToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_VERIFICATION_TOKEN));
 
-        if (verificationToken.isExpired() || verificationToken.isUsed()) {
+        if (!member.isPending() || verificationToken.isExpired() || verificationToken.isUsed()) {
             throw new BusinessException(ErrorCode.INVALID_VERIFICATION_TOKEN);
         }
-
-        Member member = memberRepository.findById(verificationToken.getMemberId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         verificationToken.use();
         member.activate();
     }
 
     public void resend(String email) {
-        Member member = memberRepository.findByEmail(email)
+        Member member = memberRepository.findByEmailForUpdate(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-        sendVerification(member.getId(), member.getEmail());
+        if (member.isPending()) {
+            enqueueVerification(member.getId());
+        }
     }
 }

@@ -7,6 +7,8 @@ public interface MemberRepository {
     Member save(Member member);
     Optional<Member> findById(Long id);
     Optional<Member> findByEmail(String email);
+    Optional<Member> findByIdForUpdate(Long id);
+    Optional<Member> findByEmailForUpdate(String email);
     boolean existsByEmail(String email);
     List<Member> findAllByIds(List<Long> ids);
     List<Member> findAll();

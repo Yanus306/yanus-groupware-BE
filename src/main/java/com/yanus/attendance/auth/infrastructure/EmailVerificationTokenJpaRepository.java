@@ -23,6 +23,16 @@ public class EmailVerificationTokenJpaRepository implements EmailVerificationTok
     }
 
     @Override
+    public Optional<EmailVerificationToken> findById(Long id) {
+        return repository.findById(id);
+    }
+
+    @Override
+    public Optional<Long> findMemberIdByToken(String token) {
+        return repository.findMemberIdByToken(token);
+    }
+
+    @Override
     public void deleteByMemberId(Long memberId) {
         repository.deleteByMemberId(memberId);
     }

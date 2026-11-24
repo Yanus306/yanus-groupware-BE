@@ -2,11 +2,11 @@ package com.yanus.attendance.auth.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.yanus.attendance.auth.FakeEmailVerificationTokenRepository;
+import com.yanus.attendance.auth.domain.EmailVerificationJobRepository;
 import com.yanus.attendance.global.exception.BusinessException;
 import com.yanus.attendance.global.exception.ErrorCode;
 import com.yanus.attendance.member.FakeMemberRepository;
@@ -24,14 +24,14 @@ public class EmailVerificationServiceTest {
     private EmailVerificationService emailVerificationService;
     private FakeMemberRepository memberRepository;
     private FakeEmailVerificationTokenRepository tokenRepository;
+    private EmailVerificationJobRepository jobs;
 
     @BeforeEach
     public void setUp() {
         tokenRepository = new FakeEmailVerificationTokenRepository();
         memberRepository = new FakeMemberRepository();
-        EmailService emailService = mock(EmailService.class);
-        doNothing().when(emailService).sendVerificationEmail(anyString(), anyString());
-        emailVerificationService = new EmailVerificationService(tokenRepository, memberRepository, emailService);
+        jobs = mock(EmailVerificationJobRepository.class);
+        emailVerificationService = new EmailVerificationService(tokenRepository, memberRepository, jobs);
     }
 
     private Member createMember() {
@@ -47,7 +47,8 @@ public class EmailVerificationServiceTest {
     void token_verification_active() {
         // given
         Member member = createMember();
-        emailVerificationService.sendVerification(member.getId(), member.getEmail());
+        emailVerificationService.enqueueVerification(member.getId());
+        verify(jobs).enqueue(tokenRepository.findAll().get(0).getId());
         String token = tokenRepository.findAll().get(0).getToken();
 
         // when
@@ -72,11 +73,11 @@ public class EmailVerificationServiceTest {
     void if_retry_old_token_remove_new_token_serve() {
         // given
         Member member = createMember();
-        emailVerificationService.sendVerification(member.getId(), member.getEmail());
+        emailVerificationService.enqueueVerification(member.getId());
         String firstToken = tokenRepository.findAll().get(0).getToken();
 
         // when
-        emailVerificationService.sendVerification(member.getId(), member.getEmail());
+        emailVerificationService.resend(member.getEmail());
         String secondToken = tokenRepository.findAll().get(0).getToken();
 
         // then
@@ -88,7 +89,7 @@ public class EmailVerificationServiceTest {
     void used_token_try_verify_is_error() {
         // given
         Member member = createMember();
-        emailVerificationService.sendVerification(member.getId(), member.getEmail());
+        emailVerificationService.enqueueVerification(member.getId());
         String token = tokenRepository.findAll().get(0).getToken();
         emailVerificationService.verify(token);
 

@@ -52,7 +52,7 @@ public class AuthService {
                 team
         );
         Member saved = memberRepository.save(member);
-        emailVerificationService.sendVerification(saved.getId(), saved.getEmail());
+        emailVerificationService.enqueueVerification(saved.getId());
     }
 
     @Transactional

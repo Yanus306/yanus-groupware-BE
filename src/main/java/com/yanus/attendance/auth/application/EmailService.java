@@ -17,7 +17,7 @@ public class EmailService {
         message.setTo(email);
         message.setSubject("[yANUs] 이메일 인증을 완료해주세요");
         message.setText("아래 토큰을 입력하여 이메일 인증을 완료하세요.\n\n토큰: " + verificationToken
-                + "\n\n토큰은 30분간 유효합니다.");
+                + "\n\n토큰은 발급 시점부터 30분간 유효합니다.");
         long started = System.nanoTime();
         boolean success = false;
         try {

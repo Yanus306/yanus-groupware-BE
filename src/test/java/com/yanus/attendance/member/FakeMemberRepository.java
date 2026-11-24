@@ -33,6 +33,16 @@ public class FakeMemberRepository implements MemberRepository {
     }
 
     @Override
+    public Optional<Member> findByIdForUpdate(Long id) {
+        return findById(id);
+    }
+
+    @Override
+    public Optional<Member> findByEmailForUpdate(String email) {
+        return findByEmail(email);
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return store.values().stream()
                 .anyMatch(m -> m.getEmail().equals(email));

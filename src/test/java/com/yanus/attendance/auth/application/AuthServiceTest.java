@@ -2,12 +2,11 @@ package com.yanus.attendance.auth.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
 import com.yanus.attendance.auth.FakeEmailVerificationTokenRepository;
 import com.yanus.attendance.auth.FakeRefreshTokenRepository;
+import com.yanus.attendance.auth.domain.EmailVerificationJobRepository;
 import com.yanus.attendance.auth.application.dto.AuthTokenResponse;
 import com.yanus.attendance.auth.application.dto.LoginCommand;
 import com.yanus.attendance.auth.application.dto.RefreshCommand;
@@ -44,10 +43,8 @@ class AuthServiceTest {
                 604800000L
         );
 
-        EmailService emailService = mock(EmailService.class);
-        doNothing().when(emailService).sendVerificationEmail(anyString(), anyString());
         EmailVerificationService emailVerificationService = new EmailVerificationService(
-                new FakeEmailVerificationTokenRepository(), memberRepository, emailService);
+                new FakeEmailVerificationTokenRepository(), memberRepository, mock(EmailVerificationJobRepository.class));
 
         authService = new AuthService(
                 memberRepository,

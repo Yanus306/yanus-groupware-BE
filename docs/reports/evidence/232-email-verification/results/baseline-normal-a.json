@@ -1,0 +1,41 @@
+{
+  "queued": false,
+  "smtpDelayMs": 0,
+  "injectionSeconds": 6,
+  "endpoints": {
+    "me": {
+      "total": 36,
+      "success": 36,
+      "failure": 0,
+      "p50": 8,
+      "p95": 15
+    },
+    "register": {
+      "total": 12,
+      "success": 12,
+      "failure": 0,
+      "p50": 85,
+      "p95": 98
+    },
+    "resend": {
+      "total": 12,
+      "success": 12,
+      "failure": 0,
+      "p50": 17,
+      "p95": 21
+    }
+  },
+  "hikari": {
+    "maxActive": 0,
+    "maxPending": 0,
+    "acquireWaitTotalMs": 3,
+    "grafanaPeakPending": 0
+  },
+  "mail": {
+    "accepted": 24,
+    "smtpDataToAcceptanceP95Ms": 2,
+    "afterHttpReportFinishedMs": 0,
+    "jobToSentP95Ms": null,
+    "queueOutcomes": null
+  }
+}

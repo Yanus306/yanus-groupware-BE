@@ -1,0 +1,25 @@
+{
+  "duringSmtp": {
+    "hikari": {
+      "hikaricp_connections_acquire_seconds_count": 6,
+      "hikaricp_connections_acquire_seconds_sum": 0.002,
+      "hikaricp_connections_active": 1,
+      "hikaricp_connections_pending": 0
+    },
+    "committedStatus": ""
+  },
+  "delayed": {
+    "status": 200,
+    "ms": 1363.28,
+    "member": "PENDING"
+  },
+  "failure": {
+    "status": 500,
+    "member": ""
+  },
+  "commitFailure": {
+    "status": 500,
+    "member": "",
+    "previouslyAccepted": true
+  }
+}
